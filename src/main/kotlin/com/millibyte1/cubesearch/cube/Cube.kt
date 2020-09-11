@@ -85,7 +85,7 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
         //down face update
         copy[5][2] = data[3][0]
         copy[5][1] = data[3][3]
-        copy[5][0] - data[3][6]
+        copy[5][0] = data[3][6]
         //wrap and return
         return Cube(copy)
     }
@@ -291,9 +291,9 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
         copy[1][3] = data[0][5]
         copy[1][6] = data[0][2]
         //down face update
-        copy[5][8] = data[1][0]
-        copy[5][5] = data[1][3]
-        copy[5][2] = data[1][6]
+        copy[5][8] = data[4][8]
+        copy[5][5] = data[4][5]
+        copy[5][2] = data[4][2]
         //wrap and return
         return Cube(copy)
     }
@@ -323,7 +323,7 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
         //left face update
         copy[2][2] = data[0][2]
         copy[2][1] = data[0][1]
-        copy[0][0] = data[0][0]
+        copy[2][0] = data[0][0]
         //back face update
         copy[1][2] = data[2][2]
         copy[1][1] = data[2][1]
@@ -344,7 +344,7 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
         //left face update
         copy[2][2] = data[3][2]
         copy[2][1] = data[3][1]
-        copy[0][0] = data[3][0]
+        copy[2][0] = data[3][0]
         //back face update
         copy[1][2] = data[0][2]
         copy[1][1] = data[0][1]
@@ -365,7 +365,7 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
         //left face update
         copy[2][2] = data[1][2]
         copy[2][1] = data[1][1]
-        copy[0][0] = data[1][0]
+        copy[2][0] = data[1][0]
         //back face update
         copy[1][2] = data[3][2]
         copy[1][1] = data[3][1]
@@ -447,7 +447,6 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
 
     /**
      * overridden equality to check whether the cubes have the same configuration
-     * pre: cube is
      */
     override fun equals(other: Any?): Boolean {
         if(this === other) return true
@@ -457,6 +456,23 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
         return false
     }
 
+    /**
+     * prints each face individually
+     */
+    override fun toString(): String {
+        var retval = ""
+        val faces = arrayOf("Front", "Back", "Left", "Right", "Up", "Down")
+        //prints out each face
+        for(i in 0 until 6) {
+            retval += '\n' + faces[i] + " face:"
+            for(j in 0 until 9) {
+                if(j % 3 == 0) retval += '\n'
+                retval += data[i][j]
+                retval += ' '
+            }
+        }
+        return retval
+    }
 }
 
 //extension function to deep copy array

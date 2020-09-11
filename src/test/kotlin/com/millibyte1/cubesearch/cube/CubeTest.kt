@@ -5,9 +5,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertFalse
 
-import com.millibyte1.cubesearch.cube.Cube
-import com.millibyte1.cubesearch.cube.Twist
-
 /**
  * Tests the 3x3 Cube implementation of Twistable
  */
@@ -84,6 +81,10 @@ class CubeTest {
         clone1 = clone1.twist(Twist.FRONT_90)
         clone2 = clone2.twist(Twist.FRONT_180)
         clone3 = clone3.twist(Twist.FRONT_270)
+        //println("frontTwists")
+        //println("Clone 1: $clone1")
+        //println("Clone 2: $clone2")
+        //println("Clone 3: $clone3")
         assertFalse(clone1 == start)
         assertFalse(clone2 == start)
         assertFalse(clone3 == start)
@@ -119,6 +120,10 @@ class CubeTest {
         clone1 = clone1.twist(Twist.BACK_90)
         clone2 = clone2.twist(Twist.BACK_180)
         clone3 = clone3.twist(Twist.BACK_270)
+        //println("backTwists")
+        //println("Clone 1: $clone1")
+        //println("Clone 2: $clone2")
+        //println("Clone 3: $clone3")
         assertFalse(clone1 == start)
         assertFalse(clone2 == start)
         assertFalse(clone3 == start)
@@ -154,6 +159,10 @@ class CubeTest {
         clone1 = clone1.twist(Twist.LEFT_90)
         clone2 = clone2.twist(Twist.LEFT_180)
         clone3 = clone3.twist(Twist.LEFT_270)
+        //println("leftTwists")
+        //println("Clone 1: $clone1")
+        //println("Clone 2: $clone2")
+        //println("Clone 3: $clone3")
         assertFalse(clone1 == start)
         assertFalse(clone2 == start)
         assertFalse(clone3 == start)
@@ -189,6 +198,10 @@ class CubeTest {
         clone1 = clone1.twist(Twist.RIGHT_90)
         clone2 = clone2.twist(Twist.RIGHT_180)
         clone3 = clone3.twist(Twist.RIGHT_270)
+        //println("rightTwists")
+        //println("Clone 1: $clone1")
+        //println("Clone 2: $clone2")
+        //println("Clone 3: $clone3")
         assertFalse(clone1 == start)
         assertFalse(clone2 == start)
         assertFalse(clone3 == start)
@@ -224,6 +237,10 @@ class CubeTest {
         clone1 = clone1.twist(Twist.UP_90)
         clone2 = clone2.twist(Twist.UP_180)
         clone3 = clone3.twist(Twist.UP_270)
+        println("upTwists")
+        println("Clone 1: $clone1")
+        println("Clone 2: $clone2")
+        println("Clone 3: $clone3")
         assertFalse(clone1 == start)
         assertFalse(clone2 == start)
         assertFalse(clone3 == start)
@@ -259,6 +276,10 @@ class CubeTest {
         clone1 = clone1.twist(Twist.DOWN_90)
         clone2 = clone2.twist(Twist.DOWN_180)
         clone3 = clone3.twist(Twist.DOWN_270)
+        //println("downTwists")
+        //println("Clone 1: $clone1")
+        //println("Clone 2: $clone2")
+        //println("Clone 3: $clone3")
         assertFalse(clone1 == start)
         assertFalse(clone2 == start)
         assertFalse(clone3 == start)
