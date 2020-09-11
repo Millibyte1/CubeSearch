@@ -25,7 +25,8 @@ enum class Twist {
          */
         fun getFace(twist: Twist): Face {
             return if(twist == FRONT_90 || twist == FRONT_180 || twist == FRONT_270) Face.FRONT
-              else if(twist == BACK_90 || twist == BACK_180 || twist == BACK_270) Face.BACK
+              else if(twist
+                    == BACK_90 || twist == BACK_180 || twist == BACK_270) Face.BACK
               else if(twist == LEFT_90 || twist == LEFT_180 || twist == LEFT_270) Face.LEFT
               else if(twist == RIGHT_90 || twist == RIGHT_180 || twist == RIGHT_270) Face.RIGHT
               else if(twist == UP_90 || twist == UP_180 || twist == UP_270) Face.UP
