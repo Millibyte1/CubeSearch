@@ -7,7 +7,7 @@ import java.io.Serializable
  *
  * @property data a minimal representation of the state of the cube
  *
- * @constructor constructs cube from a copy of [data]
+ * @constructor constructs cube from a copy of the provided data
  * @param data the 6x9 array representing the desired cube. Format: (front, back, left, right, up, down)
  *
  * Flattened cube:
@@ -23,13 +23,7 @@ import java.io.Serializable
  *         6 7 8
  */
 //TODO: make constructors private and force the use of factories
-class Cube(data: Array<IntArray>) : AbstractCube<Cube>(data), Serializable {
-
-    /**
-     * copy constructor
-     * @param cube the cube to copy
-     */
-    constructor(cube: Cube) : this(cube.data)
+class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data), Serializable {
 
     /**
      * takes a twist and returns the cube that results from it

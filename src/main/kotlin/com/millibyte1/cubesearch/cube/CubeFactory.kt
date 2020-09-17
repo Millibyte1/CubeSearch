@@ -10,7 +10,7 @@ class CubeFactory : AbstractCubeFactory<Cube>() {
     }
 
     override fun getCube(cube: Cube): Cube {
-        return Cube(cube)
+        return Cube(cube.data.copy())
     }
 
     override fun getSolvedCube(): Cube {

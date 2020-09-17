@@ -6,19 +6,14 @@ package com.millibyte1.cubesearch.cube
  *
  * @property data a minimal representation of the state of the cube
  *
- * @constructor constructs cube from a copy of data
- * @param data the 6x9 array representing the desired cube. Format: (front, back, left, right, up, down)
+ * @constructor constructs cube from a copy of the provided data
+ * @param data the 6xN array representing the desired cube. Format: (front, back, left, right, up, down)
  */
-abstract class AbstractCube<T : AbstractCube<T>>(data: Array<IntArray>) {
+abstract class AbstractCube<T : AbstractCube<T>> internal constructor(data: Array<IntArray>) {
 
-    val data: Array<IntArray> = data.copy()
+    var data: Array<IntArray> = data.copy()
+        private set
 
-    /**
-     * copy constructor
-     * @param cube the cube to copy
-     */
-    public constructor(cube: Cube) : this(cube.data)
-    
     /**
      * returns the cube resulting from applying the given twist.
      * Depending on implementation, may modify this object or return a new object

@@ -10,9 +10,11 @@ import org.junit.jupiter.api.Assertions.assertFalse
  */
 class CubeTest {
 
+    private val factory: CubeFactory = CubeFactory()
+
     //test fixtures
     private fun solved(): Cube {
-        return Cube(solvedData())
+        return factory.getSolvedCube()
     }
     private fun solvedData(): Array<IntArray> {
         return arrayOf(
@@ -43,7 +45,7 @@ class CubeTest {
     fun copyConstructor() {
         //asserts that the two cubes are equal but are different objects
         val start = solved()
-        val clone = Cube(start)
+        val clone = factory.getCube(start)
         assertTrue(start == clone)
         assertFalse(start === clone)
     }
@@ -53,7 +55,7 @@ class CubeTest {
         //immutability is dependent on constructors behaving as intended
         constructors()
         val start = solved()
-        val clone = Cube(start)
+        val clone = factory.getCube(start)
         //tests
         for(twist in Twist.values()) {
             start.twist(twist)
@@ -74,9 +76,9 @@ class CubeTest {
     fun frontTwists() {
         //sets up and tests initial turns
         val start = solved()
-        var clone1: Cube = Cube(start)
-        var clone2: Cube = Cube(start)
-        var clone3: Cube = Cube(start)
+        var clone1: Cube = factory.getCube(start)
+        var clone2: Cube = factory.getCube(start)
+        var clone3: Cube = factory.getCube(start)
 
         clone1 = clone1.twist(Twist.FRONT_90)
         clone2 = clone2.twist(Twist.FRONT_180)
@@ -113,9 +115,9 @@ class CubeTest {
     fun backTwists() {
         //sets up and tests initial turns
         val start = solved()
-        var clone1: Cube = Cube(start)
-        var clone2: Cube = Cube(start)
-        var clone3: Cube = Cube(start)
+        var clone1: Cube = factory.getCube(start)
+        var clone2: Cube = factory.getCube(start)
+        var clone3: Cube = factory.getCube(start)
 
         clone1 = clone1.twist(Twist.BACK_90)
         clone2 = clone2.twist(Twist.BACK_180)
@@ -152,9 +154,9 @@ class CubeTest {
     fun leftTwists() {
         //sets up and tests initial turns
         val start = solved()
-        var clone1: Cube = Cube(start)
-        var clone2: Cube = Cube(start)
-        var clone3: Cube = Cube(start)
+        var clone1: Cube = factory.getCube(start)
+        var clone2: Cube = factory.getCube(start)
+        var clone3: Cube = factory.getCube(start)
 
         clone1 = clone1.twist(Twist.LEFT_90)
         clone2 = clone2.twist(Twist.LEFT_180)
@@ -191,9 +193,9 @@ class CubeTest {
     fun rightTwists() {
         //sets up and tests initial turns
         val start = solved()
-        var clone1: Cube = Cube(start)
-        var clone2: Cube = Cube(start)
-        var clone3: Cube = Cube(start)
+        var clone1: Cube = factory.getCube(start)
+        var clone2: Cube = factory.getCube(start)
+        var clone3: Cube = factory.getCube(start)
 
         clone1 = clone1.twist(Twist.RIGHT_90)
         clone2 = clone2.twist(Twist.RIGHT_180)
@@ -230,9 +232,9 @@ class CubeTest {
     fun upTwists() {
         //sets up and tests initial turns
         val start = solved()
-        var clone1: Cube = Cube(start)
-        var clone2: Cube = Cube(start)
-        var clone3: Cube = Cube(start)
+        var clone1: Cube = factory.getCube(start)
+        var clone2: Cube = factory.getCube(start)
+        var clone3: Cube = factory.getCube(start)
 
         clone1 = clone1.twist(Twist.UP_90)
         clone2 = clone2.twist(Twist.UP_180)
@@ -269,9 +271,9 @@ class CubeTest {
     fun downTwists() {
         //sets up and tests initial turns
         val start = solved()
-        var clone1: Cube = Cube(start)
-        var clone2: Cube = Cube(start)
-        var clone3: Cube = Cube(start)
+        var clone1: Cube = factory.getCube(start)
+        var clone2: Cube = factory.getCube(start)
+        var clone3: Cube = factory.getCube(start)
 
         clone1 = clone1.twist(Twist.DOWN_90)
         clone2 = clone2.twist(Twist.DOWN_180)
