@@ -22,14 +22,14 @@ import java.io.Serializable
  *         3 D 5
  *         6 7 8
  */
-//TODO(factories) add factory functions and make constructor private so that testing lengths in code is unnecessary
+//TODO: make constructors private and force the use of factories
 class Cube(data: Array<IntArray>) : AbstractCube<Cube>(data), Serializable {
 
     /**
      * copy constructor
      * @param cube the cube to copy
      */
-    constructor(cube: Cube) : this(cube.data) { }
+    constructor(cube: Cube) : this(cube.data)
 
     /**
      * takes a twist and returns the cube that results from it
