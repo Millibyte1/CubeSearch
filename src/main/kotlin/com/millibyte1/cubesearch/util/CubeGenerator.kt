@@ -30,12 +30,6 @@ class CubeGenerator<T : AbstractCube<T>>(
     private var random: Random = Random(seed)
 
     /**
-     *
-     */
-    public constructor(factory: AbstractCubeFactory<T>, seed: Int) : this(factory, seed, null)
-    public constructor(factory: AbstractCubeFactory<T>) : this(factory, Random.nextInt(), null)
-
-    /**
      * Returns a new randomly generated cube.
      * Uses proper move pruning to attempt to make the difficulty accurate.
      *
