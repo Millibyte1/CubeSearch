@@ -437,7 +437,6 @@ class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data
     override fun equals(other: Any?): Boolean {
         if(this === other) return true
         if(other !is Cube) return false
-        other as Cube
         if(data.contentDeepEquals(other.data)) return true
         return false
     }
