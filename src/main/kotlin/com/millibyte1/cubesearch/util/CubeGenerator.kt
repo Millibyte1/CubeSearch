@@ -16,18 +16,35 @@ import kotlin.random.Random
  * @property seed the seed of the internal RNG
  * @property difficulty the approximate solution length of cubes being generated. if null, random difficulties will be chosen each time nextCube() is called. can be changed.
  *
- * @constructor constructs a new CubeGenerator with the given seed and initial difficulty
- * @param factory the factory to use to create cubes
- * @param seed the seed to create the internal RNG from. if none is provided, a random seed will be used.
- * @param difficulty the approximate solution length of cubes being generated. if null or not provided, random difficulties will be chosen each time nextCube() is called.
  */
 //TODO(factories) AbstractCubeFactory that can build a solved cube
-class CubeGenerator<T : AbstractCube<T>>(
-    private val factory: AbstractCubeFactory<T>,
-    private val seed: Int = Random.nextInt(),
-    private var difficulty: Int? = null) {
+class CubeGenerator<T : AbstractCube<T>> {
 
-    private var random: Random = Random(seed)
+    private val factory: AbstractCubeFactory<T>
+    private var random: Random
+    private val seed: Int
+
+    private var difficulty: Int?
+
+    /**
+     * constructs a new CubeGenerator with the given seed and initial difficulty
+     * @param factory the factory to use to create cubes
+     * @param seed the seed to create the internal RNG from. if none is provided, a random seed will be used.
+     * @param difficulty the approximate solution length of cubes being generated. if null or not provided, random difficulties will be chosen each time nextCube() is called.
+     * @throws IllegalArgumentException if [difficulty] is negative or greater than 20.
+     */
+    @Throws(IllegalArgumentException::class)
+    constructor(factory: AbstractCubeFactory<T>, seed: Int = Random.nextInt(), difficulty: Int? = null) {
+        this.factory = factory
+        this.seed = seed
+        this.random = Random(seed)
+        if(difficulty != null) {
+            if(difficulty < 0 || difficulty > 20) {
+                throw IllegalArgumentException("difficulty must be between 0 and 20 (inclusive)")
+            }
+        }
+        this.difficulty = difficulty
+    }
 
     /**
      * Returns a new randomly generated cube.
@@ -47,7 +64,7 @@ class CubeGenerator<T : AbstractCube<T>>(
         var options: Array<Twist>
         var previousMove: Twist?
         var previousFace: Twist.Face? = null
-        for(i in 0..solutionDepth) {
+        for(i in 1..solutionDepth) {
             //performs simple move-pruning on options
             options = when(previousFace) {
                 null -> Twist.values()

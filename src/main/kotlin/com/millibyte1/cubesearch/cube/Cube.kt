@@ -431,6 +431,9 @@ class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data
         return Cube(copy)
     }
 
+    override fun isValid(cube: Cube): Boolean {
+        TODO("Not yet implemented")
+    }
     /**
      * overridden equality to check whether the cubes have the same configuration
      */
@@ -458,6 +461,7 @@ class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data
         }
         return retval
     }
+
 }
 
 //extension function to deep copy array

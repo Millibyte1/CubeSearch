@@ -2,6 +2,7 @@ package com.millibyte1.cubesearch.cube
 
 /**
  * Factory for instances of the immutable Cube class
+ * TODO might have to use object pooling for performance
  */
 class CubeFactory : AbstractCubeFactory<Cube>() {
 

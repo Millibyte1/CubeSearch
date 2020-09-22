@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
  */
 class CubeTest {
 
-    private val factory: CubeFactory = CubeFactory()
+    private val factory = CubeFactory()
 
     //test fixtures
     private fun solved(): Cube {

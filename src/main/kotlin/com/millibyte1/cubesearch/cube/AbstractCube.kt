@@ -23,6 +23,7 @@ abstract class AbstractCube<T : AbstractCube<T>> internal constructor(data: Arra
      */
     abstract fun twist(twist: Twist): T
 
+    abstract fun isValid(cube: T): Boolean
 }
 
 //extension function to deep copy array
