@@ -36,6 +36,144 @@ sealed class Cubie {
 }
 
 /**
+ * Determines whether the tiles are on the same edge cubie
+ * @param tile1 the first tile
+ * @param tile2 the second tile
+ * @return whether the provided tiles are on the same edge cubie
+ */
+fun isOnSameEdgeCubie(tile1: Tile, tile2: Tile): Boolean {
+    return isOnEdgeCubie(tile1) && isOnSameCubie(tile1, tile2)
+}
+
+/**
+ * Determines whether the tiles are on the same corner cubie
+ * @param tile1 the first tile
+ * @param tile2 the second tile
+ * @return whether the provided tiles are on the same corner cubie
+ */
+fun isOnSameCornerCubie(tile1: Tile, tile2: Tile, tile3: Tile): Boolean {
+    return isOnCornerCubie(tile1) && isOnSameCubie(tile1, tile2) && isOnSameCubie(tile1, tile3)
+}
+/** Returns whether this tile is on an edge cubie */
+fun isOnEdgeCubie(tile: Tile): Boolean {
+    return when(tile.index) {
+        1, 3, 5, 7 -> true
+        else -> false
+    }
+}
+/** Returns whether this tile is on a corner cubie */
+fun isOnCornerCubie(tile: Tile): Boolean {
+    return when(tile.index) {
+        0, 2, 6, 8 -> true
+        else -> false
+    }
+}
+/** returns whether the tiles are on the same cubie */
+internal fun isOnSameCubie(tile1: Tile, tile2: Tile): Boolean {
+    return when(tile1.face) {
+        Face.FRONT -> {
+            when(tile1.index) {
+                //Edges
+                1 -> (tile2.face == Face.UP && tile2.index == 7)
+                5 -> (tile2.face == Face.RIGHT && tile2.index == 3)
+                7 -> (tile2.face == Face.DOWN && tile2.index == 1)
+                3 -> (tile2.face == Face.LEFT && tile2.index == 5)
+                //Corners
+                0 -> (tile2.face == Face.UP && tile2.index == 6) ||
+                        (tile2.face == Face.LEFT && tile2.index == 2)
+                2 -> (tile2.face == Face.UP && tile2.index == 8) ||
+                        (tile2.face == Face.RIGHT && tile2.index == 0)
+                8 -> (tile2.face == Face.DOWN && tile2.index == 2) ||
+                        (tile2.face == Face.RIGHT && tile2.index == 6)
+                6 -> (tile2.face == Face.DOWN && tile2.index == 0) ||
+                        (tile2.face == Face.LEFT && tile2.index == 8)
+                else -> false
+            }
+        }
+        Face.BACK -> {
+            when(tile1.index) {
+                //Edges
+                1 -> (tile2.face == Face.UP && tile2.index == 1)
+                5 -> (tile2.face == Face.LEFT && tile2.index == 3)
+                7 -> (tile2.face == Face.DOWN && tile2.index == 7)
+                3 -> (tile2.face == Face.RIGHT && tile2.index == 5)
+                //Corners
+                0 -> (tile2.face == Face.RIGHT && tile2.index == 2) ||
+                        (tile2.face == Face.UP && tile2.index == 2)
+                2 -> (tile2.face == Face.LEFT && tile2.index == 0) ||
+                        (tile2.face == Face.UP && tile2.index == 0)
+                8 -> (tile2.face == Face.LEFT && tile2.index == 6) ||
+                        (tile2.face == Face.DOWN && tile2.index == 6)
+                6 -> (tile2.face == Face.RIGHT && tile2.index == 8) ||
+                        (tile2.face == Face.DOWN && tile2.index == 8)
+                else -> false
+            }
+        }
+        Face.LEFT -> {
+            when(tile1.index) {
+                //Edges
+                1 -> (tile2.face == Face.UP && tile2.index == 3)
+                5 -> (tile2.face == Face.FRONT && tile2.index == 3)
+                7 -> (tile2.face == Face.DOWN && tile2.index == 3)
+                3 -> (tile2.face == Face.BACK && tile2.index == 5)
+                //Corners
+                0 -> (tile2.face == Face.UP && tile2.index == 0) ||
+                        (tile2.face == Face.BACK && tile2.index == 2)
+                2 -> (tile2.face == Face.UP && tile2.index == 6) ||
+                        (tile2.face == Face.FRONT && tile2.index == 0)
+                8 -> (tile2.face == Face.FRONT && tile2.index == 6) ||
+                        (tile2.face == Face.DOWN && tile2.index == 0)
+                6 -> (tile2.face == Face.BACK && tile2.index == 8) ||
+                        (tile2.face == Face.DOWN && tile2.index == 6)
+                else -> false
+            }
+        }
+        Face.RIGHT -> {
+            when(tile1.index) {
+                //Edges
+                1 -> (tile2.face == Face.UP && tile2.index == 5)
+                5 -> (tile2.face == Face.BACK && tile2.index == 3)
+                7 -> (tile2.face == Face.DOWN && tile2.index == 5)
+                3 -> (tile2.face == Face.FRONT && tile2.index == 5)
+                //Corners
+                0 -> (tile2.face == Face.FRONT && tile2.index == 2) ||
+                        (tile2.face == Face.UP && tile2.index == 8)
+                2 -> (tile2.face == Face.BACK && tile2.index == 0) ||
+                        (tile2.face == Face.UP && tile2.index == 2)
+                8 -> (tile2.face == Face.RIGHT && tile2.index == 6) ||
+                        (tile2.face == Face.DOWN && tile2.index == 8)
+                6 -> (tile2.face == Face.FRONT && tile2.index == 8) ||
+                        (tile2.face == Face.DOWN && tile2.index == 2)
+                else -> false
+            }
+        }
+        Face.UP -> {
+            when(tile1.index) {
+                //Edges
+                1 -> (tile2.face == Face.BACK && tile2.index == 1)
+                5 -> (tile2.face == Face.RIGHT && tile2.index == 1)
+                7 -> (tile2.face == Face.FRONT && tile2.index == 1)
+                3 -> (tile2.face == Face.LEFT && tile2.index == 1)
+                //Corners
+
+                else -> false
+            }
+        }
+        Face.DOWN -> {
+            when(tile1.index) {
+                //Edges
+                1 -> (tile2.face == Face.FRONT && tile2.index == 7)
+                5 -> (tile2.face == Face.RIGHT && tile2.index == 7)
+                7 -> (tile2.face == Face.BACK && tile2.index == 7)
+                3 -> (tile2.face == Face.LEFT && tile2.index == 7)
+                //Corners
+                else -> false
+            }
+        }
+    }
+}
+
+/**
  * Takes a cube and a tile and returns the cubie associated with the tile
  * Effectively a factory function for Cubies. TODO: refactor Cubie stuff
  * @return the appropriate cubie, if one exists
@@ -81,12 +219,7 @@ internal fun getCornerCubie(tile1: Tile, tile2: Tile, tile3: Tile): CornerCubie 
     if(isOnSameCornerCubie(tile1, tile2, tile3)) return CornerCubie(tile1, tile2, tile3)
     throw failNotAdjacent()
 }
-/**
- * Returns whether the tiles are on the same edge cubie
- */
-fun isOnSameCornerCubie(tile1: Tile, tile2: Tile, tile3: Tile): Boolean {
-    return false //TODO
-}
+
 /**
  * Takes two tiles and returns the appropriate edge cubie
  * Precondition: tiles are already in sorted order
@@ -100,12 +233,7 @@ internal fun getEdgeCubie(tile1: Tile, tile2: Tile): EdgeCubie {
     if(isOnSameEdgeCubie(tile1, tile2)) return EdgeCubie(tile1, tile2)
     throw failNotAdjacent()
 }
-/**
- * Returns whether the tiles are on the same edge cubie
- */
-fun isOnSameEdgeCubie(tile1: Tile, tile2: Tile): Boolean {
-    return false //TODO
-}
+
 /**
  * Takes a center tile and returns the appropriate center cubie
  * @param tile the tile of the desired cubie
@@ -118,7 +246,14 @@ internal fun getCenterCubie(tile: Tile): CenterCubie {
     throw IllegalArgumentException("invalid args: provided tile is not at the center of its face")
 }
 
-/** returns an exception for non-adjacent tiles as parameters */
+//Functions for frequently thrown exceptions
 private fun failNotAdjacent(): IllegalArgumentException {
     return IllegalArgumentException("invalid args: provided tiles are not adjacent")
 }
+/*
+private fun failNotEdge(): IllegalArgumentException {
+    return IllegalArgumentException("invalid args: provided tiles are not on an edge cubie")
+}
+private fun failNotCorner(): IllegalArgumentException {
+    return IllegalArgumentException("invalid args: provided tiles are not on a corner cubie")
+}*/
