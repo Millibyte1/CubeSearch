@@ -90,7 +90,6 @@ fun isOnSameCornerCubie(tile1: Tile, tile2: Tile, tile3: Tile): Boolean {
 /**
  * Takes two tiles and returns the appropriate edge cubie
  * Precondition: tiles are already in sorted order
- * TODO: make this shit pretty
  * @param tile1 the first tile
  * @param tile2 the second tile
  * @return the appropriate edge cubie
