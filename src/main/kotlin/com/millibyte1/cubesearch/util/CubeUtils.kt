@@ -60,4 +60,3 @@ internal fun edgesAreSolvable(cube: Cube): Boolean {
     return false //TODO
 }
 
-
