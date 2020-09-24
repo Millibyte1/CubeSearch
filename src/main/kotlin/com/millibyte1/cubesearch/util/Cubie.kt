@@ -54,6 +54,10 @@ fun isOnSameEdgeCubie(tile1: Tile, tile2: Tile): Boolean {
 fun isOnSameCornerCubie(tile1: Tile, tile2: Tile, tile3: Tile): Boolean {
     return isOnCornerCubie(tile1) && isOnSameCubie(tile1, tile2) && isOnSameCubie(tile1, tile3)
 }
+/** Returns whether this tile is on a center cubie */
+fun isOnCenterCubie(tile: Tile): Boolean {
+    return (tile.index == 4)
+}
 /** Returns whether this tile is on an edge cubie */
 fun isOnEdgeCubie(tile: Tile): Boolean {
     return when(tile.index) {
@@ -191,6 +195,14 @@ internal fun isOnSameCubie(tile1: Tile, tile2: Tile): Boolean {
     }
 }
 
+@Throws(IllegalArgumentException::class)
+fun getOtherTileOnEdgeCubie(cube: Cube, tile: Tile): Tile {
+
+}
+@Throws(IllegalArgumentException::class)
+fun getOtherTilesOnCornerCubie(cube: Cube, tile: Tile): Pair<Tile, Tile> {
+
+}
 /**
  * Takes a cube and a tile and returns the cubie associated with the tile
  * Effectively a factory function for Cubies. TODO: refactor Cubie stuff
@@ -200,7 +212,13 @@ internal fun isOnSameCubie(tile1: Tile, tile2: Tile): Boolean {
  */
 @Throws(IllegalArgumentException::class)
 fun getCubie(cube: Cube, tile: Tile): Cubie {
-
+    if(isOnCenterCubie(tile) && tile.color == tile.face.ordinal) return getCubie(tile)
+    if(isOnEdgeCubie(tile)) return getCubie(tile, getOtherTileOnEdgeCubie(cube, tile))
+    if(isOnCornerCubie(tile)) {
+        val tiles = getOtherTilesOnCornerCubie(cube, tile)
+        return getCubie(tile, tiles.first, tiles.second)
+    }
+    throw failNotAdjacent()
 }
 
 /**
