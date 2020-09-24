@@ -23,10 +23,23 @@ data class Tile(val face: Face, val index: Int, val color: Int) : Comparable<Til
             else -> 0
         }
     }
+    fun getPosition(): TilePosition {
+        return TilePosition(face, index)
+    }
+}
+data class TilePosition(val face: Face, val index: Int) : Comparable<TilePosition> {
+    /** A comparison based on the natural ordering of Twist.Face */
+    override fun compareTo(other: TilePosition): Int {
+        return when {
+            face < other.face -> -1
+            face > other.face -> 1
+            else -> 0
+        }
+    }
 }
 
 /**
- * A simple algebraic data type to represent the variant cubies (edge, corner, and center cubies)
+ * A simple algebraic sum type to represent the variant cubies (edge, corner, and center cubies)
  * Important for CubeUtils functions (validating a cube, heuristic for search)
  */
 sealed class Cubie {
@@ -74,122 +87,136 @@ fun isOnCornerCubie(tile: Tile): Boolean {
 }
 /**
  * Determines whether the tiles are on the same cubie
- * TODO: clean up this monster of a function
  */
 internal fun isOnSameCubie(tile1: Tile, tile2: Tile): Boolean {
-    return when(tile1.face) {
+    return when(tile1.index) {
+        1, 3, 5, 7 -> (tile2.getPosition() == getOtherTilePositionOnEdgeCubie(tile1.getPosition()))
+        0, 2, 6, 8 -> (tile2.getPosition() == getOtherTilePositionsOnCornerCubie(tile1.getPosition()).first) ||
+                      (tile2.getPosition() == getOtherTilePositionsOnCornerCubie(tile1.getPosition()).second)
+        else -> false
+    }
+}
+
+internal fun tileExists(cube: Cube, tile: Tile): Boolean {
+    return (cube.data[tile.face.ordinal][tile.index] == tile.color)
+}
+/** Gets the tile position of the other tile on this edge cubie */
+@Throws(IllegalArgumentException::class)
+fun getOtherTilePositionOnEdgeCubie(tile: TilePosition): TilePosition {
+    return when(tile.face) {
         Face.FRONT -> {
-            when(tile1.index) {
-                //Edges
-                1 -> (tile2.face == Face.UP && tile2.index == 7)
-                5 -> (tile2.face == Face.RIGHT && tile2.index == 3)
-                7 -> (tile2.face == Face.DOWN && tile2.index == 1)
-                3 -> (tile2.face == Face.LEFT && tile2.index == 5)
-                //Corners
-                0 -> (tile2.face == Face.UP && tile2.index == 6) ||
-                        (tile2.face == Face.LEFT && tile2.index == 2)
-                2 -> (tile2.face == Face.UP && tile2.index == 8) ||
-                        (tile2.face == Face.RIGHT && tile2.index == 0)
-                8 -> (tile2.face == Face.DOWN && tile2.index == 2) ||
-                        (tile2.face == Face.RIGHT && tile2.index == 6)
-                6 -> (tile2.face == Face.DOWN && tile2.index == 0) ||
-                        (tile2.face == Face.LEFT && tile2.index == 8)
-                else -> false
+            when(tile.index) {
+                1 -> TilePosition(Face.UP, 7)
+                5 -> TilePosition(Face.RIGHT, 3)
+                7 -> TilePosition(Face.DOWN, 1)
+                3 -> TilePosition(Face.LEFT, 5)
+                else -> throw failNotEdge()
             }
         }
         Face.BACK -> {
-            when(tile1.index) {
-                //Edges
-                1 -> (tile2.face == Face.UP && tile2.index == 1)
-                5 -> (tile2.face == Face.LEFT && tile2.index == 3)
-                7 -> (tile2.face == Face.DOWN && tile2.index == 7)
-                3 -> (tile2.face == Face.RIGHT && tile2.index == 5)
-                //Corners
-                0 -> (tile2.face == Face.RIGHT && tile2.index == 2) ||
-                        (tile2.face == Face.UP && tile2.index == 2)
-                2 -> (tile2.face == Face.LEFT && tile2.index == 0) ||
-                        (tile2.face == Face.UP && tile2.index == 0)
-                8 -> (tile2.face == Face.LEFT && tile2.index == 6) ||
-                        (tile2.face == Face.DOWN && tile2.index == 6)
-                6 -> (tile2.face == Face.RIGHT && tile2.index == 8) ||
-                        (tile2.face == Face.DOWN && tile2.index == 8)
-                else -> false
+            when(tile.index) {
+                1 -> TilePosition(Face.UP, 1)
+                5 -> TilePosition(Face.LEFT, 3)
+                7 -> TilePosition(Face.DOWN, 7)
+                3 -> TilePosition(Face.RIGHT, 5)
+                else -> throw failNotEdge()
             }
         }
         Face.LEFT -> {
-            when(tile1.index) {
-                //Edges
-                1 -> (tile2.face == Face.UP && tile2.index == 3)
-                5 -> (tile2.face == Face.FRONT && tile2.index == 3)
-                7 -> (tile2.face == Face.DOWN && tile2.index == 3)
-                3 -> (tile2.face == Face.BACK && tile2.index == 5)
-                //Corners
-                0 -> (tile2.face == Face.UP && tile2.index == 0) ||
-                        (tile2.face == Face.BACK && tile2.index == 2)
-                2 -> (tile2.face == Face.UP && tile2.index == 6) ||
-                        (tile2.face == Face.FRONT && tile2.index == 0)
-                8 -> (tile2.face == Face.FRONT && tile2.index == 6) ||
-                        (tile2.face == Face.DOWN && tile2.index == 0)
-                6 -> (tile2.face == Face.BACK && tile2.index == 8) ||
-                        (tile2.face == Face.DOWN && tile2.index == 6)
-                else -> false
+            when(tile.index) {
+                1 -> TilePosition(Face.UP, 3)
+                5 -> TilePosition(Face.FRONT, 3)
+                7 -> TilePosition(Face.DOWN, 3)
+                3 -> TilePosition(Face.BACK, 5)
+                else -> throw failNotEdge()
             }
         }
         Face.RIGHT -> {
-            when(tile1.index) {
-                //Edges
-                1 -> (tile2.face == Face.UP && tile2.index == 5)
-                5 -> (tile2.face == Face.BACK && tile2.index == 3)
-                7 -> (tile2.face == Face.DOWN && tile2.index == 5)
-                3 -> (tile2.face == Face.FRONT && tile2.index == 5)
-                //Corners
-                0 -> (tile2.face == Face.FRONT && tile2.index == 2) ||
-                        (tile2.face == Face.UP && tile2.index == 8)
-                2 -> (tile2.face == Face.BACK && tile2.index == 0) ||
-                        (tile2.face == Face.UP && tile2.index == 2)
-                8 -> (tile2.face == Face.RIGHT && tile2.index == 6) ||
-                        (tile2.face == Face.DOWN && tile2.index == 8)
-                6 -> (tile2.face == Face.FRONT && tile2.index == 8) ||
-                        (tile2.face == Face.DOWN && tile2.index == 2)
-                else -> false
+            when(tile.index) {
+                1 -> TilePosition(Face.UP, 5)
+                5 -> TilePosition(Face.BACK, 3)
+                7 -> TilePosition(Face.DOWN, 5)
+                3 -> TilePosition(Face.FRONT, 5)
+                else -> throw failNotEdge()
             }
         }
         Face.UP -> {
-            when(tile1.index) {
-                //Edges
-                1 -> (tile2.face == Face.BACK && tile2.index == 1)
-                5 -> (tile2.face == Face.RIGHT && tile2.index == 1)
-                7 -> (tile2.face == Face.FRONT && tile2.index == 1)
-                3 -> (tile2.face == Face.LEFT && tile2.index == 1)
-                //Corners
-                0 -> (tile2.face == Face.LEFT && tile2.index == 0) ||
-                        (tile2.face == Face.BACK && tile2.index == 2)
-                2 -> (tile2.face == Face.RIGHT && tile2.index == 2) ||
-                        (tile2.face == Face.BACK && tile2.index == 0)
-                8 -> (tile2.face == Face.FRONT && tile2.index == 2) ||
-                        (tile2.face == Face.RIGHT && tile2.index == 0)
-                6 -> (tile2.face == Face.FRONT && tile2.index == 0) ||
-                        (tile2.face == Face.LEFT && tile2.index == 2)
-                else -> false
+            when(tile.index) {
+                1 -> TilePosition(Face.BACK, 1)
+                5 -> TilePosition(Face.RIGHT, 1)
+                7 -> TilePosition(Face.FRONT, 1)
+                3 -> TilePosition(Face.LEFT, 1)
+                else -> throw failNotEdge()
             }
         }
         Face.DOWN -> {
-            when(tile1.index) {
-                //Edges
-                1 -> (tile2.face == Face.FRONT && tile2.index == 7)
-                5 -> (tile2.face == Face.RIGHT && tile2.index == 7)
-                7 -> (tile2.face == Face.BACK && tile2.index == 7)
-                3 -> (tile2.face == Face.LEFT && tile2.index == 7)
-                //Corners
-                0 -> (tile2.face == Face.FRONT && tile2.index == 6) ||
-                        (tile2.face == Face.LEFT && tile2.index == 8)
-                2 -> (tile2.face == Face.FRONT && tile2.index == 8) ||
-                        (tile2.face == Face.RIGHT && tile2.index == 6)
-                8 -> (tile2.face == Face.RIGHT && tile2.index == 8) ||
-                        (tile2.face == Face.BACK && tile2.index == 6)
-                6 -> (tile2.face == Face.LEFT && tile2.index == 6) ||
-                        (tile2.face == Face.BACK && tile2.index == 8)
-                else -> false
+            when(tile.index) {
+                1 -> TilePosition(Face.FRONT, 7)
+                5 -> TilePosition(Face.RIGHT, 7)
+                7 -> TilePosition(Face.BACK, 7)
+                3 -> TilePosition(Face.LEFT, 7)
+                else -> throw failNotEdge()
+            }
+        }
+    }
+}
+/** Gets the tile positions of the other tiles on this corner cubie */
+@Throws(IllegalArgumentException::class)
+fun getOtherTilePositionsOnCornerCubie(tile: TilePosition): Pair<TilePosition, TilePosition> {
+    //TODO make sure the tile positions are in the appropriate order
+    return when(tile.face) {
+        Face.FRONT -> {
+            when(tile.index) {
+                0 -> Pair(TilePosition(Face.LEFT, 2), TilePosition(Face.UP, 6))
+                2 -> Pair(TilePosition(Face.RIGHT, 0), TilePosition(Face.UP, 8))
+                8 -> Pair(TilePosition(Face.RIGHT, 6), TilePosition(Face.DOWN, 2))
+                6 -> Pair(TilePosition(Face.LEFT, 8), TilePosition(Face.DOWN, 0))
+                else -> throw failNotCorner()
+            }
+        }
+        Face.BACK -> {
+            when(tile.index) {
+                0 -> Pair(TilePosition(Face.RIGHT, 2), TilePosition(Face.UP, 2))
+                2 -> Pair(TilePosition(Face.LEFT, 0), TilePosition(Face.UP, 0))
+                8 -> Pair(TilePosition(Face.LEFT, 6), TilePosition(Face.DOWN, 6))
+                6 -> Pair(TilePosition(Face.RIGHT, 8), TilePosition(Face.DOWN, 8))
+                else -> throw failNotCorner()
+            }
+        }
+        Face.LEFT -> {
+            when(tile.index) {
+                0 -> Pair(TilePosition(Face.BACK, 2), TilePosition(Face.UP, 0))
+                2 -> Pair(TilePosition(Face.FRONT, 0), TilePosition(Face.UP, 6))
+                8 -> Pair(TilePosition(Face.FRONT, 6), TilePosition(Face.DOWN, 0))
+                6 -> Pair(TilePosition(Face.BACK, 8), TilePosition(Face.DOWN, 6))
+                else -> throw failNotCorner()
+            }
+        }
+        Face.RIGHT -> {
+            when(tile.index) {
+                0 -> Pair(TilePosition(Face.FRONT, 2), TilePosition(Face.UP, 8))
+                2 -> Pair(TilePosition(Face.BACK, 0), TilePosition(Face.UP, 2))
+                8 -> Pair(TilePosition(Face.RIGHT, 6), TilePosition(Face.DOWN, 8))
+                6 -> Pair(TilePosition(Face.FRONT, 8), TilePosition(Face.DOWN, 2))
+                else -> throw failNotCorner()
+            }
+        }
+        Face.UP -> {
+            when(tile.index) {
+                0 -> Pair(TilePosition(Face.BACK, 2), TilePosition(Face.LEFT, 0))
+                2 -> Pair(TilePosition(Face.BACK, 0), TilePosition(Face.RIGHT, 2))
+                8 -> Pair(TilePosition(Face.FRONT, 2), TilePosition(Face.RIGHT, 0))
+                6 -> Pair(TilePosition(Face.FRONT, 0), TilePosition(Face.LEFT, 2))
+                else -> throw failNotCorner()
+            }
+        }
+        Face.DOWN -> {
+            when(tile.index) {
+                0 -> Pair(TilePosition(Face.FRONT, 6), TilePosition(Face.LEFT, 8))
+                2 -> Pair(TilePosition(Face.FRONT, 8), TilePosition(Face.RIGHT, 6))
+                8 -> Pair(TilePosition(Face.BACK, 6), TilePosition(Face.RIGHT, 8))
+                6 -> Pair(TilePosition(Face.BACK, 8), TilePosition(Face.LEFT, 6))
+                else -> throw failNotCorner()
             }
         }
     }
@@ -197,11 +224,16 @@ internal fun isOnSameCubie(tile1: Tile, tile2: Tile): Boolean {
 
 @Throws(IllegalArgumentException::class)
 fun getOtherTileOnEdgeCubie(cube: Cube, tile: Tile): Tile {
-
+    if(!tileExists(cube, tile)) throw IllegalArgumentException("invalid args: tile does not exist on provided cube")
+    val pos = getOtherTilePositionOnEdgeCubie(tile.getPosition())
+    return Tile(pos.face, pos.index, cube.data[pos.face.ordinal][pos.index])
 }
 @Throws(IllegalArgumentException::class)
 fun getOtherTilesOnCornerCubie(cube: Cube, tile: Tile): Pair<Tile, Tile> {
-
+    if(!tileExists(cube, tile)) throw IllegalArgumentException("invalid args: tile does not exist on provided cube")
+    val pos = getOtherTilePositionsOnCornerCubie(tile.getPosition())
+    return Pair(Tile(pos.first.face, pos.first.index, cube.data[pos.first.face.ordinal][pos.first.index]),
+                Tile(pos.second.face, pos.second.index, cube.data[pos.second.face.ordinal][pos.second.index]))
 }
 /**
  * Takes a cube and a tile and returns the cubie associated with the tile
@@ -286,10 +318,10 @@ internal fun getCenterCubie(tile: Tile): CenterCubie {
 private fun failNotAdjacent(): IllegalArgumentException {
     return IllegalArgumentException("invalid args: provided tiles are not adjacent")
 }
-/*
+
 private fun failNotEdge(): IllegalArgumentException {
-    return IllegalArgumentException("invalid args: provided tiles are not on an edge cubie")
+    return IllegalArgumentException("invalid args: provided tile is not on an edge cubie")
 }
 private fun failNotCorner(): IllegalArgumentException {
-    return IllegalArgumentException("invalid args: provided tiles are not on a corner cubie")
-}*/
+    return IllegalArgumentException("invalid args: provided tile is not on a corner cubie")
+}
