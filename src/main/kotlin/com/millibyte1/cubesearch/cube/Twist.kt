@@ -20,16 +20,35 @@ enum class Twist {
 
     companion object {
         /**
+         * Returns the face associated with this twist
          * @param twist the twist in question
          * @return the face that the given twist is acting on
          */
         fun getFace(twist: Twist): Face {
-            return if(twist == FRONT_90 || twist == FRONT_180 || twist == FRONT_270) Face.FRONT
-              else if(twist == BACK_90 || twist == BACK_180 || twist == BACK_270) Face.BACK
-              else if(twist == LEFT_90 || twist == LEFT_180 || twist == LEFT_270) Face.LEFT
-              else if(twist == RIGHT_90 || twist == RIGHT_180 || twist == RIGHT_270) Face.RIGHT
-              else if(twist == UP_90 || twist == UP_180 || twist == UP_270) Face.UP
-              else Face.DOWN
+            return when {
+                (twist == FRONT_90 || twist == FRONT_180 || twist == FRONT_270) -> Face.FRONT
+                (twist == BACK_90 || twist == BACK_180 || twist == BACK_270) -> Face.BACK
+                (twist == LEFT_90 || twist == LEFT_180 || twist == LEFT_270) -> Face.LEFT
+                (twist == RIGHT_90 || twist == RIGHT_180 || twist == RIGHT_270) -> Face.RIGHT
+                (twist == UP_90 || twist == UP_180 || twist == UP_270) -> Face.UP
+                else -> Face.DOWN
+            }
+        }
+
+        /**
+         * Gets the face opposite of this one
+         * @param face the face in question
+         * @return the face opposite of [face]
+         */
+        fun getOppositeFace(face: Face): Face {
+            return when(face) {
+                Face.FRONT -> Face.BACK
+                Face.BACK -> Face.FRONT
+                Face.LEFT -> Face.RIGHT
+                Face.RIGHT -> Face.LEFT
+                Face.UP -> Face.DOWN
+                Face.DOWN -> Face.UP
+            }
         }
     }
 }

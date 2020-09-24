@@ -2,14 +2,12 @@ package com.millibyte1.cubesearch.cube
 
 import java.io.Serializable
 
-import com.millibyte1.cubesearch.cube.Twist
-
 /**
  * Immutable class representing the configuration of a 3x3 Rubik's cube
  *
  * @property data a minimal representation of the state of the cube
  *
- * @constructor constructs cube from a copy of [data]
+ * @constructor constructs cube from a copy of the provided data
  * @param data the 6x9 array representing the desired cube. Format: (front, back, left, right, up, down)
  *
  * Flattened cube:
@@ -24,20 +22,8 @@ import com.millibyte1.cubesearch.cube.Twist
  *         3 D 5
  *         6 7 8
  */
-//TODO(factories) add factory functions and make constructor private so that testing lengths in code is unnecessary
-class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
-
-    val data: Array<IntArray>
-
-    init {
-        this.data = data.copy()
-    }
-
-    /**
-     * copy constructor
-     * @param cube the cube to copy
-     */
-    constructor(cube: Cube) : this(cube.data) { }
+//TODO: make constructors private and force the use of factories
+class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data), Serializable {
 
     /**
      * takes a twist and returns the cube that results from it
@@ -46,7 +32,7 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
      * @param twist the twist to be performed
      * @return the cube that results from applying this twist
      */
-    override fun twist(twist: Twist): Twistable {
+    override fun twist(twist: Twist): Cube {
         return when(twist) {
             Twist.FRONT_90 -> twistFront90()
             Twist.FRONT_180 -> twistFront180()
@@ -68,7 +54,7 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
             Twist.DOWN_270 -> twistDown270()
         }
     }
-    private fun twistFront90() : Twistable {
+    private fun twistFront90() : Cube {
         val copy = data.copy()
         //left face update
         copy[2][8] = data[5][2]
@@ -89,7 +75,7 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
         //wrap and return
         return Cube(copy)
     }
-    private fun twistFront180() : Twistable {
+    private fun twistFront180() : Cube {
         val copy = data.copy()
         //left face update
         copy[2][8] = data[3][0]
@@ -110,7 +96,7 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
         //wrap and return
         return Cube(copy)
     }
-    private fun twistFront270() : Twistable {
+    private fun twistFront270() : Cube {
         val copy = data.copy()
         //left face update
         copy[2][8] = data[4][6]
@@ -131,7 +117,7 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
         //wrap and return
         return Cube(copy)
     }
-    private fun twistBack90() : Twistable {
+    private fun twistBack90() : Cube {
         val copy = data.copy()
         //right face update
         copy[3][2] = data[5][8]
@@ -152,7 +138,7 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
         //wrap and return
         return Cube(copy)
     }
-    private fun twistBack180() : Twistable {
+    private fun twistBack180() : Cube {
         val copy = data.copy()
         //right face update
         copy[3][2] = data[2][6]
@@ -173,7 +159,7 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
         //wrap and return
         return Cube(copy)
     }
-    private fun twistBack270() : Twistable {
+    private fun twistBack270() : Cube {
         val copy = data.copy()
         //right face update
         copy[3][2] = data[4][0]
@@ -194,7 +180,7 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
         //wrap and return
         return Cube(copy)
     }
-    private fun twistLeft90() : Twistable {
+    private fun twistLeft90() : Cube {
         val copy = data.copy()
         //back face update
         copy[1][8] = data[5][0]
@@ -214,7 +200,7 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
         copy[5][6] = data[0][6]
         return Cube(copy)
     }
-    private fun twistLeft180() : Twistable {
+    private fun twistLeft180() : Cube {
         val copy = data.copy()
         //back face update
         copy[1][8] = data[0][0]
@@ -235,7 +221,7 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
         //wrap and return
         return Cube(copy)
     }
-    private fun twistLeft270() : Twistable {
+    private fun twistLeft270() : Cube {
         val copy = data.copy()
         //back face update
         copy[1][8] = data[4][0]
@@ -255,7 +241,7 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
         copy[5][6] = data[1][2]
         return Cube(copy)
     }
-    private fun twistRight90() : Twistable {
+    private fun twistRight90() : Cube {
         val copy = data.copy()
         //front face update
         copy[0][8] = data[5][8]
@@ -276,7 +262,7 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
         //wrap and return
         return Cube(copy)
     }
-    private fun twistRight180() : Twistable {
+    private fun twistRight180() : Cube {
         val copy = data.copy()
         //front face update
         copy[0][8] = data[1][0]
@@ -297,7 +283,7 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
         //wrap and return
         return Cube(copy)
     }
-    private fun twistRight270() : Twistable {
+    private fun twistRight270() : Cube {
         val copy = data.copy()
         //front face update
         copy[0][8] = data[4][8]
@@ -318,7 +304,7 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
         //wrap and return
         return Cube(copy)
     }
-    private fun twistUp90() : Twistable {
+    private fun twistUp90() : Cube {
         val copy = data.copy()
         //left face update
         copy[2][2] = data[0][2]
@@ -339,7 +325,7 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
         //wrap and return
         return Cube(copy)
     }
-    private fun twistUp180() : Twistable {
+    private fun twistUp180() : Cube {
         val copy = data.copy()
         //left face update
         copy[2][2] = data[3][2]
@@ -360,7 +346,7 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
         //wrap and return
         return Cube(copy)
     }
-    private fun twistUp270() : Twistable {
+    private fun twistUp270() : Cube {
         val copy = data.copy()
         //left face update
         copy[2][2] = data[1][2]
@@ -381,7 +367,7 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
         //wrap and return
         return Cube(copy)
     }
-    private fun twistDown90() : Twistable {
+    private fun twistDown90() : Cube {
         val copy = data.copy()
         //left face update
         copy[2][6] = data[1][6]
@@ -402,7 +388,7 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
         //wrap and return
         return Cube(copy)
     }
-    private fun twistDown180() : Twistable {
+    private fun twistDown180() : Cube {
         val copy = data.copy()
         //left face update
         copy[2][6] = data[3][6]
@@ -423,7 +409,7 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
         //wrap and return
         return Cube(copy)
     }
-    private fun twistDown270() : Twistable {
+    private fun twistDown270() : Cube {
         val copy = data.copy()
         //left face update
         copy[2][6] = data[0][6]
@@ -451,7 +437,6 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
     override fun equals(other: Any?): Boolean {
         if(this === other) return true
         if(other !is Cube) return false
-        other as Cube
         if(data.contentDeepEquals(other.data)) return true
         return false
     }
@@ -473,8 +458,9 @@ class Cube constructor(data: Array<IntArray>) : Twistable, Serializable {
         }
         return retval
     }
+
 }
 
 //extension function to deep copy array
-fun Array<IntArray>.copy() = Array(size) { i -> get(i).clone() }
+//fun Array<IntArray>.copy() = Array(size) { i -> get(i).clone() }
 
