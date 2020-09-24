@@ -68,7 +68,10 @@ fun isOnCornerCubie(tile: Tile): Boolean {
         else -> false
     }
 }
-/** returns whether the tiles are on the same cubie */
+/**
+ * Determines whether the tiles are on the same cubie
+ * TODO: clean up this monster of a function
+ */
 internal fun isOnSameCubie(tile1: Tile, tile2: Tile): Boolean {
     return when(tile1.face) {
         Face.FRONT -> {
@@ -155,7 +158,14 @@ internal fun isOnSameCubie(tile1: Tile, tile2: Tile): Boolean {
                 7 -> (tile2.face == Face.FRONT && tile2.index == 1)
                 3 -> (tile2.face == Face.LEFT && tile2.index == 1)
                 //Corners
-
+                0 -> (tile2.face == Face.LEFT && tile2.index == 0) ||
+                        (tile2.face == Face.BACK && tile2.index == 2)
+                2 -> (tile2.face == Face.RIGHT && tile2.index == 2) ||
+                        (tile2.face == Face.BACK && tile2.index == 0)
+                8 -> (tile2.face == Face.FRONT && tile2.index == 2) ||
+                        (tile2.face == Face.RIGHT && tile2.index == 0)
+                6 -> (tile2.face == Face.FRONT && tile2.index == 0) ||
+                        (tile2.face == Face.LEFT && tile2.index == 2)
                 else -> false
             }
         }
@@ -167,6 +177,14 @@ internal fun isOnSameCubie(tile1: Tile, tile2: Tile): Boolean {
                 7 -> (tile2.face == Face.BACK && tile2.index == 7)
                 3 -> (tile2.face == Face.LEFT && tile2.index == 7)
                 //Corners
+                0 -> (tile2.face == Face.FRONT && tile2.index == 6) ||
+                        (tile2.face == Face.LEFT && tile2.index == 8)
+                2 -> (tile2.face == Face.FRONT && tile2.index == 8) ||
+                        (tile2.face == Face.RIGHT && tile2.index == 6)
+                8 -> (tile2.face == Face.RIGHT && tile2.index == 8) ||
+                        (tile2.face == Face.BACK && tile2.index == 6)
+                6 -> (tile2.face == Face.LEFT && tile2.index == 6) ||
+                        (tile2.face == Face.BACK && tile2.index == 8)
                 else -> false
             }
         }
