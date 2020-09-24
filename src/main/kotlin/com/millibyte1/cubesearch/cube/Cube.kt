@@ -72,6 +72,14 @@ class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data
         copy[5][2] = data[3][0]
         copy[5][1] = data[3][3]
         copy[5][0] = data[3][6]
+        //front face update
+        copy[0][0] = data[0][6]
+        copy[0][1] = data[0][3]
+        copy[0][2] = data[0][0]
+        copy[0][5] = data[0][1]
+        copy[0][8] = data[0][2]
+        copy[0][7] = data[0][5]
+        copy[0][6] = data[0][8]
         //wrap and return
         return Cube(copy)
     }
@@ -93,6 +101,14 @@ class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data
         copy[5][2] = data[4][6]
         copy[5][1] = data[4][7]
         copy[5][0] = data[4][8]
+        //front face update
+        copy[0][0] = data[0][8]
+        copy[0][1] = data[0][7]
+        copy[0][2] = data[0][6]
+        copy[0][5] = data[0][3]
+        copy[0][8] = data[0][0]
+        copy[0][7] = data[0][1]
+        copy[0][6] = data[0][2]
         //wrap and return
         return Cube(copy)
     }
@@ -114,6 +130,14 @@ class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data
         copy[5][2] = data[2][8]
         copy[5][1] = data[2][5]
         copy[5][0] = data[2][2]
+        //front face update
+        copy[0][0] = data[0][2]
+        copy[0][1] = data[0][5]
+        copy[0][2] = data[0][8]
+        copy[0][5] = data[0][7]
+        copy[0][8] = data[0][6]
+        copy[0][7] = data[0][3]
+        copy[0][6] = data[0][0]
         //wrap and return
         return Cube(copy)
     }
@@ -135,6 +159,14 @@ class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data
         copy[5][8] = data[2][6]
         copy[5][7] = data[2][3]
         copy[5][6] = data[2][0]
+        //back face update
+        copy[1][0] = data[1][6]
+        copy[1][1] = data[1][3]
+        copy[1][2] = data[1][0]
+        copy[1][5] = data[1][1]
+        copy[1][8] = data[1][2]
+        copy[1][7] = data[1][5]
+        copy[1][6] = data[1][8]
         //wrap and return
         return Cube(copy)
     }
@@ -156,6 +188,14 @@ class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data
         copy[5][8] = data[4][0]
         copy[5][7] = data[4][1]
         copy[5][6] = data[4][2]
+        //back face update
+        copy[1][0] = data[1][8]
+        copy[1][1] = data[1][7]
+        copy[1][2] = data[1][6]
+        copy[1][5] = data[1][3]
+        copy[1][8] = data[1][0]
+        copy[1][7] = data[1][1]
+        copy[1][6] = data[1][2]
         //wrap and return
         return Cube(copy)
     }
@@ -177,6 +217,14 @@ class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data
         copy[5][8] = data[3][2]
         copy[5][7] = data[3][5]
         copy[5][6] = data[3][8]
+        //back face update
+        copy[1][0] = data[1][2]
+        copy[1][1] = data[1][5]
+        copy[1][2] = data[1][8]
+        copy[1][5] = data[1][7]
+        copy[1][8] = data[1][6]
+        copy[1][7] = data[1][3]
+        copy[1][6] = data[1][0]
         //wrap and return
         return Cube(copy)
     }
@@ -198,6 +246,15 @@ class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data
         copy[5][0] = data[0][0]
         copy[5][3] = data[0][3]
         copy[5][6] = data[0][6]
+        //left face update
+        copy[2][0] = data[2][6]
+        copy[2][1] = data[2][3]
+        copy[2][2] = data[2][0]
+        copy[2][5] = data[2][1]
+        copy[2][8] = data[2][2]
+        copy[2][7] = data[2][5]
+        copy[2][6] = data[2][8]
+        //wrap and return
         return Cube(copy)
     }
     private fun twistLeft180() : Cube {
@@ -218,6 +275,14 @@ class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data
         copy[5][0] = data[4][0]
         copy[5][3] = data[4][3]
         copy[5][6] = data[4][6]
+        //left face update
+        copy[2][0] = data[2][8]
+        copy[2][1] = data[2][7]
+        copy[2][2] = data[2][6]
+        copy[2][5] = data[2][3]
+        copy[2][8] = data[2][0]
+        copy[2][7] = data[2][1]
+        copy[2][6] = data[2][2]
         //wrap and return
         return Cube(copy)
     }
@@ -239,6 +304,14 @@ class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data
         copy[5][0] = data[1][8]
         copy[5][3] = data[1][5]
         copy[5][6] = data[1][2]
+        //left face update
+        copy[2][0] = data[2][2]
+        copy[2][1] = data[2][5]
+        copy[2][2] = data[2][8]
+        copy[2][5] = data[2][7]
+        copy[2][8] = data[2][6]
+        copy[2][7] = data[2][3]
+        copy[2][6] = data[2][0]
         return Cube(copy)
     }
     private fun twistRight90() : Cube {
@@ -259,6 +332,14 @@ class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data
         copy[5][8] = data[1][0]
         copy[5][5] = data[1][3]
         copy[5][2] = data[1][6]
+        //right face update
+        copy[3][0] = data[3][6]
+        copy[3][1] = data[3][3]
+        copy[3][2] = data[3][0]
+        copy[3][5] = data[3][1]
+        copy[3][8] = data[3][2]
+        copy[3][7] = data[3][5]
+        copy[3][6] = data[3][8]
         //wrap and return
         return Cube(copy)
     }
@@ -280,6 +361,14 @@ class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data
         copy[5][8] = data[4][8]
         copy[5][5] = data[4][5]
         copy[5][2] = data[4][2]
+        //right face update
+        copy[3][0] = data[3][8]
+        copy[3][1] = data[3][7]
+        copy[3][2] = data[3][6]
+        copy[3][5] = data[3][3]
+        copy[3][8] = data[3][0]
+        copy[3][7] = data[3][1]
+        copy[3][6] = data[3][2]
         //wrap and return
         return Cube(copy)
     }
@@ -301,6 +390,14 @@ class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data
         copy[5][8] = data[0][8]
         copy[5][5] = data[0][5]
         copy[5][2] = data[0][2]
+        //right face update
+        copy[3][0] = data[3][2]
+        copy[3][1] = data[3][5]
+        copy[3][2] = data[3][8]
+        copy[3][5] = data[3][7]
+        copy[3][8] = data[3][6]
+        copy[3][7] = data[3][3]
+        copy[3][6] = data[3][0]
         //wrap and return
         return Cube(copy)
     }
@@ -322,6 +419,14 @@ class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data
         copy[0][2] = data[3][2]
         copy[0][1] = data[3][1]
         copy[0][0] = data[3][0]
+        //up face update
+        copy[4][0] = data[4][6]
+        copy[4][1] = data[4][3]
+        copy[4][2] = data[4][0]
+        copy[4][5] = data[4][1]
+        copy[4][8] = data[4][2]
+        copy[4][7] = data[4][5]
+        copy[4][6] = data[4][8]
         //wrap and return
         return Cube(copy)
     }
@@ -343,6 +448,14 @@ class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data
         copy[0][2] = data[1][2]
         copy[0][1] = data[1][1]
         copy[0][0] = data[1][0]
+        //up face update
+        copy[4][0] = data[4][8]
+        copy[4][1] = data[4][7]
+        copy[4][2] = data[4][6]
+        copy[4][5] = data[4][3]
+        copy[4][8] = data[4][0]
+        copy[4][7] = data[4][1]
+        copy[4][6] = data[4][2]
         //wrap and return
         return Cube(copy)
     }
@@ -364,6 +477,14 @@ class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data
         copy[0][2] = data[2][2]
         copy[0][1] = data[2][1]
         copy[0][0] = data[2][0]
+        //up face update
+        copy[4][0] = data[4][2]
+        copy[4][1] = data[4][5]
+        copy[4][2] = data[4][8]
+        copy[4][5] = data[4][7]
+        copy[4][8] = data[4][6]
+        copy[4][7] = data[4][3]
+        copy[4][6] = data[4][0]
         //wrap and return
         return Cube(copy)
     }
@@ -385,6 +506,14 @@ class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data
         copy[1][6] = data[3][6]
         copy[1][7] = data[3][7]
         copy[1][8] = data[3][8]
+        //down face update
+        copy[5][0] = data[5][6]
+        copy[5][1] = data[5][3]
+        copy[5][2] = data[5][0]
+        copy[5][5] = data[5][1]
+        copy[5][8] = data[5][2]
+        copy[5][7] = data[5][5]
+        copy[5][6] = data[5][8]
         //wrap and return
         return Cube(copy)
     }
@@ -406,6 +535,14 @@ class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data
         copy[1][6] = data[0][6]
         copy[1][7] = data[0][7]
         copy[1][8] = data[0][8]
+        //down face update
+        copy[5][0] = data[5][8]
+        copy[5][1] = data[5][7]
+        copy[5][2] = data[5][6]
+        copy[5][5] = data[5][3]
+        copy[5][8] = data[5][0]
+        copy[5][7] = data[5][1]
+        copy[5][6] = data[5][2]
         //wrap and return
         return Cube(copy)
     }
@@ -427,6 +564,14 @@ class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data
         copy[1][6] = data[2][6]
         copy[1][7] = data[2][7]
         copy[1][8] = data[2][8]
+        //down face update
+        copy[5][0] = data[5][2]
+        copy[5][1] = data[5][5]
+        copy[5][2] = data[5][8]
+        copy[5][5] = data[5][7]
+        copy[5][8] = data[5][6]
+        copy[5][7] = data[5][3]
+        copy[5][6] = data[5][0]
         //wrap and return
         return Cube(copy)
     }
