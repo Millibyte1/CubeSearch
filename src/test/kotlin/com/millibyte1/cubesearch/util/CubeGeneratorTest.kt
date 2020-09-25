@@ -21,6 +21,7 @@ class CubeGeneratorTest {
     private fun oneMoveGenerator() : CubeGenerator<Cube> {
         return CubeGenerator<Cube>(factory, 0, 0)
     }
+
     @Test
     fun sameSeed() {
         var generator1 = simpleGenerator()

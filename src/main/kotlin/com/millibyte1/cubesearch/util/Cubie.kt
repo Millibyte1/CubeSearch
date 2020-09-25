@@ -66,18 +66,18 @@ fun isOnSameEdgeCubie(tile1: Tile, tile2: Tile): Boolean {
 fun isOnSameCornerCubie(tile1: Tile, tile2: Tile, tile3: Tile): Boolean {
     return isOnCornerCubie(tile1) && isOnSameCubie(tile1, tile2) && isOnSameCubie(tile1, tile3)
 }
-/** Returns whether this tile is on a center cubie */
+/** Returns whether this tile's position is on a center cubie */
 fun isOnCenterCubie(tile: Tile): Boolean {
     return (tile.index == 4)
 }
-/** Returns whether this tile is on an edge cubie */
+/** Returns whether this tile's position is on an edge cubie */
 fun isOnEdgeCubie(tile: Tile): Boolean {
     return when(tile.index) {
         1, 3, 5, 7 -> true
         else -> false
     }
 }
-/** Returns whether this tile is on a corner cubie */
+/** Returns whether this tile's position is on a corner cubie */
 fun isOnCornerCubie(tile: Tile): Boolean {
     return when(tile.index) {
         0, 2, 6, 8 -> true
@@ -86,6 +86,9 @@ fun isOnCornerCubie(tile: Tile): Boolean {
 }
 /**
  * Determines whether the tiles are on the same cubie
+ * @param tile1 the first tile
+ * @param tile2 the second tile
+ * @return whether the tiles are positioned on the same cubie
  */
 internal fun isOnSameCubie(tile1: Tile, tile2: Tile): Boolean {
     return when(tile1.index) {
@@ -99,7 +102,12 @@ internal fun isOnSameCubie(tile1: Tile, tile2: Tile): Boolean {
 internal fun tileExists(cube: Cube, tile: Tile): Boolean {
     return (cube.data[tile.face.ordinal][tile.index] == tile.color)
 }
-/** Gets the tile position of the other tile on this edge cubie */
+/**
+ * Gets the tile position of the other tile on this edge cubie
+ * @param tile the tile position in question
+ * @return the position of the other tile on this edge
+ * @throws IllegalArgumentException if this tile position is not on an edge
+ */
 @Throws(IllegalArgumentException::class)
 fun getOtherTilePositionOnEdgeCubie(tile: TilePosition): TilePosition {
     return when(tile.face) {
@@ -159,7 +167,12 @@ fun getOtherTilePositionOnEdgeCubie(tile: TilePosition): TilePosition {
         }
     }
 }
-/** Gets the tile positions of the other tiles on this corner cubie */
+/**
+ * Gets the tile positions of the other tiles on this corner cubie
+ * @param tile the tile position in question
+ * @return the position of the other tiles on this corner
+ * @throws IllegalArgumentException if this tile position is not on a corner
+ */
 @Throws(IllegalArgumentException::class)
 fun getOtherTilePositionsOnCornerCubie(tile: TilePosition): Pair<TilePosition, TilePosition> {
     //TODO make sure the tile positions are in the appropriate order
@@ -221,12 +234,26 @@ fun getOtherTilePositionsOnCornerCubie(tile: TilePosition): Pair<TilePosition, T
     }
 }
 
+/**
+ * Takes a cube and an edge tile and returns the other tile on the edge
+ * @param cube the cube in question
+ * @param tile the tile in question
+ * @return the appropriate tile
+ * @throws IllegalArgumentException if the tile isn't a real edge tile on this cube
+ */
 @Throws(IllegalArgumentException::class)
 fun getOtherTileOnEdgeCubie(cube: Cube, tile: Tile): Tile {
     if(!tileExists(cube, tile)) throw IllegalArgumentException("invalid args: tile does not exist on provided cube")
     val pos = getOtherTilePositionOnEdgeCubie(tile.getPosition())
     return Tile(pos.face, pos.index, cube.data[pos.face.ordinal][pos.index])
 }
+/**
+ * Takes a cube and a corner tile and returns the other tiles on the corner
+ * @param cube the cube in question
+ * @param tile the tile in question
+ * @return a pair of the appropriate tiles
+ * @throws IllegalArgumentException if the tile isn't a real corner tile on this cube
+ */
 @Throws(IllegalArgumentException::class)
 fun getOtherTilesOnCornerCubie(cube: Cube, tile: Tile): Pair<Tile, Tile> {
     if(!tileExists(cube, tile)) throw IllegalArgumentException("invalid args: tile does not exist on provided cube")
@@ -236,8 +263,8 @@ fun getOtherTilesOnCornerCubie(cube: Cube, tile: Tile): Pair<Tile, Tile> {
 }
 /**
  * Takes a cube and a tile and returns the cubie associated with the tile
- * Effectively a factory function for Cubies. TODO: refactor Cubie stuff
- * @return the appropriate cubie, if one exists
+ * Effectively a factory function for Cubies.
+ * @param tile the tile in question
  * @return the appropriate cubie
  * @throws IllegalArgumentException if the given tile does not exist on this cube
  */

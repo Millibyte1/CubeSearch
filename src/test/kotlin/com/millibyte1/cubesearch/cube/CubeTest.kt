@@ -1,6 +1,8 @@
 package com.millibyte1.cubesearch.cube
 
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Tag
+
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -29,11 +31,13 @@ class CubeTest {
 
     //unit tests
     @Test
+    @Tag("CubeSimulationTest")
     fun constructors() {
         primaryConstructor()
         copyConstructor()
     }
     @Test
+    @Tag("CubeSimulationTest")
     fun primaryConstructor() {
         //primary constructor will work if the array copy extension function works
         val array1 = solvedData()
@@ -42,6 +46,7 @@ class CubeTest {
         assertFalse(array1.contentDeepEquals(array2))
     }
     @Test
+    @Tag("CubeSimulationTest")
     fun copyConstructor() {
         //asserts that the two cubes are equal but are different objects
         val start = solved()
@@ -51,6 +56,7 @@ class CubeTest {
     }
 
     @Test
+    @Tag("CubeSimulationTest")
     fun immutability() {
         //immutability is dependent on constructors behaving as intended
         constructors()
@@ -64,6 +70,7 @@ class CubeTest {
     }
 
     @Test
+    @Tag("CubeSimulationTest")
     fun twists() {
         frontTwists()
         backTwists()
@@ -73,6 +80,7 @@ class CubeTest {
         downTwists()
     }
     @Test
+    @Tag("CubeSimulationTest")
     fun frontTwists() {
         //sets up and tests initial turns
         val start = solved()
@@ -112,6 +120,7 @@ class CubeTest {
         assertTrue(clone3 == start)
     }
     @Test
+    @Tag("CubeSimulationTest")
     fun backTwists() {
         //sets up and tests initial turns
         val start = solved()
@@ -151,6 +160,7 @@ class CubeTest {
         assertTrue(clone3 == start)
     }
     @Test
+    @Tag("CubeSimulationTest")
     fun leftTwists() {
         //sets up and tests initial turns
         val start = solved()
@@ -190,6 +200,7 @@ class CubeTest {
         assertTrue(clone3 == start)
     }
     @Test
+    @Tag("CubeSimulationTest")
     fun rightTwists() {
         //sets up and tests initial turns
         val start = solved()
@@ -229,6 +240,7 @@ class CubeTest {
         assertTrue(clone3 == start)
     }
     @Test
+    @Tag("CubeSimulationTest")
     fun upTwists() {
         //sets up and tests initial turns
         val start = solved()
@@ -268,6 +280,7 @@ class CubeTest {
         assertTrue(clone3 == start)
     }
     @Test
+    @Tag("CubeSimulationTest")
     fun downTwists() {
         //sets up and tests initial turns
         val start = solved()
