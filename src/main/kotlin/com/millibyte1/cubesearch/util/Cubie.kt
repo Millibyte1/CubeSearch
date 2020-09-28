@@ -42,11 +42,90 @@ data class TilePosition(val face: Face, val index: Int) : Comparable<TilePositio
  * Important for CubeUtils functions (validating a cube, heuristic for search)
  */
 sealed class Cubie {
-    data class CenterCubie(val tile1: Tile) : Cubie()
-    data class EdgeCubie(val tile1: Tile, val tile2: Tile) : Cubie()
-    data class CornerCubie(val tile1: Tile, val tile2: Tile, val tile3: Tile) : Cubie()
+    data class CenterCubie(val tile1: Tile) : Cubie() {
+        override fun equals(other: Any?): Boolean {
+            if(this === other) return true
+            if(other !is CenterCubie) return false
+            return other.tile1 == this.tile1
+        }
+    }
+    data class EdgeCubie(val tile1: Tile, val tile2: Tile) : Cubie() {
+        override fun equals(other: Any?): Boolean {
+            if(this === other) return true
+            if(other !is EdgeCubie) return false
+            var sortedThis = arrayOf(tile1, tile2).sorted()
+            var sortedOther = arrayOf(other.tile1, other.tile2).sorted()
+            return sortedThis == sortedOther
+        }
+    }
+    data class CornerCubie(val tile1: Tile, val tile2: Tile, val tile3: Tile) : Cubie() {
+        override fun equals(other: Any?): Boolean {
+            if(this === other) return true
+            if(other !is CornerCubie) return false
+            var sortedThis = arrayOf(tile1, tile2, tile3).sorted()
+            var sortedOther = arrayOf(other.tile1, other.tile2, tile3).sorted()
+            return sortedThis == sortedOther
+        }
+    }
 }
 
+/**
+ * Determines whether the cubie has a tile on the given face
+ * @param cubie the cubie in question
+ * @param face the face in question
+ * @return whether the cubie has a tile on the given face
+ */
+fun isOnFace(cubie: Cubie, face: Face): Boolean {
+    return when(cubie) {
+        is CenterCubie -> (cubie.tile1.face == face)
+        is EdgeCubie   -> (cubie.tile1.face == face || cubie.tile2.face == face)
+        is CornerCubie -> (cubie.tile1.face == face || cubie.tile2.face == face || cubie.tile3.face == face)
+    }
+}
+
+/**
+ * Determines whether the cubie has a tile on each given face
+ * @param cubie the cubie in question
+ * @param faces the faces in question
+ * @return whether the cubie has a tile on each given face
+ */
+fun isOnFaces(cubie: Cubie, vararg faces: Face): Boolean {
+    return faces.all { face -> isOnFace(cubie, face) }
+}
+
+/**
+ * Gets the tile on this cubie that is on the given face
+ * @param cubie the cubie in question
+ * @param face the face in question
+ * @return the tile that is on the given face
+ * @throws IllegalArgumentException if the cubie is not on the given face
+ */
+@Throws(IllegalArgumentException::class)
+fun getTileOnFace(cubie: Cubie, face: Face): Tile {
+    return when(cubie) {
+        is CenterCubie -> {
+            when {
+                (cubie.tile1.face == face) -> cubie.tile1
+                else -> throw IllegalArgumentException("Cubie is not on face")
+            }
+        }
+        is EdgeCubie -> {
+            when {
+                (cubie.tile1.face == face) -> cubie.tile1
+                (cubie.tile2.face == face) -> cubie.tile2
+                else -> throw IllegalArgumentException("Cubie is not on face")
+            }
+        }
+        is CornerCubie -> {
+            when {
+                (cubie.tile1.face == face) -> cubie.tile1
+                (cubie.tile2.face == face) -> cubie.tile2
+                (cubie.tile3.face == face) -> cubie.tile3
+                else -> throw IllegalArgumentException("Cubie is not on face")
+            }
+        }
+    }
+}
 /**
  * Determines whether the tiles are on the same edge cubie
  * @param tile1 the first tile
