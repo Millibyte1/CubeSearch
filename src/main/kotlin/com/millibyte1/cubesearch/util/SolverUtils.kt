@@ -1,6 +1,7 @@
 package com.millibyte1.cubesearch.util
 
 import com.millibyte1.cubesearch.cube.Cube
+import com.millibyte1.cubesearch.cube.CubeFactory
 import com.millibyte1.cubesearch.cube.Twist
 import com.millibyte1.cubesearch.cube.Twist.Face
 
@@ -8,7 +9,8 @@ import com.millibyte1.cubesearch.cube.Twist.Face
  * Collection of utilities for analyzing standard Rubik's cubes
  */
 
-
+//TODO refactor this mess
+private var cubeFactory = CubeFactory()
 /**
  * A pre-generated map from cubies to the distance from their solved positions.
  */
@@ -252,7 +254,35 @@ private fun rotateCorner(tile1: Tile, tile2: Tile, tile3: Tile): CornerCubie {
 }
 
 private fun getCornerPermutationParity(cube: Cube): Boolean {
+    val solvedCornerPermutation = getSolvedCornerPermutation()
+    val currentCornerPermutation = getCurrentCornerPermutation(cube)
+    
     return false
+}
+/** Manually produces and indexes each of the corners */
+private fun getSolvedCornerPermutation(): Array<CornerCubie> {
+    val solved = cubeFactory.getSolvedCube()
+    val permutation = Array<CornerCubie>(8) { getCubie(solved, Tile(Face.UP, 0, 4)) as CornerCubie }
+    permutation[1] = getCubie(solved, Tile(Face.UP, 2, 4)) as CornerCubie
+    permutation[2] = getCubie(solved, Tile(Face.UP, 6, 4)) as CornerCubie
+    permutation[3] = getCubie(solved, Tile(Face.UP, 8, 4)) as CornerCubie
+    permutation[4] = getCubie(solved, Tile(Face.DOWN, 0, 4)) as CornerCubie
+    permutation[5] = getCubie(solved, Tile(Face.DOWN, 2, 4)) as CornerCubie
+    permutation[6] = getCubie(solved, Tile(Face.DOWN, 6, 4)) as CornerCubie
+    permutation[7] = getCubie(solved, Tile(Face.DOWN, 8, 4)) as CornerCubie
+    return permutation
+}
+/** Manually produces and indexes each of the corners */
+private fun getCurrentCornerPermutation(cube: Cube): Array<CornerCubie> {
+    val permutation = Array<CornerCubie>(8) { getCubie(cube, TilePosition(Face.UP, 0)) as CornerCubie }
+    permutation[1] = getCubie(cube, TilePosition(Face.UP, 2)) as CornerCubie
+    permutation[2] = getCubie(cube, TilePosition(Face.UP, 6)) as CornerCubie
+    permutation[3] = getCubie(cube, TilePosition(Face.UP, 8)) as CornerCubie
+    permutation[4] = getCubie(cube, TilePosition(Face.DOWN, 0)) as CornerCubie
+    permutation[5] = getCubie(cube, TilePosition(Face.DOWN, 2)) as CornerCubie
+    permutation[6] = getCubie(cube, TilePosition(Face.DOWN, 6)) as CornerCubie
+    permutation[7] = getCubie(cube, TilePosition(Face.DOWN, 8)) as CornerCubie
+    return permutation
 }
 private fun getEdgePermutationParity(cube: Cube): Boolean {
     return false
