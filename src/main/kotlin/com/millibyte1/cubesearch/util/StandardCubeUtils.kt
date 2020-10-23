@@ -10,7 +10,6 @@ typealias CenterCubie = Cubie.CenterCubie
 typealias EdgeCubie = Cubie.EdgeCubie
 typealias CornerCubie = Cubie.CornerCubie
 
-
 /**
  * A simple algebraic sum type to represent the variant cubies (edge, corner, and center cubies).
  * Important for validation and search algorithms.
@@ -118,6 +117,7 @@ sealed class Cubie {
     }
 }
 
+/** A simple data class representing the position of a tile on a cube */
 data class TilePosition(val face: Face, val index: Int) : Comparable<TilePosition> {
     /** A comparison based on the natural ordering of Twist.Face and then the index */
     override fun compareTo(other: TilePosition): Int {
@@ -130,6 +130,7 @@ data class TilePosition(val face: Face, val index: Int) : Comparable<TilePositio
         }
     }
 }
+/** A simple data class representing a single tile on a single cubie on a cube */
 data class Tile(val pos: TilePosition, val color: Int) : Comparable<Tile> {
     constructor(cube: Cube, pos: TilePosition) : this(pos, cube.data[pos.face.ordinal][pos.index])
     override fun compareTo(other: Tile): Int {
@@ -246,6 +247,24 @@ fun getCubieAt(cube: Cube, tile: TilePosition): Cubie {
 
 /* =============================================== HELPER FUNCTIONS ================================================= */
 
+/** Determines whether this cubie lies on all the provided faces */
+fun isOnFaces(cubie: Cubie, vararg faces: Face): Boolean {
+    return faces.all { face -> isOnFace(cubie, face) }
+}
+/** Determines whether this cubie lies on the provided face */
+fun isOnFace(cubie: Cubie, face: Face): Boolean {
+    return when(cubie) {
+        is CenterCubie ->
+            (cubie.tile1.pos.face == face)
+        is EdgeCubie   ->
+            (cubie.tile1.pos.face == face) ||
+            (cubie.tile2.pos.face == face)
+        is CornerCubie ->
+            (cubie.tile1.pos.face == face) ||
+            (cubie.tile2.pos.face == face) ||
+            (cubie.tile3.pos.face == face)
+    }
+}
 /**
  * Gets the position of one of the tiles on the cubie that lies on these faces
  * @param faces the faces the desired cubie is on
