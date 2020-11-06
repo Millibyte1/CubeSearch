@@ -44,7 +44,7 @@ sealed class Cubie {
             if(this === other) return true
             if(other !is EdgeCubie) return false
             return ((tile1.color == other.tile1.color && tile2.color == other.tile2.color) ||
-                    (tile1.color == other.tile1.color && tile2.color == other.tile1.color))
+                    (tile1.color == other.tile2.color && tile2.color == other.tile1.color))
         }
         override fun positionEquals(other: Cubie): Boolean {
             if(this === other) return true
@@ -263,6 +263,14 @@ fun isOnFace(cubie: Cubie, face: Face): Boolean {
             (cubie.tile1.pos.face == face) ||
             (cubie.tile2.pos.face == face) ||
             (cubie.tile3.pos.face == face)
+    }
+}
+/** Determines whether this cubie has a tile with the given color */
+fun containsColor(cubie: Cubie, color: Int): Boolean {
+    return when(cubie) {
+        is CenterCubie -> (cubie.tile1.color == color)
+        is EdgeCubie -> (cubie.tile1.color == color || cubie.tile2.color == color)
+        is CornerCubie -> (cubie.tile1.color == color || cubie.tile2.color == color || cubie.tile3.color == color)
     }
 }
 /**

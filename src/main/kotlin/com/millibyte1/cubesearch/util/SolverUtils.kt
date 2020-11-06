@@ -54,9 +54,16 @@ fun isSolvable(cube: Cube): Boolean {
 /**
  * Checks that the cube is correctly stickered
  * @param cube the cube in question
- * @return whether every cubie on a standard rubik's cube is accounted for
+ * @return whether every cubie on a standard rubik's cube is accounted for and the centers are in the right places
  */
 fun isCorrectlyStickered(cube: Cube): Boolean {
+    return centersAreCorrectlyPlaced(cube) && containsAllRealCubies(cube)
+}
+fun centersAreCorrectlyPlaced(cube: Cube): Boolean {
+    val centers = getCenters(cube)
+    return getSolvedCenters().all { solved -> centers.any { unsolved -> unsolved == solved } }
+}
+fun containsAllRealCubies(cube: Cube): Boolean {
     val cubies = getCubies(cube)
     return getSolvedCubies().all { solved -> cubies.any { unsolved -> unsolved.colorEquals(solved) } }
 }
@@ -130,11 +137,11 @@ internal fun rotateCorner(cubie: CornerCubie): CornerCubie {
 /** Gets the orientation value of this cubie */
 internal fun getEdgeOrientation(edge: EdgeCubie): Int {
     var tile: Tile
-    if(isOnFace(edge, Face.UP) || isOnFace(edge, Face.DOWN)) {
+    if(containsColor(edge, 4) || containsColor(edge, 5)) {
         tile = getUpOrDownColoredTile(edge)
-        if(tile.pos.face == Face.UP || tile.pos.face == Face.DOWN) return 0
+        if (tile.pos.face == Face.UP || tile.pos.face == Face.DOWN) return 0
     }
-    else if(isOnFace(edge, Face.FRONT) || isOnFace(edge, Face.BACK)) {
+    else if(containsColor(edge, 0) || containsColor(edge, 1)) {
         tile = getFrontOrBackColoredTile(edge)
         if(tile.pos.face == Face.FRONT || tile.pos.face == Face.DOWN) return 0
     }
@@ -181,6 +188,11 @@ private fun getFrontOrBackColoredTile(edge: EdgeCubie): Tile {
     }
 }
 
+private fun cubieNumber(cubie: Cubie, solved: List<Cubie>): Int {
+    for(i in solved.indices) if(solved[i].colorEquals(cubie)) return i
+    return -1
+}
+/** Gets the boolean parity of the set of corners on this cube */
 private fun getCornerPermutationParity(cube: Cube): Boolean {
     val current = getCorners(cube)
     val solved = getSolvedCorners()
@@ -194,10 +206,7 @@ private fun getCornerPermutationParity(cube: Cube): Boolean {
     }
     return (inversions % 2 != 0)
 }
-private fun cubieNumber(cubie: Cubie, solved: List<Cubie>): Int {
-    for(i in solved.indices) if(solved[i].colorEquals(cubie)) return i
-    return -1
-}
+/** Gets the boolean parity of the set of edges on this cube */
 private fun getEdgePermutationParity(cube: Cube): Boolean {
     val current = getEdges(cube)
     val solved = getSolvedEdges()

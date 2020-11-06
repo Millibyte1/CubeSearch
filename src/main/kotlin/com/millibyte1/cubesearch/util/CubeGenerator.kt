@@ -2,6 +2,7 @@ package com.millibyte1.cubesearch.util
 
 import com.millibyte1.cubesearch.cube.AbstractCube
 import com.millibyte1.cubesearch.cube.AbstractCubeFactory
+import com.millibyte1.cubesearch.cube.Cube
 import com.millibyte1.cubesearch.cube.Twist
 import kotlin.random.Random
 
@@ -67,9 +68,9 @@ class CubeGenerator<T : AbstractCube<T>> {
             //performs simple move-pruning on options
             options = when(previousFace) {
                 null -> Twist.values()
+                else -> Twist.values()
                         .filter { twist -> Twist.getFace(twist) != previousFace }
                         .toTypedArray()
-                else -> Twist.values()
             }
             previousMove = options[random.nextInt(options.size)]
             cube = cube.twist(previousMove)
