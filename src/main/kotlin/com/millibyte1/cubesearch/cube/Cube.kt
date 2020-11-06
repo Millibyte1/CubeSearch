@@ -3,7 +3,7 @@ package com.millibyte1.cubesearch.cube
 import java.io.Serializable
 
 /**
- * Immutable class representing the configuration of a 3x3 Rubik's cube
+ * Class representing the configuration of a 3x3 Rubik's cube
  *
  * @property data a minimal representation of the state of the cube
  *
@@ -603,7 +603,6 @@ class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data
         }
         return retval
     }
-
 }
 
 //extension function to deep copy array

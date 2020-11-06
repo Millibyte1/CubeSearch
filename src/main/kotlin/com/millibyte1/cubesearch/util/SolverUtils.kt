@@ -80,7 +80,7 @@ fun passesParityTests(cube: Cube): Boolean {
  * @param cube the cube in question
  * @return whether the corners and edges can all be solved at the same time
  */
-internal fun passesPermutationParityTest(cube: Cube): Boolean {
+fun passesPermutationParityTest(cube: Cube): Boolean {
     return (getCornerPermutationParity(cube) == getEdgePermutationParity(cube))
 }
 /**
@@ -92,7 +92,7 @@ internal fun passesPermutationParityTest(cube: Cube): Boolean {
  * @param cube the cube in question
  * @return whether all the corners of this cube are solvable
  */
-internal fun passesCornerParityTest(cube: Cube): Boolean {
+fun passesCornerParityTest(cube: Cube): Boolean {
     var orientationSum: Int = 0
     for(cubie in getCorners(cube)) orientationSum += getCornerOrientation(cubie)
     return (orientationSum % 3 == 0)
@@ -106,12 +106,13 @@ internal fun passesCornerParityTest(cube: Cube): Boolean {
  * @param cube the cube in question
  * @return whether all the edges of this cube are solvable
  */
-internal fun passesEdgeParityTest(cube: Cube): Boolean {
+fun passesEdgeParityTest(cube: Cube): Boolean {
     var orientationSum: Int = 0
     for(cubie in getEdges(cube)) orientationSum += getEdgeOrientation(cubie)
     return (orientationSum % 2 == 0)
 }
 
+/* =============================================== HELPER FUNCTIONS ================================================= */
 /** Gets the orientation value of this cubie */
 internal fun getCornerOrientation(corner: CornerCubie): Int {
     var tile: Tile = getUpOrDownColoredTile(corner)
@@ -121,7 +122,7 @@ internal fun getCornerOrientation(corner: CornerCubie): Int {
     return 2
 }
 /** Returns a clockwise rotation of the cubie with the given tiles */
-private fun rotateCorner(cubie: CornerCubie): CornerCubie {
+internal fun rotateCorner(cubie: CornerCubie): CornerCubie {
     return Cubie.makeCubie(Tile(cubie.tile1.pos, cubie.tile3.color),
             Tile(cubie.tile2.pos, cubie.tile1.color),
             Tile(cubie.tile3.pos, cubie.tile2.color)) as CornerCubie
@@ -181,10 +182,32 @@ private fun getFrontOrBackColoredTile(edge: EdgeCubie): Tile {
 }
 
 private fun getCornerPermutationParity(cube: Cube): Boolean {
-    //TODO
-    return false
+    val current = getCorners(cube)
+    val solved = getSolvedCorners()
+    var inversions = 0
+    //count inversions in currentCorners
+    for(i in current.indices) {
+        for(j in i+1 until current.size) {
+            //if current[j] comes before current[i], it's an inversion
+            if(cubieNumber(current[j], solved) < cubieNumber(current[i], solved)) inversions++
+        }
+    }
+    return (inversions % 2 != 0)
+}
+private fun cubieNumber(cubie: Cubie, solved: List<Cubie>): Int {
+    for(i in solved.indices) if(solved[i].colorEquals(cubie)) return i
+    return -1
 }
 private fun getEdgePermutationParity(cube: Cube): Boolean {
-    //TODO
-    return false
+    val current = getEdges(cube)
+    val solved = getSolvedEdges()
+    var inversions = 0
+    //count inversions in currentCorners
+    for(i in current.indices) {
+        for(j in i+1 until current.size) {
+            //if current[j] comes before current[i], it's an inversion
+            if(cubieNumber(current[j], solved) < cubieNumber(current[i], solved)) inversions++
+        }
+    }
+    return (inversions % 2 != 0)
 }

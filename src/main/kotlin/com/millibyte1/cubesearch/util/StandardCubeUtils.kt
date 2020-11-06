@@ -148,16 +148,16 @@ data class Tile(val pos: TilePosition, val color: Int) : Comparable<Tile> {
 
 private val solved = CubeFactory().getSolvedCube()
 
-fun getSolvedCubies(): Set<Cubie> {
+fun getSolvedCubies(): List<Cubie> {
     return getCubies(solved)
 }
-fun getSolvedCorners(): Set<CornerCubie> {
+fun getSolvedCorners(): List<CornerCubie> {
     return getCorners(solved)
 }
-fun getSolvedEdges(): Set<EdgeCubie> {
+fun getSolvedEdges(): List<EdgeCubie> {
     return getEdges(solved)
 }
-fun getSolvedCenters(): Set<CenterCubie> {
+fun getSolvedCenters(): List<CenterCubie> {
     return getCenters(solved)
 }
 fun getSolvedCubieAt(tile: TilePosition): Cubie {
@@ -170,12 +170,12 @@ fun getSolvedCubieOnFaces(vararg faces: Face): Cubie {
 /* ============================================ CUBIE ACCESS FUNCTIONS ============================================== */
 
 /** Gets all cubies on this cube */
-fun getCubies(cube: Cube): Set<Cubie> {
-    return HashSet<Cubie>().union(getCorners(cube)).union(getEdges(cube)).union(getCenters(cube))
+fun getCubies(cube: Cube): List<Cubie> {
+    return getCorners(cube) + getEdges(cube) + getCenters(cube)
 }
 /** Gets all corner cubies on this cube */
-fun getCorners(cube: Cube): Set<CornerCubie> {
-    val corners = HashSet<CornerCubie>()
+fun getCorners(cube: Cube): List<CornerCubie> {
+    val corners = ArrayList<CornerCubie>()
     corners.add(getCubieOnFaces(cube, Face.UP, Face.FRONT, Face.LEFT) as CornerCubie)
     corners.add(getCubieOnFaces(cube, Face.UP, Face.FRONT, Face.RIGHT) as CornerCubie)
     corners.add(getCubieOnFaces(cube, Face.UP, Face.BACK, Face.LEFT) as CornerCubie)
@@ -187,8 +187,8 @@ fun getCorners(cube: Cube): Set<CornerCubie> {
     return corners
 }
 /** Gets all edge cubies on this cube */
-fun getEdges(cube: Cube): Set<EdgeCubie> {
-    val edges = HashSet<EdgeCubie>()
+fun getEdges(cube: Cube): List<EdgeCubie> {
+    val edges = ArrayList<EdgeCubie>()
     edges.add(getCubieOnFaces(cube, Face.UP, Face.FRONT) as EdgeCubie)
     edges.add(getCubieOnFaces(cube, Face.UP, Face.BACK) as EdgeCubie)
     edges.add(getCubieOnFaces(cube, Face.UP, Face.LEFT) as EdgeCubie)
@@ -204,8 +204,8 @@ fun getEdges(cube: Cube): Set<EdgeCubie> {
     return edges
 }
 /** Gets all center cubies on this cube */
-fun getCenters(cube: Cube): Set<CenterCubie> {
-    val centers = HashSet<CenterCubie>()
+fun getCenters(cube: Cube): List<CenterCubie> {
+    val centers = ArrayList<CenterCubie>()
     centers.add(getCubieOnFaces(cube, Face.FRONT) as CenterCubie)
     centers.add(getCubieOnFaces(cube, Face.BACK) as CenterCubie)
     centers.add(getCubieOnFaces(cube, Face.LEFT) as CenterCubie)
@@ -223,7 +223,7 @@ fun getCenters(cube: Cube): Set<CenterCubie> {
  */
 @Throws(IllegalArgumentException::class)
 fun getCubieOnFaces(cube: Cube, vararg faces: Face): Cubie {
-    if(faces.isEmpty() || faces.size > 2) throw failInvalidNumberOfFaces()
+    if(faces.isEmpty() || faces.size > 3) throw failInvalidNumberOfFaces()
     return getCubieAt(cube, getTilePositionOnFaces(*faces))
 }
 /**
@@ -288,7 +288,7 @@ fun getTilePositionOnFaces(vararg faces: Face): TilePosition {
                 faces.contains(Face.FRONT) && faces.contains(Face.LEFT) -> TilePosition(Face.FRONT, 3)
                 faces.contains(Face.FRONT) && faces.contains(Face.RIGHT) -> TilePosition(Face.FRONT, 5)
                 faces.contains(Face.BACK) && faces.contains(Face.LEFT) -> TilePosition(Face.BACK, 5)
-                faces.contains(Face.BACK) && faces.contains(Face.LEFT) -> TilePosition(Face.BACK, 3)
+                faces.contains(Face.BACK) && faces.contains(Face.RIGHT) -> TilePosition(Face.BACK, 3)
                 else -> throw failFacesNotAdjacent()
             }
         }
@@ -422,7 +422,7 @@ fun getOtherTilePositionsOnCornerCubie(tile: TilePosition): Pair<TilePosition, T
             when(tile.index) {
                 0 -> Pair(TilePosition(Face.FRONT, 2), TilePosition(Face.UP, 8))
                 2 -> Pair(TilePosition(Face.BACK, 0), TilePosition(Face.UP, 2))
-                8 -> Pair(TilePosition(Face.RIGHT, 6), TilePosition(Face.DOWN, 8))
+                8 -> Pair(TilePosition(Face.BACK, 6), TilePosition(Face.DOWN, 8))
                 6 -> Pair(TilePosition(Face.FRONT, 8), TilePosition(Face.DOWN, 2))
                 else -> throw failNotCorner()
             }
@@ -447,8 +447,13 @@ fun getOtherTilePositionsOnCornerCubie(tile: TilePosition): Pair<TilePosition, T
         }
     }
 }
+/** Returns whether these three tile positions are on the same cubie */
+fun isOnSameCubie(tile1: TilePosition, tile2: TilePosition, tile3: TilePosition): Boolean {
+    return isOnSameCubie(tile1, tile2) && isOnSameCubie(tile2, tile3)
+}
 /** Returns whether these two tile positions are on the same cubie */
 fun isOnSameCubie(tile1: TilePosition, tile2: TilePosition): Boolean {
+    if (tile1 == tile2) return true
     return when(tile1.index) {
         1, 3, 5, 7 -> tile2 == getOtherTilePositionOnEdgeCubie(tile1)
         0, 2, 6, 8 -> (tile2 == getOtherTilePositionsOnCornerCubie(tile1).first) ||

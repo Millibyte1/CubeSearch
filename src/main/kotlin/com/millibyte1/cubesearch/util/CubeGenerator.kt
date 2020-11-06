@@ -17,7 +17,6 @@ import kotlin.random.Random
  * @property difficulty the approximate solution length of cubes being generated. if null, random difficulties will be chosen each time nextCube() is called. can be changed.
  *
  */
-//TODO(factories) AbstractCubeFactory that can build a solved cube
 class CubeGenerator<T : AbstractCube<T>> {
 
     private val factory: AbstractCubeFactory<T>
