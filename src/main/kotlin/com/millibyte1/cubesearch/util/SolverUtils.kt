@@ -101,7 +101,10 @@ fun passesPermutationParityTest(cube: Cube): Boolean {
  */
 fun passesCornerParityTest(cube: Cube): Boolean {
     var orientationSum: Int = 0
-    for(cubie in getCorners(cube)) orientationSum += getCornerOrientation(cubie)
+    for(cubie in getCorners(cube)) {
+        val orientation = getCornerOrientation(cubie)
+        orientationSum += orientation
+    }
     return (orientationSum % 3 == 0)
 }
 /**
@@ -115,7 +118,10 @@ fun passesCornerParityTest(cube: Cube): Boolean {
  */
 fun passesEdgeParityTest(cube: Cube): Boolean {
     var orientationSum: Int = 0
-    for(cubie in getEdges(cube)) orientationSum += getEdgeOrientation(cubie)
+    for(cubie in getEdges(cube)) {
+        val orientation = getEdgeOrientation(cubie)
+        orientationSum += orientation
+    }
     return (orientationSum % 2 == 0)
 }
 
@@ -130,22 +136,43 @@ internal fun getCornerOrientation(corner: CornerCubie): Int {
 }
 /** Returns a clockwise rotation of the cubie with the given tiles */
 internal fun rotateCorner(cubie: CornerCubie): CornerCubie {
-    return Cubie.makeCubie(Tile(cubie.tile1.pos, cubie.tile3.color),
+    /*return Cubie.makeCubie(Tile(cubie.tile1.pos, cubie.tile3.color),
             Tile(cubie.tile2.pos, cubie.tile1.color),
-            Tile(cubie.tile3.pos, cubie.tile2.color)) as CornerCubie
+            Tile(cubie.tile3.pos, cubie.tile2.color)) as CornerCubie*/
+    val solved = getSolvedCorners()
+    //different corners have different orderings of tiles so we can't use the same swaps for every cubie
+    return when {
+        //tile 1=3, 2=1, 3=2
+        isOnFaces(cubie, Face.FRONT, Face.LEFT, Face.UP) ||
+        isOnFaces(cubie, Face.FRONT, Face.RIGHT, Face.DOWN) ||
+        isOnFaces(cubie, Face.BACK, Face.RIGHT, Face.UP) ||
+        isOnFaces(cubie, Face.BACK, Face.LEFT, Face.DOWN) ->
+            Cubie.makeCubie(Tile(cubie.tile1.pos, cubie.tile3.color),
+                            Tile(cubie.tile2.pos, cubie.tile1.color),
+                            Tile(cubie.tile3.pos, cubie.tile2.color)) as CornerCubie
+        //tile 1=2, 2=3, 3=1
+        isOnFaces(cubie, Face.FRONT, Face.RIGHT, Face.UP) ||
+        isOnFaces(cubie, Face.FRONT, Face.LEFT, Face.DOWN) ||
+        isOnFaces(cubie, Face.BACK, Face.LEFT, Face.UP) ||
+        isOnFaces(cubie, Face.BACK, Face.RIGHT, Face.DOWN) ->
+            Cubie.makeCubie(Tile(cubie.tile1.pos, cubie.tile2.color),
+                            Tile(cubie.tile2.pos, cubie.tile3.color),
+                            Tile(cubie.tile3.pos, cubie.tile1.color)) as CornerCubie
+        else -> throw IllegalArgumentException("Error: Invalid CornerCubie. Must lie on 3 adjacent faces")
+    }
 }
 /** Gets the orientation value of this cubie */
 internal fun getEdgeOrientation(edge: EdgeCubie): Int {
     var tile: Tile
     if(containsColor(edge, 4) || containsColor(edge, 5)) {
         tile = getUpOrDownColoredTile(edge)
-        if (tile.pos.face == Face.UP || tile.pos.face == Face.DOWN) return 0
+        if (tile.pos.face == Face.UP || tile.pos.face == Face.DOWN) return 1
     }
     else if(containsColor(edge, 0) || containsColor(edge, 1)) {
         tile = getFrontOrBackColoredTile(edge)
-        if(tile.pos.face == Face.FRONT || tile.pos.face == Face.DOWN) return 0
+        if(tile.pos.face == Face.FRONT || tile.pos.face == Face.BACK) return 1
     }
-    return 1
+    return 0
 }
 
 /**

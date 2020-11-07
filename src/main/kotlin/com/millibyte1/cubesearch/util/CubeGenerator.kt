@@ -73,7 +73,14 @@ class CubeGenerator<T : AbstractCube<T>> {
                         .toTypedArray()
             }
             previousMove = options[random.nextInt(options.size)]
+            //TODO remove temp debugging code
+            val previousCube = cube
             cube = cube.twist(previousMove)
+            if(!isCorrectlyStickered(cube as Cube)) {
+                println("previous: $previousCube")
+                println("move: $previousMove")
+                println("current: $cube")
+            }
             previousFace = Twist.getFace(previousMove)
         }
         return cube
