@@ -4,6 +4,7 @@ import com.millibyte1.cubesearch.cube.Cube
 import com.millibyte1.cubesearch.cube.CubeFactory
 import com.millibyte1.cubesearch.cube.Twist
 import com.millibyte1.cubesearch.cube.Twist.Face
+import com.millibyte1.cubesearch.cube.Twist.UP_180
 
 /**
  * Collection of utilities for analyzing standard Rubik's cubes
@@ -40,12 +41,12 @@ fun getManhattanDistance(cube: Cube): Int {
 /* ============================================ SOLVABILITY FUNCTIONS =============================================== */
 
 /**
- * Returns whether it's possible to solve this Rubik's cube.
+ * Checks whether it's possible to solve this Rubik's cube
  *
  * Accomplishes this by first checking that the stickers are placed correctly,
- * and then that the corners and edges are oriented/twisted in a solvable way.
+ * and then that the corners and edges are arranged and oriented in a solvable way.
  *
- * @param cube the cube we want to analyze
+ * @param cube the cube in question
  * @return whether the cube can be solvable or not
  */
 fun isSolvable(cube: Cube): Boolean {
@@ -59,18 +60,26 @@ fun isSolvable(cube: Cube): Boolean {
 fun isCorrectlyStickered(cube: Cube): Boolean {
     return centersAreCorrectlyPlaced(cube) && containsAllRealCubies(cube)
 }
+
+/**
+ * Checks whether the center pieces on this cube are in the correct places
+ * @param cube the cube in question
+ * @return whether all center cubies are in the correct positions
+ */
 fun centersAreCorrectlyPlaced(cube: Cube): Boolean {
     val centers = getCenters(cube)
     return getSolvedCenters().all { solved -> centers.any { unsolved -> unsolved == solved } }
 }
+
+/** Checks whether this cube contains all of the pieces present on a standard Rubik's cube */
 fun containsAllRealCubies(cube: Cube): Boolean {
     val cubies = getCubies(cube)
     return getSolvedCubies().all { solved -> cubies.any { unsolved -> unsolved.colorEquals(solved) } }
 }
 /**
- * Returns whether this cube passes every parity test
- * @param cube the cube we want to analyze
- * @return whether the cube passes all the parity tests
+ * Checks whether this cube passes all three parity tests
+ * @param cube the cube in question
+ * @return whether the cube passes all parity tests
  */
 fun passesParityTests(cube: Cube): Boolean {
     return (passesPermutationParityTest(cube) &&
@@ -119,14 +128,14 @@ fun passesCornerParityTest(cube: Cube): Boolean {
 fun passesEdgeParityTest(cube: Cube): Boolean {
     var orientationSum: Int = 0
     for(cubie in getEdges(cube)) {
-        val orientation = getEdgeOrientation(cubie)
+        val orientation = getEdgeOrientation(cubie, cube)
         orientationSum += orientation
     }
     return (orientationSum % 2 == 0)
 }
 
 /* =============================================== HELPER FUNCTIONS ================================================= */
-/** Gets the orientation value of this cubie */
+/** Gets the orientation value of this corner cubie */
 internal fun getCornerOrientation(corner: CornerCubie): Int {
     var tile: Tile = getUpOrDownColoredTile(corner)
     if(tile.pos.face == Face.UP || tile.pos.face == Face.DOWN) return 0
@@ -136,9 +145,6 @@ internal fun getCornerOrientation(corner: CornerCubie): Int {
 }
 /** Returns a clockwise rotation of the cubie with the given tiles */
 internal fun rotateCorner(cubie: CornerCubie): CornerCubie {
-    /*return Cubie.makeCubie(Tile(cubie.tile1.pos, cubie.tile3.color),
-            Tile(cubie.tile2.pos, cubie.tile1.color),
-            Tile(cubie.tile3.pos, cubie.tile2.color)) as CornerCubie*/
     val solved = getSolvedCorners()
     //different corners have different orderings of tiles so we can't use the same swaps for every cubie
     return when {
@@ -162,23 +168,35 @@ internal fun rotateCorner(cubie: CornerCubie): CornerCubie {
     }
 }
 /** Gets the orientation value of this cubie */
-internal fun getEdgeOrientation(edge: EdgeCubie): Int {
-    var tile: Tile
-    if(containsColor(edge, 4) || containsColor(edge, 5)) {
-        tile = getUpOrDownColoredTile(edge)
-        if (tile.pos.face == Face.UP || tile.pos.face == Face.DOWN) return 1
+internal fun getEdgeOrientation(edge: EdgeCubie, cube: Cube): Int {
+    //TODO: fix this
+    val xTwists = arrayListOf(Twist.LEFT_90, Twist.LEFT_180, Twist.LEFT_270,
+                              Twist.RIGHT_90, Twist.RIGHT_180, Twist.RIGHT_270, null)
+    val yTwists = arrayListOf(Twist.UP_90, Twist.UP_180, Twist.UP_270,
+                              Twist.DOWN_90, Twist.DOWN_180, Twist.DOWN_270, null)
+    for(xTwist in xTwists) {
+        var newCube = cube
+        if(xTwist != null) newCube = cube.twist(xTwist)
+        for(yTwist in yTwists) {
+            if(yTwist != null) newCube = newCube.twist(yTwist)
+            if(containsColor(edge, 4) || containsColor(edge, 5)) {
+                val tile = getUpOrDownColoredTile(edge)
+                if (tile.pos.face == Face.UP || tile.pos.face == Face.DOWN) return 0
+            }
+            else if(containsColor(edge, 0) || containsColor(edge, 1)) {
+                val tile = getFrontOrBackColoredTile(edge)
+                if(tile.pos.face == Face.FRONT || tile.pos.face == Face.BACK) return 0
+            }
+        }
     }
-    else if(containsColor(edge, 0) || containsColor(edge, 1)) {
-        tile = getFrontOrBackColoredTile(edge)
-        if(tile.pos.face == Face.FRONT || tile.pos.face == Face.BACK) return 1
-    }
-    return 0
+    return 1
 }
 
 /**
- * Gets the tile on the cubie that has the same color as either the up or down face
- *
- * Assumes that the corner cubie is a valid cubie
+ * Gets the tile on this corner cubie that has the same color as either the up or down center
+ * @param corner the corner cubie in question
+ * @return the tile with the same color as the up or down center
+ * @throws IllegalArgumentException if this cubie has no up or down colored tile (impossible for a valid corner cubie)
  */
 @Throws(IllegalArgumentException::class)
 private fun getUpOrDownColoredTile(corner: CornerCubie): Tile {
@@ -190,9 +208,10 @@ private fun getUpOrDownColoredTile(corner: CornerCubie): Tile {
     }
 }
 /**
- * Gets the tile on the cubie that has the same color as either the up or down face
- *
- * Assumes that the edge cubie is a valid cubie
+ * Gets the tile on this edge cubie that has the same color as either the up or down center
+ * @param edge the edge cubie in question
+ * @return the tile with the same color as the up or down center
+ * @throws IllegalArgumentException if this cubie has no up or down colored tile (does not mean this edge is invalid)
  */
 @Throws(IllegalArgumentException::class)
 private fun getUpOrDownColoredTile(edge: EdgeCubie): Tile {
@@ -203,8 +222,10 @@ private fun getUpOrDownColoredTile(edge: EdgeCubie): Tile {
     }
 }
 /**
- * Gets the tile on the cubie that has the same color as either the front or back face
- * Assumes that the edge cubie is a valid cubie
+ * Gets the tile on this edge cubie that has the same color as either the front or back center
+ * @param edge the edge cubie in question
+ * @return the tile with the same color as the front or back center
+ * @throws IllegalArgumentException If this cubie has no front or back colored tile (does not mean this edge is invalid)
  */
 @Throws(IllegalArgumentException::class)
 private fun getFrontOrBackColoredTile(edge: EdgeCubie): Tile {
@@ -215,6 +236,7 @@ private fun getFrontOrBackColoredTile(edge: EdgeCubie): Tile {
     }
 }
 
+/** Determines the position of this cubie or its rotations in the provided "sorted" list of cubies */
 private fun cubieNumber(cubie: Cubie, solved: List<Cubie>): Int {
     for(i in solved.indices) if(solved[i].colorEquals(cubie)) return i
     return -1

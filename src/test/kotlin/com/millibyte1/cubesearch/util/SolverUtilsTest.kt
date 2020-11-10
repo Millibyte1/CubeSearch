@@ -22,17 +22,23 @@ class SolverUtilsTest {
     private fun solved(): Cube {
         return factory.getSolvedCube()
     }
+    private fun randomValidCube(): Cube {
+        return generator.nextCube()
+    }
+    /** Should fail on stickering only */
     private fun switchedCenters(): Cube {
         val cube = solved()
         cube.data[0][4] = 1
         cube.data[1][4] = 0
         return cube
     }
+    /** Should fail on stickering only */
     private fun duplicateCenters(): Cube {
         val cube = solved()
         cube.data[0][4] = 1
         return cube
     }
+    /** Should fail on corner parity only */
     private fun oneCornerTwisted(): Cube {
         val cube = solved()
         cube.data[0][0] = 4
@@ -40,12 +46,26 @@ class SolverUtilsTest {
         cube.data[4][6] = 2
         return cube
     }
+    /** Should fail on edge parity only */
     private fun oneEdgeTwisted(): Cube {
         val cube = solved()
         cube.data[0][1] = 4
         cube.data[4][7] = 0
         return cube
     }
+    /** Should fail on permutation parity only */
+    private fun twoEdgesSwapped(): Cube {
+        val cube = solved()
+        val copy = factory.getCube(cube)
+        //front-up edge
+        copy.data[0][1] = cube.data[0][5]
+        copy.data[4][7] = cube.data[3][3]
+        //front-right edge
+        copy.data[0][5] = cube.data[0][1]
+        copy.data[3][3] = cube.data[4][7]
+        return copy
+    }
+    /** Should pass everything */
     private fun superFlip(): Cube {
         val cube = solved()
         //front-up
@@ -86,6 +106,7 @@ class SolverUtilsTest {
         cube.data[3][7] = 5
         return cube
     }
+    /** Should pass everything */
     private fun threeEdgesSwapped(): Cube {
         val cube = solved()
         val copy = factory.getCube(cube)
@@ -100,23 +121,25 @@ class SolverUtilsTest {
         copy.data[5][1] = cube.data[4][7]
         return copy
     }
+    /** Should pass everything */
     private fun threeCornersSwapped(): Cube {
         val cube = solved()
         val copy = factory.getCube(cube)
         //front-left-up corner
-        copy.data[0][0]
-        copy.data[2][2]
-        copy.data[4][6]
+        copy.data[0][0] = cube.data[0][2]
+        copy.data[2][2] = cube.data[4][8]
+        copy.data[4][6] = cube.data[3][0]
         //front-right-up corner
-        copy.data[0][2]
-        copy.data[4][8]
-        copy.data[3][0]
+        copy.data[0][2] = cube.data[0][6]
+        copy.data[4][8] = cube.data[5][0]
+        copy.data[3][0] = cube.data[2][8]
         //front-left-down corner
-        copy.data[0][6]
-        copy.data[5][0]
-        copy.data[2][8]
+        copy.data[0][6] = cube.data[0][0]
+        copy.data[5][0] = cube.data[2][2]
+        copy.data[2][8] = cube.data[4][6]
         return copy
     }
+    /** Should pass everything */
     private fun threeEdgesAndCornersSwapped(): Cube {
         val cube = solved()
         val copy = factory.getCube(cube)
@@ -130,21 +153,18 @@ class SolverUtilsTest {
         copy.data[0][7] = cube.data[0][1]
         copy.data[5][1] = cube.data[4][7]
         //front-left-up corner
-        copy.data[0][0]
-        copy.data[2][2]
-        copy.data[4][6]
+        copy.data[0][0] = cube.data[0][2]
+        copy.data[2][2] = cube.data[4][8]
+        copy.data[4][6] = cube.data[3][0]
         //front-right-up corner
-        copy.data[0][2]
-        copy.data[4][8]
-        copy.data[3][0]
+        copy.data[0][2] = cube.data[0][6]
+        copy.data[4][8] = cube.data[5][0]
+        copy.data[3][0] = cube.data[2][8]
         //front-left-down corner
-        copy.data[0][6]
-        copy.data[5][0]
-        copy.data[2][8]
+        copy.data[0][6] = cube.data[0][0]
+        copy.data[5][0] = cube.data[2][2]
+        copy.data[2][8] = cube.data[4][6]
         return copy
-    }
-    private fun randomValidCube(): Cube {
-        return generator.nextCube()
     }
 
 
@@ -170,12 +190,17 @@ class SolverUtilsTest {
         assertTrue(isSolvable(solved().twist(Twist.UP_90)))
         assertTrue(isSolvable(solved().twist(Twist.UP_180)))
         assertTrue(isSolvable(solved().twist(Twist.UP_270)))
-        //tests special cases
+        //tests special cases that should pass for everything
         assertTrue(isSolvable(superFlip()))
+        assertTrue(isSolvable(threeEdgesSwapped()))
+        assertTrue(isSolvable(threeCornersSwapped()))
+        assertTrue(isSolvable(threeEdgesAndCornersSwapped()))
+        //tests special cases that should fail for some things
         assertFalse(isSolvable(switchedCenters()))
         assertFalse(isSolvable(duplicateCenters()))
         assertFalse(isSolvable(oneCornerTwisted()))
         assertFalse(isSolvable(oneEdgeTwisted()))
+        assertFalse(isSolvable(twoEdgesSwapped()))
         //tests random cubes
         for(i in 0 until 100) assertTrue(isSolvable(randomValidCube()))
     }
@@ -199,12 +224,17 @@ class SolverUtilsTest {
         assertTrue(isCorrectlyStickered(solved().twist(Twist.UP_90)))
         assertTrue(isCorrectlyStickered(solved().twist(Twist.UP_180)))
         assertTrue(isCorrectlyStickered(solved().twist(Twist.UP_270)))
-        //tests special cases
+        //tests special cases that should pass for everything
         assertTrue(isCorrectlyStickered(superFlip()))
+        assertTrue(isCorrectlyStickered(threeEdgesSwapped()))
+        assertTrue(isCorrectlyStickered(threeCornersSwapped()))
+        assertTrue(isCorrectlyStickered(threeEdgesAndCornersSwapped()))
+        //tests special cases that should fail for some things
         assertFalse(isCorrectlyStickered(switchedCenters()))
         assertFalse(isCorrectlyStickered(duplicateCenters()))
         assertTrue(isCorrectlyStickered(oneCornerTwisted()))
         assertTrue(isCorrectlyStickered(oneEdgeTwisted()))
+        assertTrue(isCorrectlyStickered(twoEdgesSwapped()))
         //tests random cubes
         for(i in 0 until 100) assertTrue(isCorrectlyStickered(randomValidCube()))
     }
@@ -228,12 +258,17 @@ class SolverUtilsTest {
         assertTrue(passesParityTests(solved().twist(Twist.UP_90)))
         assertTrue(passesParityTests(solved().twist(Twist.UP_180)))
         assertTrue(passesParityTests(solved().twist(Twist.UP_270)))
-        //tests special cases
+        //tests special cases that should pass for everything
         assertTrue(passesParityTests(superFlip()))
+        assertTrue(passesParityTests(threeEdgesSwapped()))
+        assertTrue(passesParityTests(threeCornersSwapped()))
+        assertTrue(passesParityTests(threeEdgesAndCornersSwapped()))
+        //tests special cases that should fail for some things
         assertTrue(passesParityTests(switchedCenters()))
         assertTrue(passesParityTests(duplicateCenters()))
-        assertFalse(passesParityTests(oneCornerTwisted()))
-        assertFalse(passesParityTests(oneEdgeTwisted()))
+        assertTrue(passesParityTests(oneCornerTwisted()))
+        assertTrue(passesParityTests(oneEdgeTwisted()))
+        assertFalse(passesParityTests(twoEdgesSwapped()))
         //tests random cubes
         for(i in 0 until 100) assertTrue(passesParityTests(randomValidCube()))
     }
@@ -257,15 +292,17 @@ class SolverUtilsTest {
         assertTrue(passesPermutationParityTest(solved().twist(Twist.UP_90)))
         assertTrue(passesPermutationParityTest(solved().twist(Twist.UP_180)))
         assertTrue(passesPermutationParityTest(solved().twist(Twist.UP_270)))
-        //tests special cases
+        //tests special cases that should pass for everything
         assertTrue(passesPermutationParityTest(superFlip()))
+        assertTrue(passesPermutationParityTest(threeEdgesSwapped()))
+        assertTrue(passesPermutationParityTest(threeCornersSwapped()))
+        assertTrue(passesPermutationParityTest(threeEdgesAndCornersSwapped()))
+        //tests special cases that should fail for some things
         assertTrue(passesPermutationParityTest(switchedCenters()))
         assertTrue(passesPermutationParityTest(duplicateCenters()))
         assertTrue(passesPermutationParityTest(oneCornerTwisted()))
         assertTrue(passesPermutationParityTest(oneEdgeTwisted()))
-        assertFalse(passesPermutationParityTest(threeEdgesSwapped()))
-        assertFalse(passesPermutationParityTest(threeCornersSwapped()))
-        assertTrue(passesPermutationParityTest(threeEdgesAndCornersSwapped()))
+        assertFalse(passesPermutationParityTest(twoEdgesSwapped()))
         //tests random cubes
         for(i in 0 until 100) assertTrue(passesPermutationParityTest(randomValidCube()))
     }
@@ -289,22 +326,19 @@ class SolverUtilsTest {
         assertTrue(passesEdgeParityTest(solved().twist(Twist.UP_90)))
         assertTrue(passesEdgeParityTest(solved().twist(Twist.UP_180)))
         assertTrue(passesEdgeParityTest(solved().twist(Twist.UP_270)))
-        //tests special cases
+        //tests special cases that should pass for everything
         assertTrue(passesEdgeParityTest(superFlip()))
+        assertTrue(passesEdgeParityTest(threeEdgesSwapped()))
+        assertTrue(passesEdgeParityTest(threeCornersSwapped()))
+        assertTrue(passesEdgeParityTest(threeEdgesAndCornersSwapped()))
+        //tests special cases that should fail for some things
         assertTrue(passesEdgeParityTest(switchedCenters()))
         assertTrue(passesEdgeParityTest(duplicateCenters()))
         assertTrue(passesEdgeParityTest(oneCornerTwisted()))
         assertFalse(passesEdgeParityTest(oneEdgeTwisted()))
+        assertTrue(passesEdgeParityTest(twoEdgesSwapped()))
         //tests random cubes
-        //for(i in 0 until 100) assertTrue(passesEdgeParityTest(randomValidCube()))
-        for(i in 0 until 10000) {
-            val foo = randomValidCube()
-            if(!passesEdgeParityTest(foo)) {
-                passesEdgeParityTest(foo)
-                println(foo)
-                assert(false)
-            }
-        }
+        for (i in 0 until 100) assertTrue(passesEdgeParityTest(randomValidCube()))
     }
     @Test
     @Tag("CubeSimulationTest")
@@ -326,12 +360,17 @@ class SolverUtilsTest {
         assertTrue(passesCornerParityTest(solved().twist(Twist.UP_90)))
         assertTrue(passesCornerParityTest(solved().twist(Twist.UP_180)))
         assertTrue(passesCornerParityTest(solved().twist(Twist.UP_270)))
-        //tests special cases
+        //tests special cases that should pass for everything
         assertTrue(passesCornerParityTest(superFlip()))
+        assertTrue(passesCornerParityTest(threeEdgesSwapped()))
+        assertTrue(passesCornerParityTest(threeCornersSwapped()))
+        assertTrue(passesCornerParityTest(threeEdgesAndCornersSwapped()))
+        //tests special cases that should fail for some things
         assertTrue(passesCornerParityTest(switchedCenters()))
         assertTrue(passesCornerParityTest(duplicateCenters()))
         assertFalse(passesCornerParityTest(oneCornerTwisted()))
         assertTrue(passesCornerParityTest(oneEdgeTwisted()))
+        assertTrue(passesCornerParityTest(twoEdgesSwapped()))
         //tests random cubes
         for(i in 0 until 100) assertTrue(passesCornerParityTest(randomValidCube()))
     }
