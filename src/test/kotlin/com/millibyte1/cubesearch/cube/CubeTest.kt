@@ -28,6 +28,180 @@ class CubeTest {
                 IntArray(9) { 5 }  //down face
         )
     }
+    /** The data of a solved cube after a single F */
+    private fun frontData(): Array<IntArray> {
+        return arrayOf(
+                //front face
+                IntArray(9) { 0 },
+                //back face
+                IntArray(9) { 1 },
+                //left face
+                intArrayOf(2, 2, 5,
+                           2, 2, 5,
+                           2, 2, 5
+                ),
+                //right face
+                intArrayOf(4, 3, 3,
+                           4, 3, 3,
+                           4, 3, 3
+                ),
+                //up face
+                intArrayOf(4, 4, 4,
+                           4, 4, 4,
+                           2, 2, 2
+                ),
+                //down face
+                intArrayOf(3, 3, 3,
+                           5, 5, 5,
+                           5, 5, 5
+                )
+        )
+    }
+    /** The data of a solved cube after a single B */
+    private fun backData(): Array<IntArray> {
+        return arrayOf(
+                //front face
+                IntArray(9) { 0 },
+                //back face
+                IntArray(9) { 1 },
+                //left face
+                intArrayOf(4, 2, 2,
+                           4, 2, 2,
+                           4, 2, 2
+                ),
+                //right face
+                intArrayOf(3, 3, 5,
+                           3, 3, 5,
+                           3, 3, 5
+                ),
+                //up face
+                intArrayOf(3, 3, 3,
+                           4, 4, 4,
+                           4, 4, 4
+                ),
+                //down face
+                intArrayOf(5, 5, 5,
+                           5, 5, 5,
+                           2, 2, 2
+                )
+        )
+    }
+    /** The data of a solved cube after a single L */
+    private fun leftData(): Array<IntArray> {
+        return arrayOf(
+                //front face
+                intArrayOf(4, 0, 0,
+                           4, 0, 0,
+                           4, 0, 0
+                ),
+                //back face
+                intArrayOf(1, 1, 5,
+                           1, 1, 5,
+                           1, 1, 5
+                ),
+                //left face
+                IntArray(9) { 2 },
+                //right face
+                IntArray(9) { 3 },
+                //up face
+                intArrayOf(1, 4, 4,
+                           1, 4, 4,
+                           1, 4, 4
+                ),
+                //down face
+                intArrayOf(0, 5, 5,
+                           0, 5, 5,
+                           0, 5, 5
+                )
+        )
+    }
+    /** The data of a solved cube after a single R */
+    private fun rightData(): Array<IntArray> {
+        return arrayOf(
+                //front face
+                intArrayOf(0, 0, 5,
+                           0, 0, 5,
+                           0, 0, 5
+                ),
+                //back face
+                intArrayOf(4, 1, 1,
+                           4, 1, 1,
+                           4, 1, 1
+                ),
+                //left face
+                IntArray(9) { 2 },
+                //right face
+                IntArray(9) { 3 },
+                //up face
+                intArrayOf(4, 4, 0,
+                           4, 4, 0,
+                           4, 4, 0
+                ),
+                //down face
+                intArrayOf(5, 5, 1,
+                           5, 5, 1,
+                           5, 5, 1
+                )
+        )
+    }
+    /** The data of a solved cube after a single U */
+    private fun upData(): Array<IntArray> {
+        return arrayOf(
+                //front face
+                intArrayOf(3, 3, 3,
+                           0, 0, 0,
+                           0, 0, 0
+                ),
+                //back face
+                intArrayOf(2, 2, 2,
+                           1, 1, 1,
+                           1, 1, 1
+                ),
+                //left face
+                intArrayOf(0, 0, 0,
+                           2, 2, 2,
+                           2, 2, 2
+                ),
+                //right face
+                intArrayOf(1, 1, 1,
+                           3, 3, 3,
+                           3, 3, 3
+                ),
+                //up face
+                IntArray(9) { 4 },
+                //down face
+                IntArray(9) { 5 }
+        )
+    }
+    /** The data of a solved cube after a single D */
+    private fun downData(): Array<IntArray> {
+        return arrayOf(
+                //front face
+                intArrayOf(0, 0, 0,
+                           0, 0, 0,
+                           2, 2, 2
+                ),
+                //back face
+                intArrayOf(1, 1, 1,
+                           1, 1, 1,
+                           3, 3, 3
+                ),
+                //left face
+                intArrayOf(2, 2, 2,
+                           2, 2, 2,
+                           1, 1, 1
+                ),
+                //right face
+                intArrayOf(3, 3, 3,
+                           3, 3, 3,
+                           0, 0, 0
+                ),
+                //up face
+                IntArray(9) { 4 },
+                //down face
+                IntArray(9) { 5 }
+        )
+    }
 
     //unit tests
     @Test
@@ -57,9 +231,7 @@ class CubeTest {
 
     @Test
     @Tag("CubeSimulationTest")
-    fun immutability() {
-        //immutability is dependent on constructors behaving as intended
-        constructors()
+    fun twistsAreSideEffectFree() {
         val start = solved()
         val clone = factory.getCube(start)
         //tests
@@ -118,6 +290,13 @@ class CubeTest {
         assertTrue(clone3 == clone1)
         clone3 = clone3.twist(Twist.FRONT_270)
         assertTrue(clone3 == start)
+
+        //tests that F is actually correct
+        clone1 = start.twist(Twist.FRONT_90)
+        clone2 = factory.getCube(frontData())
+        //println("clone1: $clone1")
+        //println("clone2: $clone2")
+        assertEquals(clone1, clone2)
     }
     @Test
     @Tag("CubeSimulationTest")
@@ -158,6 +337,11 @@ class CubeTest {
         assertTrue(clone3 == clone1)
         clone3 = clone3.twist(Twist.BACK_270)
         assertTrue(clone3 == start)
+
+        //tests that B is actually clone1clone1 = start.twist(Twist.BACK_90)
+        clone1 = solved().twist(Twist.BACK_90)
+        clone2 = factory.getCube(backData())
+        assertEquals(clone1, clone2)
     }
     @Test
     @Tag("CubeSimulationTest")
@@ -198,6 +382,11 @@ class CubeTest {
         assertTrue(clone3 == clone1)
         clone3 = clone3.twist(Twist.LEFT_270)
         assertTrue(clone3 == start)
+
+        //tests that L is actually correct
+        clone1 = start.twist(Twist.LEFT_90)
+        clone2 = factory.getCube(leftData())
+        assertEquals(clone1, clone2)
     }
     @Test
     @Tag("CubeSimulationTest")
@@ -238,6 +427,11 @@ class CubeTest {
         assertTrue(clone3 == clone1)
         clone3 = clone3.twist(Twist.RIGHT_270)
         assertTrue(clone3 == start)
+
+        //tests that R is actually correct
+        clone1 = start.twist(Twist.RIGHT_90)
+        clone2 = factory.getCube(rightData())
+        assertEquals(clone1, clone2)
     }
     @Test
     @Tag("CubeSimulationTest")
@@ -251,10 +445,10 @@ class CubeTest {
         clone1 = clone1.twist(Twist.UP_90)
         clone2 = clone2.twist(Twist.UP_180)
         clone3 = clone3.twist(Twist.UP_270)
-        println("upTwists")
-        println("Clone 1: $clone1")
-        println("Clone 2: $clone2")
-        println("Clone 3: $clone3")
+        //println("upTwists")
+        //println("Clone 1: $clone1")
+        //println("Clone 2: $clone2")
+        //println("Clone 3: $clone3")
         assertFalse(clone1 == start)
         assertFalse(clone2 == start)
         assertFalse(clone3 == start)
@@ -278,6 +472,11 @@ class CubeTest {
         assertTrue(clone3 == clone1)
         clone3 = clone3.twist(Twist.UP_270)
         assertTrue(clone3 == start)
+
+        //tests that U is actually correct
+        clone1 = start.twist(Twist.UP_90)
+        clone2 = factory.getCube(upData())
+        assertEquals(clone1, clone2)
     }
     @Test
     @Tag("CubeSimulationTest")
@@ -318,5 +517,10 @@ class CubeTest {
         assertTrue(clone3 == clone1)
         clone3 = clone3.twist(Twist.DOWN_270)
         assertTrue(clone3 == start)
+
+        //tests that D is actually correct
+        clone1 = start.twist(Twist.DOWN_90)
+        clone2 = factory.getCube(downData())
+        assertEquals(clone1, clone2)
     }
 }

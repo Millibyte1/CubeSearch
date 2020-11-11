@@ -2,6 +2,7 @@ package com.millibyte1.cubesearch.util
 
 import com.millibyte1.cubesearch.cube.AbstractCube
 import com.millibyte1.cubesearch.cube.AbstractCubeFactory
+import com.millibyte1.cubesearch.cube.Cube
 import com.millibyte1.cubesearch.cube.Twist
 import kotlin.random.Random
 
@@ -17,7 +18,6 @@ import kotlin.random.Random
  * @property difficulty the approximate solution length of cubes being generated. if null, random difficulties will be chosen each time nextCube() is called. can be changed.
  *
  */
-//TODO(factories) AbstractCubeFactory that can build a solved cube
 class CubeGenerator<T : AbstractCube<T>> {
 
     private val factory: AbstractCubeFactory<T>
@@ -68,12 +68,19 @@ class CubeGenerator<T : AbstractCube<T>> {
             //performs simple move-pruning on options
             options = when(previousFace) {
                 null -> Twist.values()
+                else -> Twist.values()
                         .filter { twist -> Twist.getFace(twist) != previousFace }
                         .toTypedArray()
-                else -> Twist.values()
             }
             previousMove = options[random.nextInt(options.size)]
+            //TODO remove temp debugging code
+            val previousCube = cube
             cube = cube.twist(previousMove)
+            if(!isCorrectlyStickered(cube as Cube)) {
+                println("previous: $previousCube")
+                println("move: $previousMove")
+                println("current: $cube")
+            }
             previousFace = Twist.getFace(previousMove)
         }
         return cube
