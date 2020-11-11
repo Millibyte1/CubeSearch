@@ -148,23 +148,39 @@ data class Tile(val pos: TilePosition, val color: Int) : Comparable<Tile> {
 
 private val solved = CubeFactory().getSolvedCube()
 
+/** Gets the list of cubies on a solved cube */
 fun getSolvedCubies(): List<Cubie> {
     return getCubies(solved)
 }
+/** Gets the list of corners on a solved cube */
 fun getSolvedCorners(): List<CornerCubie> {
     return getCorners(solved)
 }
+/** Gets the list of edges on a solved cube */
 fun getSolvedEdges(): List<EdgeCubie> {
     return getEdges(solved)
 }
+/** Gets the list of centers on a solved cube */
 fun getSolvedCenters(): List<CenterCubie> {
     return getCenters(solved)
 }
+/** Gets the cubie at the specified position on a solved cube */
 fun getSolvedCubieAt(tile: TilePosition): Cubie {
     return getCubieAt(solved, tile)
 }
+/** Gets the cubie that lies on all of the given faces on a solved cube */
 fun getSolvedCubieOnFaces(vararg faces: Face): Cubie {
     return getCubieOnFaces(solved, *faces)
+}
+/**
+ * Gets the correctly positioned and oriented version of this cubie
+ * @param cubie the cubie in question
+ * @return the cubie on the solved cube with this cubie's colors
+ * @throws IllegalArgumentException if this cubie does not exist on a solvable cube
+ */
+@Throws(IllegalArgumentException::class)
+fun getSolvedCubie(cubie: Cubie): Cubie {
+    return getCubieOnCube(solved, cubie)
 }
 
 /* ============================================ CUBIE ACCESS FUNCTIONS ============================================== */
@@ -245,6 +261,44 @@ fun getCubieAt(cube: Cube, tile: TilePosition): Cubie {
     }
 }
 
+/** Gets the cubie on the given cube with the same colors as the provided cubie
+ * @param cube the cube we want to search on
+ * @param cubie the cubie that we want to find on [cube]
+ * @return the cubie on [cube] with the same colors as [cubie]
+ * @throws IllegalArgumentException if the provided cubie does not exist on the given cube
+ */
+@Throws(IllegalArgumentException::class)
+fun getCubieOnCube(cube: Cube, cubie: Cubie): Cubie {
+    return getCubieWithColors(cube, *getColorsOnCubie(cubie))
+}
+/**
+ * Gets the cubie with the specified tile colors
+ * @param cube the cube in question
+ * @param colors the colors we want to find on a cubie
+ * @return the cubie that matches all of the given colors
+ * @throws IllegalArgumentException if no cubie on this cube has all of the given colors
+ */
+@Throws(IllegalArgumentException::class)
+fun getCubieWithColors(cube: Cube, vararg colors: Int): Cubie {
+    for(cubie in getCubies(cube)) {
+        val cubieColors = getColorsOnCubie(cubie)
+        if(colors.all { color1 -> cubieColors.any { color2 -> color1 == color2 } } &&
+                cubieColors.all {color1 -> colors.any { color2 -> color1 == color2} }) return cubie
+    }
+    throw IllegalArgumentException("Error: No cubie on the given cube has the listed colors")
+}
+/**
+ * Gets the colors of the tiles on this cubie (works for both valid and invalid cubies)
+ * @param cubie the cubie in question
+ * @return the colors on this cube
+ */
+fun getColorsOnCubie(cubie: Cubie): IntArray {
+    return when(cubie) {
+        is CenterCubie -> intArrayOf(cubie.tile1.color)
+        is EdgeCubie -> intArrayOf(cubie.tile1.color, cubie.tile2.color)
+        is CornerCubie -> intArrayOf(cubie.tile1.color, cubie.tile2.color, cubie.tile3.color)
+    }
+}
 /* =============================================== HELPER FUNCTIONS ================================================= */
 
 /** Determines whether this cubie lies on all the provided faces */

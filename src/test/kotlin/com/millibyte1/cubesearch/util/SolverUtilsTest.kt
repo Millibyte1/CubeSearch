@@ -166,6 +166,30 @@ class SolverUtilsTest {
         copy.data[2][8] = cube.data[4][6]
         return copy
     }
+    /** Should pass everything */
+    private fun extraEdgeParityTestCase(): Cube {
+        val data = arrayOf(
+                intArrayOf(2, 2, 2,
+                           0, 0, 5,
+                           0, 0, 5),
+                intArrayOf(3, 3, 3,
+                           4, 1, 1,
+                           4, 1, 1),
+                intArrayOf(4, 1, 1,
+                           2, 2, 2,
+                           2, 2, 2),
+                intArrayOf(0, 0, 5,
+                           3, 3, 3,
+                           3, 3, 3),
+                intArrayOf(0, 0, 0,
+                           4, 4, 4,
+                           4, 4, 4),
+                intArrayOf(5, 5, 1,
+                           5, 5, 1,
+                           5, 5, 1)
+        )
+        return factory.getCube(data)
+    }
 
 
 /* ========================================= SOLVABILITY FUNCTION TESTS ============================================= */
@@ -201,6 +225,7 @@ class SolverUtilsTest {
         assertFalse(isSolvable(oneCornerTwisted()))
         assertFalse(isSolvable(oneEdgeTwisted()))
         assertFalse(isSolvable(twoEdgesSwapped()))
+        assertTrue(isSolvable(extraEdgeParityTestCase()))
         //tests random cubes
         for(i in 0 until 100) assertTrue(isSolvable(randomValidCube()))
     }
@@ -266,9 +291,10 @@ class SolverUtilsTest {
         //tests special cases that should fail for some things
         assertTrue(passesParityTests(switchedCenters()))
         assertTrue(passesParityTests(duplicateCenters()))
-        assertTrue(passesParityTests(oneCornerTwisted()))
-        assertTrue(passesParityTests(oneEdgeTwisted()))
+        assertFalse(passesParityTests(oneCornerTwisted()))
+        assertFalse(passesParityTests(oneEdgeTwisted()))
         assertFalse(passesParityTests(twoEdgesSwapped()))
+        assertTrue(isSolvable(extraEdgeParityTestCase()))
         //tests random cubes
         for(i in 0 until 100) assertTrue(passesParityTests(randomValidCube()))
     }
@@ -303,6 +329,7 @@ class SolverUtilsTest {
         assertTrue(passesPermutationParityTest(oneCornerTwisted()))
         assertTrue(passesPermutationParityTest(oneEdgeTwisted()))
         assertFalse(passesPermutationParityTest(twoEdgesSwapped()))
+        assertTrue(passesPermutationParityTest(extraEdgeParityTestCase()))
         //tests random cubes
         for(i in 0 until 100) assertTrue(passesPermutationParityTest(randomValidCube()))
     }
@@ -337,6 +364,7 @@ class SolverUtilsTest {
         assertTrue(passesEdgeParityTest(oneCornerTwisted()))
         assertFalse(passesEdgeParityTest(oneEdgeTwisted()))
         assertTrue(passesEdgeParityTest(twoEdgesSwapped()))
+        assertTrue(passesEdgeParityTest(extraEdgeParityTestCase()))
         //tests random cubes
         for (i in 0 until 100) assertTrue(passesEdgeParityTest(randomValidCube()))
     }
@@ -371,6 +399,7 @@ class SolverUtilsTest {
         assertFalse(passesCornerParityTest(oneCornerTwisted()))
         assertTrue(passesCornerParityTest(oneEdgeTwisted()))
         assertTrue(passesCornerParityTest(twoEdgesSwapped()))
+        assertTrue(passesCornerParityTest(extraEdgeParityTestCase()))
         //tests random cubes
         for(i in 0 until 100) assertTrue(passesCornerParityTest(randomValidCube()))
     }

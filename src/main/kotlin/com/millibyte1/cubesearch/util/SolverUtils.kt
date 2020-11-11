@@ -127,10 +127,7 @@ fun passesCornerParityTest(cube: Cube): Boolean {
  */
 fun passesEdgeParityTest(cube: Cube): Boolean {
     var orientationSum: Int = 0
-    for(cubie in getEdges(cube)) {
-        val orientation = getEdgeOrientation(cubie, cube)
-        orientationSum += orientation
-    }
+    for(cubie in getEdges(cube)) orientationSum += getEdgeOrientation(cubie, cube)
     return (orientationSum % 2 == 0)
 }
 
@@ -167,25 +164,43 @@ internal fun rotateCorner(cubie: CornerCubie): CornerCubie {
         else -> throw IllegalArgumentException("Error: Invalid CornerCubie. Must lie on 3 adjacent faces")
     }
 }
+/** Returns the flipped image of the edge cubie with the given tiles */
+internal fun flipEdge(cubie: EdgeCubie): EdgeCubie {
+    return Cubie.makeCubie(Tile(cubie.tile1.pos, cubie.tile2.color),
+                           Tile(cubie.tile2.pos, cubie.tile1.color)) as EdgeCubie
+}
 /** Gets the orientation value of this cubie */
 internal fun getEdgeOrientation(edge: EdgeCubie, cube: Cube): Int {
-    //TODO: fix this
+    //Generates the sets of moves we can use that won't flip the orientation of the cubie (no front/back twists)
     val xTwists = arrayListOf(Twist.LEFT_90, Twist.LEFT_180, Twist.LEFT_270,
                               Twist.RIGHT_90, Twist.RIGHT_180, Twist.RIGHT_270, null)
     val yTwists = arrayListOf(Twist.UP_90, Twist.UP_180, Twist.UP_270,
                               Twist.DOWN_90, Twist.DOWN_180, Twist.DOWN_270, null)
-    for(xTwist in xTwists) {
-        var newCube = cube
-        if(xTwist != null) newCube = cube.twist(xTwist)
-        for(yTwist in yTwists) {
-            if(yTwist != null) newCube = newCube.twist(yTwist)
-            if(containsColor(edge, 4) || containsColor(edge, 5)) {
-                val tile = getUpOrDownColoredTile(edge)
-                if (tile.pos.face == Face.UP || tile.pos.face == Face.DOWN) return 0
+    val solvedEdge = getSolvedCubie(edge) as EdgeCubie
+
+    //brute-forces the cubie into the correct position and checks whether it's correctly oriented
+    var newEdge: EdgeCubie
+    for(twist1 in xTwists) {
+        var firstCube = if(twist1 != null) cube.twist(twist1) else cube
+        for(twist2 in yTwists) {
+            var secondCube = if(twist2 != null) firstCube.twist(twist2) else firstCube
+            for(twist3 in xTwists) {
+                var thirdCube = if(twist3 != null) secondCube.twist(twist3) else secondCube
+                newEdge = getCubieOnCube(thirdCube, edge) as EdgeCubie
+                if(newEdge == solvedEdge) return 0
+                if(flipEdge(newEdge) == solvedEdge) return 1
             }
-            else if(containsColor(edge, 0) || containsColor(edge, 1)) {
-                val tile = getFrontOrBackColoredTile(edge)
-                if(tile.pos.face == Face.FRONT || tile.pos.face == Face.BACK) return 0
+        }
+    }
+    for(twist1 in yTwists) {
+        var firstCube = if(twist1 != null) cube.twist(twist1) else cube
+        for(twist2 in xTwists) {
+            var secondCube = if(twist2 != null) firstCube.twist(twist2) else firstCube
+            for(twist3 in yTwists) {
+                var thirdCube = if(twist3 != null) secondCube.twist(twist3) else secondCube
+                newEdge = getCubieOnCube(thirdCube, edge) as EdgeCubie
+                if(newEdge == solvedEdge) return 0
+                if(flipEdge(newEdge) == solvedEdge) return 1
             }
         }
     }
