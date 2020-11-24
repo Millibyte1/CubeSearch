@@ -2,7 +2,6 @@ package com.millibyte1.cubesearch.util
 
 import com.millibyte1.cubesearch.cube.AbstractCube
 import com.millibyte1.cubesearch.cube.AbstractCubeFactory
-import com.millibyte1.cubesearch.cube.Cube
 import com.millibyte1.cubesearch.cube.Twist
 import kotlin.random.Random
 
@@ -38,10 +37,8 @@ class CubeGenerator<T : AbstractCube<T>> {
         this.factory = factory
         this.seed = seed
         this.random = Random(seed)
-        if(difficulty != null) {
-            if(difficulty < 0 || difficulty > 20) {
-                throw IllegalArgumentException("difficulty must be between 0 and 20 (inclusive)")
-            }
+        if(difficulty != null && (difficulty < 0 || difficulty > 20)) {
+            throw IllegalArgumentException("difficulty must be between 0 and 20 (inclusive)")
         }
         this.difficulty = difficulty
     }
@@ -73,14 +70,7 @@ class CubeGenerator<T : AbstractCube<T>> {
                         .toTypedArray()
             }
             previousMove = options[random.nextInt(options.size)]
-            //TODO remove temp debugging code
-            val previousCube = cube
             cube = cube.twist(previousMove)
-            if(!isCorrectlyStickered(cube as Cube)) {
-                println("previous: $previousCube")
-                println("move: $previousMove")
-                println("current: $cube")
-            }
             previousFace = Twist.getFace(previousMove)
         }
         return cube

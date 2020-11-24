@@ -22,7 +22,6 @@ import java.io.Serializable
  *         3 D 5
  *         6 7 8
  */
-//TODO: make constructors private and force the use of factories
 class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data), Serializable {
 
     /**
@@ -620,6 +619,10 @@ class Cube internal constructor(data: Array<IntArray>) : AbstractCube<Cube>(data
             }
         }
         return retval
+    }
+
+    override fun hashCode(): Int {
+        return data[0].plus(data[1]).plus(data[2]).plus(data[3]).plus(data[4]).plus(data[5]).contentHashCode()
     }
 }
 

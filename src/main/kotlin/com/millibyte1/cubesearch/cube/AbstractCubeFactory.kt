@@ -4,7 +4,7 @@ package com.millibyte1.cubesearch.cube
  * AbstractFactory for AbstractCube implementations
  * @param T the cube implementation being used
  */
-abstract class AbstractCubeFactory<T : AbstractCube<T>>() {
+abstract class AbstractCubeFactory<T : AbstractCube<T>> {
     /**
      * Constructs a cube from the contents of [data]
      * @param data the 6xN array representing the faces of the cube
