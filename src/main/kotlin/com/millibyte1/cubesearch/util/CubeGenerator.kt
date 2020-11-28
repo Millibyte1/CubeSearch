@@ -51,7 +51,7 @@ class CubeGenerator<T : AbstractCube<T>> {
      */
     @Synchronized
     fun nextCube(): T {
-        //TODO: implement advanced move pruning. determine if difficulty is or could be 100% accurate
+
         var cube = factory.getSolvedCube()
         val solutionDepth = when(difficulty) {
             null -> Random.nextInt(20)
@@ -60,19 +60,20 @@ class CubeGenerator<T : AbstractCube<T>> {
 
         var options: Array<Twist>
         var previousMove: Twist?
-        var previousFace: Twist.Face? = null
+        var face1Previous: Twist.Face? = null
+        var face2Previous: Twist.Face? = null
+
+        //generates a random sequence of twists
         for(i in 1..solutionDepth) {
-            //performs simple move-pruning on options
-            options = when(previousFace) {
-                null -> Twist.values()
-                else -> Twist.values()
-                        .filter { twist -> Twist.getFace(twist) != previousFace }
-                        .toTypedArray()
-            }
+            //eliminates twists that would necessarily result in a cube that could be reached in fewer moves
+            options = getOptions(face1Previous, face2Previous)
+            //performs the twist and updates move history
+            face2Previous = face1Previous
             previousMove = options[random.nextInt(options.size)]
+            face1Previous = Twist.getFace(previousMove)
             cube = cube.twist(previousMove)
-            previousFace = Twist.getFace(previousMove)
         }
+
         return cube
     }
 
@@ -85,5 +86,29 @@ class CubeGenerator<T : AbstractCube<T>> {
     @Synchronized
     fun setDifficulty(difficulty: Int) {
         this.difficulty = difficulty
+    }
+
+    /**
+     * Returns the list of twists that could be productive.
+     * If this is the first move, branching factor is 18.
+     * If there have been two moves in a row on the same axis, branching factor is 12.
+     * Else, branching factor is 15.
+     * After the first two moves, the average branching factor will be 14.4
+     */
+    private fun getOptions(face1Previous: Twist.Face?, face2Previous: Twist.Face?): Array<Twist> {
+        //TODO: find a way to improve branching factor
+        return when {
+            (face1Previous == null) && (face2Previous == null) -> Twist.values()
+            (face2Previous == null) ->
+            Twist.values()
+                    .filter { twist -> Twist.getFace(twist) != face1Previous }
+                    .toTypedArray()
+            (face1Previous == Twist.getOppositeFace(face2Previous)) ->
+            Twist.values()
+                    .filter { twist -> Twist.getFace(twist) != face1Previous &&
+                            Twist.getFace(twist) != face2Previous }
+                    .toTypedArray()
+            else -> Twist.values()
+        }
     }
 }
