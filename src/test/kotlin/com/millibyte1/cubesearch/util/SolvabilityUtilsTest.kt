@@ -1,18 +1,21 @@
 package com.millibyte1.cubesearch.util
 
-import com.millibyte1.cubesearch.util.Cubie
-
 import com.millibyte1.cubesearch.cube.CubeFactory
 import com.millibyte1.cubesearch.cube.Cube
 import com.millibyte1.cubesearch.cube.Twist
-import com.millibyte1.cubesearch.cube.Twist.Face
+
+import com.millibyte1.cubesearch.util.SolvabilityUtils.isSolvable
+import com.millibyte1.cubesearch.util.SolvabilityUtils.isCorrectlyStickered
+import com.millibyte1.cubesearch.util.SolvabilityUtils.passesParityTests
+import com.millibyte1.cubesearch.util.SolvabilityUtils.passesCornerParityTest
+import com.millibyte1.cubesearch.util.SolvabilityUtils.passesEdgeParityTest
+import com.millibyte1.cubesearch.util.SolvabilityUtils.passesPermutationParityTest
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Assertions.*
-import kotlin.test.assertFailsWith
 
-class SolverUtilsTest {
+class SolvabilityUtilsTest {
 
     /* ========================================== TEST FIXTURES ===================================================== */
 

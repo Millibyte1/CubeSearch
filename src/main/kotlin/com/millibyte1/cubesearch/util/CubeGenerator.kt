@@ -2,7 +2,6 @@ package com.millibyte1.cubesearch.util
 
 import com.millibyte1.cubesearch.cube.AbstractCube
 import com.millibyte1.cubesearch.cube.AbstractCubeFactory
-import com.millibyte1.cubesearch.cube.Cube
 import com.millibyte1.cubesearch.cube.Twist
 import kotlin.random.Random
 
@@ -38,10 +37,8 @@ class CubeGenerator<T : AbstractCube<T>> {
         this.factory = factory
         this.seed = seed
         this.random = Random(seed)
-        if(difficulty != null) {
-            if(difficulty < 0 || difficulty > 20) {
-                throw IllegalArgumentException("difficulty must be between 0 and 20 (inclusive)")
-            }
+        if(difficulty != null && (difficulty < 0 || difficulty > 20)) {
+            throw IllegalArgumentException("difficulty must be between 0 and 20 (inclusive)")
         }
         this.difficulty = difficulty
     }
@@ -54,7 +51,7 @@ class CubeGenerator<T : AbstractCube<T>> {
      */
     @Synchronized
     fun nextCube(): T {
-        //TODO: implement advanced move pruning. determine if difficulty is or could be 100% accurate
+
         var cube = factory.getSolvedCube()
         val solutionDepth = when(difficulty) {
             null -> Random.nextInt(20)
@@ -63,26 +60,20 @@ class CubeGenerator<T : AbstractCube<T>> {
 
         var options: Array<Twist>
         var previousMove: Twist?
-        var previousFace: Twist.Face? = null
+        var face1Previous: Twist.Face? = null
+        var face2Previous: Twist.Face? = null
+
+        //generates a random sequence of twists
         for(i in 1..solutionDepth) {
-            //performs simple move-pruning on options
-            options = when(previousFace) {
-                null -> Twist.values()
-                else -> Twist.values()
-                        .filter { twist -> Twist.getFace(twist) != previousFace }
-                        .toTypedArray()
-            }
+            //eliminates twists that would necessarily result in a cube that could be reached in fewer moves
+            options = SolverUtils.getOptions(face1Previous, face2Previous)
+            //performs the twist and updates move history
+            face2Previous = face1Previous
             previousMove = options[random.nextInt(options.size)]
-            //TODO remove temp debugging code
-            val previousCube = cube
+            face1Previous = Twist.getFace(previousMove)
             cube = cube.twist(previousMove)
-            if(!isCorrectlyStickered(cube as Cube)) {
-                println("previous: $previousCube")
-                println("move: $previousMove")
-                println("current: $cube")
-            }
-            previousFace = Twist.getFace(previousMove)
         }
+
         return cube
     }
 
@@ -96,4 +87,5 @@ class CubeGenerator<T : AbstractCube<T>> {
     fun setDifficulty(difficulty: Int) {
         this.difficulty = difficulty
     }
+
 }

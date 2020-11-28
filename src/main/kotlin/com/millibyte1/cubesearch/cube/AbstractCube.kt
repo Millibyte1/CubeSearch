@@ -19,7 +19,7 @@ abstract class AbstractCube<T : AbstractCube<T>> internal constructor(data: Arra
      * Depending on implementation, may modify this object or return a new object
      *
      * @param twist the twist we are applying to this cube
-     * @return the cube resulting from the applying given twist
+     * @return the cube resulting from applying the given twist
      */
     abstract fun twist(twist: Twist): T
 

@@ -7,11 +7,15 @@ import com.millibyte1.cubesearch.cube.Cube
 import com.millibyte1.cubesearch.cube.Twist
 import com.millibyte1.cubesearch.cube.Twist.Face
 
+import com.millibyte1.cubesearch.util.StandardCubeUtils.getCubies
+import com.millibyte1.cubesearch.util.StandardCubeUtils.isOnCornerCubie
+import com.millibyte1.cubesearch.util.StandardCubeUtils.isOnEdgeCubie
+import com.millibyte1.cubesearch.util.StandardCubeUtils.isOnCenterCubie
+import com.millibyte1.cubesearch.util.StandardCubeUtils.isOnSameCubie
+
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Assertions.*
-import org.opentest4j.AssertionFailedError
-import kotlin.test.assertFailsWith
 
 class StandardCubeUtilsTest {
 

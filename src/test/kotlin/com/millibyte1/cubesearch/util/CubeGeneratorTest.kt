@@ -53,10 +53,5 @@ class CubeGeneratorTest {
         println("cube1: $cube1")
         println("cube2: $cube2")
     }
-    @Test
-    fun checkDifficultyAccuracy() {
-        //TODO figure out how to do this
-
-    }
 
 }
