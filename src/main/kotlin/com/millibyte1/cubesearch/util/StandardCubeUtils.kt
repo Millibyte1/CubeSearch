@@ -166,6 +166,11 @@ object StandardCubeUtils {
 
     private val solved = CubeFactory().getSolvedCube()
 
+    /** Returns whether the given cube is solved */
+    fun isSolved(cube: Cube): Boolean {
+        return cube == solved
+    }
+
     /** Gets the list of cubies on a solved cube */
     fun getSolvedCubies(): List<Cubie> {
         return getCubies(solved)

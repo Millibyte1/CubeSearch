@@ -1,6 +1,9 @@
 package com.millibyte1.cubesearch.solver
 
 import com.millibyte1.cubesearch.cube.AbstractCube
+import com.millibyte1.cubesearch.cube.Cube
+import com.millibyte1.cubesearch.cube.Twist
+import com.millibyte1.cubesearch.util.Path
 
 /**
  * Abstract base implementation of the Solver interface.
@@ -12,5 +15,12 @@ abstract class AbstractSolver<T : AbstractCube<T>>(private val costEvaluator: Co
     @Throws(IllegalArgumentException::class)
     override fun getCost(cube: T): Int {
         return costEvaluator.getCost(cube)
+    }
+
+    /**
+     * Gets the total estimated cost of a path of past moves and a candidate node
+     */
+    internal fun totalCost(path: Path, candidate: T): Int {
+        return path.size + costEvaluator.getCost(candidate)
     }
 }

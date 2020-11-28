@@ -26,20 +26,34 @@ class SolverTest {
     @ParameterizedTest
     @MethodSource("solvers")
     fun testLengthOneSolutions(solver: Solver<Cube>) {
-        for(solution in lengthOneSolutions()) assertEquals(solver.getSolution(solution.cube), solution.path)
+        for(solution in lengthOneSolutions()) {
+            assertEquals(solver.getSolution(solution.first)[0], Twist.getReverse(solution.second))
+        }
     }
     @ParameterizedTest
     @MethodSource("solvers")
-    fun testLengthTwoSolutions(solver: Solver<Cube>) {
-        for(solution in lengthTwoSolutions()) {
-            assertTrue(solver.getSolution(solution.cube) == solution.path ||
-                       solver.getSolution(solution.cube) == solution.path.reversed())
+    fun testRandomSolutions(solver: Solver<Cube>) {
+        for(depth in 1..depthRating(solver)) {
+            generator.reset()
+            generator.setDifficulty(depth)
+            for(i in 0 until 100) {
+                var cube = generator.nextCube()
+                val solution = solver.getSolution(cube)
+                val visited = HashSet<Cube>()
+                //checks that the solution actually works, and that there's no duplicate states
+                for(twist in solution) {
+                    assertFalse(visited.contains(cube))
+                    visited.add(cube)
+                    cube = cube.twist(twist)
+                }
+                assertEquals(cube, solved())
+            }
         }
     }
     @ParameterizedTest
     @MethodSource("solvers")
     fun testConsistencyWithHeuristic(solver: Solver<Cube>) {
-        for(depth in 1 until depthRating(solver)) {
+        for(depth in 1..depthRating(solver)) {
             generator.reset()
             generator.setDifficulty(depth)
             for(i in 0 until 100) {
@@ -47,14 +61,13 @@ class SolverTest {
                 assertTrue(solver.getSolution(cube).size >= standardCostFunction().getCost(cube))
             }
         }
+        println("State count: " + ClassicalAStarSolver.stateCounter)
     }
 
     companion object {
 
         private val factory = CubeFactory()
         private val generator = CubeGenerator(factory, -483132)
-
-        private data class SolutionCase(val cube: Cube, val path: ArrayList<Twist>)
 
         /* ====================================== TEST FIXTURES ===================================================== */
 
@@ -69,27 +82,23 @@ class SolverTest {
         @JvmStatic
         /** Returns a list of solvers using an already tested CostEvaluator */
         private fun solvers(): List<Solver<Cube>> {
-            return listOf(ClassicalAStarSolver(standardCostFunction()),
-                    IterativeDeepeningAStarSolver(standardCostFunction()))
+            return listOf(ClassicalAStarSolver(standardCostFunction()))
+            /*return listOf(ClassicalAStarSolver(standardCostFunction()),
+                    IterativeDeepeningAStarSolver(standardCostFunction()))*/
         }
 
         @JvmStatic
-        private fun lengthOneSolutions(): List<SolutionCase> {
-            val solutions = ArrayList<SolutionCase>()
-            for(twist in Twist.values()) solutions.add(SolutionCase(solved().twist(twist), arrayListOf(twist)))
+        private fun lengthOneSolutions(): List<Pair<Cube, Twist>> {
+            val solutions = ArrayList<Pair<Cube, Twist>>()
+            for(twist in Twist.values()) solutions.add(Pair(solved().twist(twist), twist))
             return solutions
-        }
-
-        @JvmStatic
-        private fun lengthTwoSolutions(): List<SolutionCase> {
-            TODO()
         }
 
         /** The maximum depth of solution this solver can handle */
         @JvmStatic
         private fun depthRating(solver: Solver<Cube>): Int {
             return when(solver) {
-                is ClassicalAStarSolver -> 8
+                is ClassicalAStarSolver -> 6
                 is IterativeDeepeningAStarSolver -> 10
                 else -> 10
             }

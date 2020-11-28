@@ -66,7 +66,7 @@ class CubeGenerator<T : AbstractCube<T>> {
         //generates a random sequence of twists
         for(i in 1..solutionDepth) {
             //eliminates twists that would necessarily result in a cube that could be reached in fewer moves
-            options = getOptions(face1Previous, face2Previous)
+            options = SolverUtils.getOptions(face1Previous, face2Previous)
             //performs the twist and updates move history
             face2Previous = face1Previous
             previousMove = options[random.nextInt(options.size)]
@@ -88,27 +88,4 @@ class CubeGenerator<T : AbstractCube<T>> {
         this.difficulty = difficulty
     }
 
-    /**
-     * Returns the list of twists that could be productive.
-     * If this is the first move, branching factor is 18.
-     * If there have been two moves in a row on the same axis, branching factor is 12.
-     * Else, branching factor is 15.
-     * After the first two moves, the average branching factor will be 14.4
-     */
-    private fun getOptions(face1Previous: Twist.Face?, face2Previous: Twist.Face?): Array<Twist> {
-        //TODO: find a way to improve branching factor
-        return when {
-            (face1Previous == null) && (face2Previous == null) -> Twist.values()
-            (face2Previous == null) ->
-            Twist.values()
-                    .filter { twist -> Twist.getFace(twist) != face1Previous }
-                    .toTypedArray()
-            (face1Previous == Twist.getOppositeFace(face2Previous)) ->
-            Twist.values()
-                    .filter { twist -> Twist.getFace(twist) != face1Previous &&
-                            Twist.getFace(twist) != face2Previous }
-                    .toTypedArray()
-            else -> Twist.values()
-        }
-    }
 }
