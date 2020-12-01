@@ -8,7 +8,17 @@ import com.millibyte1.cubesearch.solver.CostEvaluator
 
 typealias Path = MutableList<Twist>
 
-data class PathWithBack(val path: Path, val back: Cube)
+data class PathWithBack(val path: Path, val back: Cube) {
+    fun size(): Int {
+        return path.size
+    }
+
+    fun add(twist: Twist): PathWithBack {
+        val newPath = path.copy()
+        newPath.add(twist)
+        return PathWithBack(newPath, back.twist(twist))
+    }
+}
 
 object SolverUtils {
 
@@ -47,4 +57,17 @@ object SolverUtils {
         for(twist in path) cube = cube.twist(twist)
         return cube
     }
+}
+
+internal fun <E> MutableList<E>.copy(): MutableList<E> {
+    val newList = ArrayList<E>()
+    for(item in this) newList.add(item)
+    return newList
+}
+
+internal fun failNotSolvable(): IllegalArgumentException {
+    return IllegalArgumentException("Error: cube is not solvable")
+}
+internal fun failCouldNotSolve(): RuntimeException {
+    return RuntimeException("Error: Could not solve cube that should be solvable")
 }

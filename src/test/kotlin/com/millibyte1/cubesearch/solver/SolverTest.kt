@@ -50,6 +50,23 @@ class SolverTest {
             }
         }
     }
+
+    @ParameterizedTest
+    @MethodSource("solvers")
+    fun testSingleDeepSolution(solver: Solver<Cube>) {
+        generator.reset()
+        generator.setDifficulty(singleRunDepthRating(solver))
+        var cube = generator.nextCube()
+        val solution = solver.getSolution(cube)
+        val visited = HashSet<Cube>()
+        //checks that the solution actually works, and that there's no duplicate states
+        for(twist in solution) {
+            assertFalse(visited.contains(cube))
+            visited.add(cube)
+            cube = cube.twist(twist)
+        }
+        assertEquals(cube, solved())
+    }
     @ParameterizedTest
     @MethodSource("solvers")
     fun testConsistencyWithHeuristic(solver: Solver<Cube>) {
@@ -82,9 +99,9 @@ class SolverTest {
         @JvmStatic
         /** Returns a list of solvers using an already tested CostEvaluator */
         private fun solvers(): List<Solver<Cube>> {
-            return listOf(ClassicalAStarSolver(standardCostFunction()))
-            /*return listOf(ClassicalAStarSolver(standardCostFunction()),
-                    IterativeDeepeningAStarSolver(standardCostFunction()))*/
+            //return listOf(IterativeDeepeningAStarSolver(standardCostFunction()))
+            return listOf(ClassicalAStarSolver(standardCostFunction()),
+                    IterativeDeepeningAStarSolver(standardCostFunction()))
         }
 
         @JvmStatic
@@ -94,13 +111,21 @@ class SolverTest {
             return solutions
         }
 
-        /** The maximum depth of solution this solver can handle */
+        /** The maximum depth of solution this solver can handle for many repeated runs */
         @JvmStatic
         private fun depthRating(solver: Solver<Cube>): Int {
             return when(solver) {
                 is ClassicalAStarSolver -> 6
-                is IterativeDeepeningAStarSolver -> 10
-                else -> 10
+                is IterativeDeepeningAStarSolver -> 6
+                else -> 6
+            }
+        }
+        @JvmStatic
+        private fun singleRunDepthRating(solver: Solver<Cube>): Int {
+            return when(solver) {
+                is ClassicalAStarSolver -> 7
+                is IterativeDeepeningAStarSolver -> 7
+                else -> 8
             }
         }
     }
