@@ -5,9 +5,6 @@ import com.millibyte1.cubesearch.cube.CubeFactory
 import com.millibyte1.cubesearch.cube.Twist
 import com.millibyte1.cubesearch.util.CubeGenerator
 
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Tag
-
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -35,7 +32,7 @@ class SolverTest {
     fun testRandomSolutions(solver: Solver<Cube>) {
         for(depth in 1..depthRating(solver)) {
             generator.reset()
-            generator.setDifficulty(depth)
+            generator.setWalkLength(depth)
             for(i in 0 until 100) {
                 var cube = generator.nextCube()
                 val solution = solver.getSolution(cube)
@@ -55,7 +52,7 @@ class SolverTest {
     @MethodSource("solvers")
     fun testSingleDeepSolution(solver: Solver<Cube>) {
         generator.reset()
-        generator.setDifficulty(singleRunDepthRating(solver))
+        generator.setWalkLength(singleRunDepthRating(solver))
         var cube = generator.nextCube()
         val solution = solver.getSolution(cube)
         val visited = HashSet<Cube>()
@@ -72,13 +69,12 @@ class SolverTest {
     fun testConsistencyWithHeuristic(solver: Solver<Cube>) {
         for(depth in 1..depthRating(solver)) {
             generator.reset()
-            generator.setDifficulty(depth)
+            generator.setWalkLength(depth)
             for(i in 0 until 100) {
                 val cube = generator.nextCube()
                 assertTrue(solver.getSolution(cube).size >= standardCostFunction().getCost(cube))
             }
         }
-        println("State count: " + ClassicalAStarSolver.stateCounter)
     }
 
     companion object {
@@ -101,7 +97,8 @@ class SolverTest {
         private fun solvers(): List<Solver<Cube>> {
             //return listOf(IterativeDeepeningAStarSolver(standardCostFunction()))
             return listOf(ClassicalAStarSolver(standardCostFunction()),
-                    IterativeDeepeningAStarSolver(standardCostFunction()))
+                          FrontierSearchSolver(standardCostFunction()),
+                          IterativeDeepeningAStarSolver(standardCostFunction()))
         }
 
         @JvmStatic
@@ -115,7 +112,8 @@ class SolverTest {
         @JvmStatic
         private fun depthRating(solver: Solver<Cube>): Int {
             return when(solver) {
-                is ClassicalAStarSolver -> 6
+                is ClassicalAStarSolver -> 5
+                is FrontierSearchSolver -> 5
                 is IterativeDeepeningAStarSolver -> 6
                 else -> 6
             }
@@ -124,8 +122,9 @@ class SolverTest {
         private fun singleRunDepthRating(solver: Solver<Cube>): Int {
             return when(solver) {
                 is ClassicalAStarSolver -> 7
+                is FrontierSearchSolver -> 7
                 is IterativeDeepeningAStarSolver -> 7
-                else -> 8
+                else -> 7
             }
         }
     }

@@ -9,9 +9,9 @@ import com.millibyte1.cubesearch.util.failNotSolvable
 
 import java.util.concurrent.PriorityBlockingQueue
 
-class ClassicalAStarSolver(costEvaluator: CostEvaluator<Cube>) : AbstractSolver<Cube>(costEvaluator) {
+/** Implements the frontier search algorithm, which is like A* but without a table of already explored nodes */
+class FrontierSearchSolver(costEvaluator: CostEvaluator<Cube>) : AbstractSolver<Cube>(costEvaluator) {
 
-    private val visited: MutableMap<Cube, Int> = HashMap()
     private val candidates: PriorityBlockingQueue<PathWithBack> = PriorityBlockingQueue(100, Comparator {
         path1: PathWithBack, path2: PathWithBack -> when {
             path1.size() + getCost(path1.back) < path2.size() + getCost(path2.back) -> -1
@@ -26,9 +26,8 @@ class ClassicalAStarSolver(costEvaluator: CostEvaluator<Cube>) : AbstractSolver<
         if(!SolvabilityUtils.isSolvable(cube)) throw failNotSolvable()
         reset()
 
-        //puts the initial cube into the candidates and visited
+        //puts the initial cube into the candidates queue
         candidates.add(PathWithBack(ArrayList(), cube))
-        visited[cube] = 0
 
         var path: PathWithBack
         var currentCube: Cube
@@ -51,13 +50,10 @@ class ClassicalAStarSolver(costEvaluator: CostEvaluator<Cube>) : AbstractSolver<
             for(twist in SolverUtils.getOptions(face1Previous, face2Previous)) {
                 nextCube = currentCube.twist(twist)
 
-                //if there's a shorter path to this cube, skip it
-                if(visited.containsKey(nextCube) && visited[nextCube]!! < path.size() + 1) continue
                 //if it's impossible for this move to produce an optimal solution, skip it
                 if(path.size() + getCost(nextCube) > MAX_DEPTH) continue
 
-                //inserts good successors into records
-                visited[nextCube] = path.size() + 1
+                //inserts good successors into candidates queue
                 candidates.add(path.add(twist))
             }
 
@@ -66,7 +62,6 @@ class ClassicalAStarSolver(costEvaluator: CostEvaluator<Cube>) : AbstractSolver<
     }
 
     private fun reset() {
-        visited.clear()
         candidates.clear()
     }
 

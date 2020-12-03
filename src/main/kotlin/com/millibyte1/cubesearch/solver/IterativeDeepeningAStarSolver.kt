@@ -40,23 +40,3 @@ class IterativeDeepeningAStarSolver(costEvaluator: CostEvaluator<Cube>) : Abstra
         return null
     }
 }
-
-/*
- * path: List<Twist>
- *
- * getSolution(cube: Cube):
- *    solution: List<Twist>?
- *    for(depthLimit in 0..20):
- *       solution = getSolution(PathWithBack(empty, cube), depthLimit)
- *       if(solution != null) return solution
- *    throw IllegalArgumentException
- *
- * getSolution(path: PathWithBack, depthLimit: Int): List<Twist>?
- *    if(isSolved(path.back)) return path.back
- *    for(twist in Twist.values):
- *       nextCube = path.back.twist(twist)
- *       if(getCost(nextCube) + path.size() <= depthLimit):
- *          solution = getSolution(path.add(twist), depthLimit)
- *          if(solution != null) return solution
- *    return null
- */

@@ -4,12 +4,8 @@ import com.millibyte1.cubesearch.cube.Cube
 import com.millibyte1.cubesearch.cube.CubeFactory
 import com.millibyte1.cubesearch.util.CubeGenerator
 
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Tag
-
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
@@ -27,7 +23,7 @@ class CostEvaluatorTest {
         var cube: Cube
         for(depth in 1..20) {
             generator.reset()
-            generator.setDifficulty(depth)
+            generator.setWalkLength(depth)
             for(i in 0 until 100) {
                 assertTrue(evaluator.getCost(generator.nextCube()) <= depth)
             }
