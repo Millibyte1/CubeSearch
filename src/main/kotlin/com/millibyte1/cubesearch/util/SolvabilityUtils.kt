@@ -169,6 +169,7 @@ object SolvabilityUtils {
                 Twist.DOWN_90, Twist.DOWN_180, Twist.DOWN_270, null)
         val solvedEdge = getSolvedCubie(edge) as EdgeCubie
 
+        //TODO: precompute this rather than recomputing every time
         //brute-forces the cubie into the correct position and checks whether it's correctly oriented
         var newEdge: EdgeCubie
         var firstCube: Cube
@@ -248,9 +249,24 @@ object SolvabilityUtils {
     }
 
     /** Determines the position of this cubie or its rotations in the provided "sorted" list of cubies */
-    private fun cubieNumber(cubie: Cubie, solved: List<Cubie>): Int {
+    internal fun cubieNumber(cubie: Cubie, solved: List<Cubie>): Int {
         for (i in solved.indices) if (solved[i].colorEquals(cubie)) return i
         return -1
+    }
+
+    /** Gets an array of the cubie numbers of each element */
+    internal fun getCubiePermutation(cubies: List<Cubie>, solved: List<Cubie>): IntArray {
+        var retval = IntArray(cubies.size)
+        for(i in cubies.indices) retval += cubieNumber(cubies[i], solved)
+        return retval
+    }
+    /** Gets an array of the cubie numbers of each corner */
+    internal fun getCornerPermutation(cube: Cube): IntArray {
+        return getCubiePermutation(StandardCubeUtils.getCorners(cube), StandardCubeUtils.getSolvedCorners())
+    }
+    /** Gets an array of the cubie numbers of each edge */
+    internal fun getEdgePermutation(cube: Cube): IntArray {
+        return getCubiePermutation(StandardCubeUtils.getEdges(cube), StandardCubeUtils.getSolvedEdges())
     }
 
     /** Gets the boolean parity of the set of corners on this cube */

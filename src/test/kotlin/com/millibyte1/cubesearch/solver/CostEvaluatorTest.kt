@@ -16,7 +16,7 @@ class CostEvaluatorTest {
     fun testZero(evaluator: CostEvaluator<Cube>) {
         assertEquals(evaluator.getCost(solved()), 0)
     }
-    /** Only actually verifies consistency if the generator perfectly estimates solution depth */
+    /** Only actually verifies consistency if the generator walk length perfectly estimates solution depth */
     @ParameterizedTest
     @MethodSource("evaluators")
     fun testConsistency(evaluator: CostEvaluator<Cube>) {
