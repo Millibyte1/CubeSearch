@@ -1,6 +1,8 @@
 package com.millibyte1.cubesearch.solver
 
 import com.millibyte1.cubesearch.cube.Cube
+import com.millibyte1.cubesearch.database.CornerPatternDatabase
+import com.millibyte1.cubesearch.database.EdgePatternDatabase
 
 import com.millibyte1.cubesearch.util.*
 
@@ -27,7 +29,8 @@ import com.millibyte1.cubesearch.util.*
 object PatternDatabaseCostEvaluator : CostEvaluator<Cube> {
 
     override fun getCost(cube: Cube): Int {
-        TODO("Not yet implemented")
+        return maxOf(CornerPatternDatabase.getCost(getCornerIndex(cube)),
+                     EdgePatternDatabase.getCost(getEdgeIndex(cube)))
     }
 
     /** Computes the corner index by separately computing the position index and orientation index */
