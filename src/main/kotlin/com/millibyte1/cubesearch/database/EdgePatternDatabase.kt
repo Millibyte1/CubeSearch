@@ -1,5 +1,7 @@
 package com.millibyte1.cubesearch.database
 
+//TODO: Probably need to split this into two pattern databases because the cardinality is too high
+//estimatedDepth = log_15(CARDINALITY)
 object EdgePatternDatabase : RedisPatternDatabase() {
 
     private const val CARDINALITY = 980995276800
