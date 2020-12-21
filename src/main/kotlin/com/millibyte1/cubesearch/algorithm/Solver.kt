@@ -1,7 +1,8 @@
-package com.millibyte1.cubesearch.solver
+package com.millibyte1.cubesearch.algorithm
 
 import com.millibyte1.cubesearch.cube.AbstractCube
 import com.millibyte1.cubesearch.cube.Twist
+import com.millibyte1.cubesearch.algorithm.heuristics.CostEvaluator
 
 /**
  * A simple interface wrapping an informed search algorithm on a Rubik's cube.

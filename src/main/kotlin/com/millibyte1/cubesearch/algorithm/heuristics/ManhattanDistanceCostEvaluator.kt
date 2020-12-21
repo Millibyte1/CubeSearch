@@ -1,4 +1,4 @@
-package com.millibyte1.cubesearch.solver
+package com.millibyte1.cubesearch.algorithm.heuristics
 
 import com.millibyte1.cubesearch.cube.Cube
 import com.millibyte1.cubesearch.cube.CubeFactory
@@ -30,17 +30,17 @@ object ManhattanDistanceCostEvaluator : CostEvaluator<Cube> {
      * @throws IllegalArgumentException if this cube is improperly stickered
      */
     @Throws(IllegalArgumentException::class)
-    override fun getCost(cube: Cube): Int {
+    override fun getCost(cube: Cube): Byte {
         return when {
             SolvabilityUtils.isCorrectlyStickered(cube) ->
-                Integer.max(
+                (Integer.max(
                         (StandardCubeUtils.getCorners(cube)
                                 .map { corner -> cubieManhattanDistances[corner] } as List<Int>)
                                 .reduce { sum, distance -> sum + distance },
                         (StandardCubeUtils.getEdges(cube)
                                 .map { edge -> cubieManhattanDistances[edge] } as List<Int>)
                                 .reduce { sum, distance -> sum + distance }
-                ) / 4
+                ) / 4).toByte()
             else -> throw failInvalidCubies()
         }
     }

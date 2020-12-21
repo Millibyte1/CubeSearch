@@ -1,7 +1,8 @@
-package com.millibyte1.cubesearch.solver
+package com.millibyte1.cubesearch.algorithm
 
 import com.millibyte1.cubesearch.cube.Cube
 import com.millibyte1.cubesearch.cube.Twist
+import com.millibyte1.cubesearch.algorithm.heuristics.CostEvaluator
 import com.millibyte1.cubesearch.util.*
 
 import com.millibyte1.cubesearch.util.StandardCubeUtils.isSolved
@@ -17,7 +18,6 @@ class IterativeDeepeningAStarSolver(costEvaluator: CostEvaluator<Cube>) : Abstra
             solution = getSolution(PathWithBack(ArrayList(), cube), depthLimit)
             if(solution != null) return solution
         }
-
         throw failCouldNotSolve()
     }
     /** Performs an informed depth first search for the solution */

@@ -1,4 +1,4 @@
-package com.millibyte1.cubesearch.solver
+package com.millibyte1.cubesearch.algorithm.heuristics
 
 import com.millibyte1.cubesearch.cube.AbstractCube
 
@@ -15,5 +15,5 @@ interface CostEvaluator<T : AbstractCube<T>> {
      * @throws IllegalArgumentException if the cost cannot be evaluated (e.g. if the cube is incorrectly stickered)
      */
     @Throws(IllegalArgumentException::class)
-    fun getCost(cube: T): Int
+    fun getCost(cube: T): Byte
 }

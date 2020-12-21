@@ -1,8 +1,7 @@
-package com.millibyte1.cubesearch.solver
+package com.millibyte1.cubesearch.algorithm
 
 import com.millibyte1.cubesearch.cube.AbstractCube
-import com.millibyte1.cubesearch.cube.Cube
-import com.millibyte1.cubesearch.cube.Twist
+import com.millibyte1.cubesearch.algorithm.heuristics.CostEvaluator
 import com.millibyte1.cubesearch.util.Path
 
 /**
@@ -13,7 +12,7 @@ import com.millibyte1.cubesearch.util.Path
  */
 abstract class AbstractSolver<T : AbstractCube<T>>(private val costEvaluator: CostEvaluator<T>) : Solver<T> {
     @Throws(IllegalArgumentException::class)
-    override fun getCost(cube: T): Int {
+    override fun getCost(cube: T): Byte {
         return costEvaluator.getCost(cube)
     }
 

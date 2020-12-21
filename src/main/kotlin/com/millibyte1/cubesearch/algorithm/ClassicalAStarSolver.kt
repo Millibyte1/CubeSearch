@@ -1,7 +1,8 @@
-package com.millibyte1.cubesearch.solver
+package com.millibyte1.cubesearch.algorithm
 
 import com.millibyte1.cubesearch.cube.Cube
 import com.millibyte1.cubesearch.cube.Twist
+import com.millibyte1.cubesearch.algorithm.heuristics.CostEvaluator
 import com.millibyte1.cubesearch.util.*
 
 import com.millibyte1.cubesearch.util.StandardCubeUtils.isSolved

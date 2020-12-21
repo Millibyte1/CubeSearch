@@ -1,8 +1,10 @@
-package com.millibyte1.cubesearch.solver
+package com.millibyte1.cubesearch.algorithm
 
 import com.millibyte1.cubesearch.cube.Cube
 import com.millibyte1.cubesearch.cube.CubeFactory
 import com.millibyte1.cubesearch.cube.Twist
+import com.millibyte1.cubesearch.algorithm.heuristics.CostEvaluator
+import com.millibyte1.cubesearch.algorithm.heuristics.ManhattanDistanceCostEvaluator
 import com.millibyte1.cubesearch.util.CubeGenerator
 
 import org.junit.jupiter.api.Assertions.assertEquals
