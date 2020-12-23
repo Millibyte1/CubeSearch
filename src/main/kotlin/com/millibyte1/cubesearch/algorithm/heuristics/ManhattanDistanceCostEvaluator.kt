@@ -7,9 +7,18 @@ import com.millibyte1.cubesearch.util.Cubie
 import com.millibyte1.cubesearch.util.SolvabilityUtils
 import com.millibyte1.cubesearch.util.StandardCubeUtils
 
-object ManhattanDistanceCostEvaluator : CostEvaluator<Cube> {
-
-    private val solved = CubeFactory().getSolvedCube()
+/**
+ * Wrapper for a "Manhattan Distance" heuristic. This heuristic is less performant than large pattern databases
+ * (it's actually equivalent 26 single-cubie pattern databases), but it takes just milliseconds to initialize,
+ * allowing it to be used to search for any given goal cube rather than just the solved cube.
+ *
+ * Pre-generates the number of moves it takes to correctly orient each possible cubie, and uses this info to quickly
+ * determine a lower bound on the number of moves it takes to get to the goal cube.
+ *
+ * @constructor Tabulates the Manhattan distances of each possible cubie from the provided goal cube.
+ * @param goal the cube we want to search for; usually the solved cube.
+ */
+class ManhattanDistanceCostEvaluator(private val goal: Cube = CubeFactory().getSolvedCube()) : CostEvaluator<Cube> {
 
     private val cubieManhattanDistances: MutableMap<Cubie, Int> = HashMap()
 
@@ -50,7 +59,7 @@ object ManhattanDistanceCostEvaluator : CostEvaluator<Cube> {
         val twists = setOf(null, *Twist.values())
         //Only 3 moves are needed to reach any possible position and orientation of a particular cubie
         for(twist1 in twists) {
-            val cube1 = if(twist1 != null) solved.twist(twist1) else solved
+            val cube1 = if(twist1 != null) goal.twist(twist1) else goal
             for(twist2 in twists) {
                 val cube2 = if(twist2 != null) cube1.twist(twist2) else cube1
                 for(twist3 in twists) {

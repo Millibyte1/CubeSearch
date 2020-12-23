@@ -41,7 +41,7 @@ class CostEvaluatorTest {
 
         @JvmStatic
         fun evaluators(): List<CostEvaluator<Cube>> {
-            return listOf(ManhattanDistanceCostEvaluator)
+            return listOf(ManhattanDistanceCostEvaluator())
         }
     }
 }

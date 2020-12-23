@@ -91,7 +91,7 @@ class SolverTest {
         }
 
         private fun standardCostFunction(): CostEvaluator<Cube> {
-            return ManhattanDistanceCostEvaluator
+            return ManhattanDistanceCostEvaluator()
         }
 
         @JvmStatic
