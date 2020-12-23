@@ -8,30 +8,35 @@ import com.millibyte1.cubesearch.util.*
 import java.util.Queue
 import java.util.ArrayDeque
 
+import redis.clients.jedis.Jedis
+
 object CornerPatternDatabase : AbstractPatternDatabase<Cube>() {
 
     internal const val CARDINALITY = 88179840
+
+    private val jedis = Jedis()
+    private val key = "cubesearch:corner-pattern-db"
 
     init {
         if(!isPopulated()) populateDatabase()
     }
 
-    override fun getCost(index: Long): Byte {
-        TODO("Not yet implemented")
+    override fun getCost(index: Int): Byte {
+        return jedis.hget(key, index.toString()).toByte()
     }
 
-    override fun getIndex(cube: Cube): Long {
+    override fun getIndex(cube: Cube): Int {
         //(maxOrientationIndex * positionIndex) + orientationIndex
         return (2187 * getCornerPositionIndex(cube)) + getCornerOrientationIndex(cube)
     }
 
     /** Checks whether or not the pattern database has been fully generated */
     internal fun isPopulated(): Boolean {
-        TODO("Not yet implemented")
+        return getPopulation() == CARDINALITY
     }
     /** Gets the number of entries in the pattern database */
     internal fun getPopulation(): Int {
-        TODO("Not yet implemented")
+        return jedis.hlen(key).toInt()
     }
     /**
      * Generates the pattern database to completion.
@@ -58,36 +63,36 @@ object CornerPatternDatabase : AbstractPatternDatabase<Cube>() {
     }
     /** Checks whether this configuration is already in the pattern database */
     private fun databaseContains(cube: Cube): Boolean {
-        TODO("Not yet implemented")
+        return jedis.hexists(key, getIndex(cube).toString())
     }
     /** Adds the cost to the pattern database */
     private fun addCost(cube: Cube, cost: Byte) {
-        TODO("Not yet implemented")
+        jedis.hset(key, getIndex(cube).toString(), cost.toString())
     }
 
     /** Gets the Lehmer code of the corner permutation of this cube and converts it to base 10 */
-    private fun getCornerPositionIndex(cube: Cube): Long {
+    private fun getCornerPositionIndex(cube: Cube): Int {
         val lehmer = PatternDatabaseUtils.getLehmerCode(SolvabilityUtils.getCornerPermutation(cube))
         //multiplies the value at each index by its factoradic base
-        return (lehmer[0] * 5040).toLong() +
-                (lehmer[1] * 720).toLong() +
-                (lehmer[2] * 120).toLong() +
-                (lehmer[3] * 24).toLong() +
-                (lehmer[4] * 6).toLong() +
-                (lehmer[5] * 2).toLong() +
-                (lehmer[6]).toLong()
+        return lehmer[0] * 5040 +
+               lehmer[1] * 720 +
+               lehmer[2] * 120 +
+               lehmer[3] * 24 +
+               lehmer[4] * 6 +
+               lehmer[5] * 2 +
+               lehmer[6]
     }
     /** Computes the corner orientation index by converting the orientation string to a base 10 number */
-    private fun getCornerOrientationIndex(cube: Cube): Long {
+    private fun getCornerOrientationIndex(cube: Cube): Int {
         val orientations = getCornerOrientationSequence(cube)
         //ignores orientations[7] since there are only 7 degrees of choice
-        return (orientations[0] * 729).toLong() +
-                (orientations[1] * 243).toLong() +
-                (orientations[2] * 81).toLong() +
-                (orientations[3] * 27).toLong() +
-                (orientations[4] * 9).toLong() +
-                (orientations[5] * 3).toLong() +
-                (orientations[6]).toLong()
+        return orientations[0] * 729 +
+               orientations[1] * 243 +
+               orientations[2] * 81 +
+               orientations[3] * 27 +
+               orientations[4] * 9 +
+               orientations[5] * 3 +
+               orientations[6]
     }
     /** Encodes the orientations of this cube's corners as a sequence of integers */
     private fun getCornerOrientationSequence(cube: Cube): IntArray {

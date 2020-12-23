@@ -24,7 +24,7 @@ abstract class AbstractPatternDatabase<T : AbstractCube<T>> : CostEvaluator<T> {
      * @param  index the index of the cube in question
      * @return a lower bound on the number of moves it might take to solve a cube with this index
      */
-    abstract fun getCost(index: Long): Byte
+    abstract fun getCost(index: Int): Byte
     /**
      * Gets the index of this cube in the pattern database.
      * Produces an integer representation of the configuration of the appropriate subsection of this cube to use
@@ -32,5 +32,5 @@ abstract class AbstractPatternDatabase<T : AbstractCube<T>> : CostEvaluator<T> {
      * @param cube the cube in question
      * @return the index of this cube in the pattern database.
      */
-    abstract fun getIndex(cube: T): Long
+    abstract fun getIndex(cube: T): Int
 }

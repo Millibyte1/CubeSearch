@@ -23,7 +23,7 @@ class CornerPatternDatabaseTest {
     }
     @Test
     fun testSingleMoveCubeCosts() {
-        for(twist in Twist.values()) assertEquals(CornerPatternDatabase.getCost(solved().twist(twist)), 0)
+        for(twist in Twist.values()) assertEquals(CornerPatternDatabase.getCost(solved().twist(twist)), 1)
     }
     @Test
     fun testRandomCubeCosts() {
@@ -39,6 +39,7 @@ class CornerPatternDatabaseTest {
     }
     @Test
     fun testDatabaseSize() {
+        val foo = CornerPatternDatabase.getPopulation()
         assertEquals(CornerPatternDatabase.getPopulation(), CornerPatternDatabase.CARDINALITY)
     }
 }
