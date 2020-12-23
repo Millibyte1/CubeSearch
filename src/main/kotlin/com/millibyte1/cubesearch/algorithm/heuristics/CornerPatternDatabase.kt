@@ -1,14 +1,20 @@
 package com.millibyte1.cubesearch.algorithm.heuristics
 
 import com.millibyte1.cubesearch.cube.Cube
-import com.millibyte1.cubesearch.util.CornerCubie
-import com.millibyte1.cubesearch.util.PatternDatabaseUtils
-import com.millibyte1.cubesearch.util.SolvabilityUtils
-import com.millibyte1.cubesearch.util.StandardCubeUtils
+import com.millibyte1.cubesearch.cube.CubeFactory
+import com.millibyte1.cubesearch.cube.Twist
+import com.millibyte1.cubesearch.util.*
+
+import java.util.Queue
+import java.util.ArrayDeque
 
 object CornerPatternDatabase : AbstractPatternDatabase<Cube>() {
 
-    private const val CARDINALITY = 88179840
+    internal const val CARDINALITY = 88179840
+
+    init {
+        if(!isPopulated()) populateDatabase()
+    }
 
     override fun getCost(index: Long): Byte {
         TODO("Not yet implemented")
@@ -19,12 +25,43 @@ object CornerPatternDatabase : AbstractPatternDatabase<Cube>() {
         return (2187 * getCornerPositionIndex(cube)) + getCornerOrientationIndex(cube)
     }
 
+    /** Checks whether or not the pattern database has been fully generated */
     internal fun isPopulated(): Boolean {
         TODO("Not yet implemented")
     }
-
-    //should only require a partial BFS w/o heuristic pruning to depth 10 to generate all possible corner configurations
+    /** Gets the number of entries in the pattern database */
+    internal fun getPopulation(): Int {
+        TODO("Not yet implemented")
+    }
+    /**
+     * Generates the pattern database to completion.
+     * Should only require a partial BFS w/o heuristic pruning to depth 10 to generate all possible corner configurations.
+     */
     private fun populateDatabase() {
+        //constructs the queue for the BFS and enqueues the solved cube
+        val queue: Queue<PathWithBack> = ArrayDeque()
+        queue.add(PathWithBack(ArrayList(), CubeFactory().getSolvedCube()))
+        //generates every possible corner configuration via a breadth-first traversal
+        while(queue.isNotEmpty()) {
+            //dequeues and inserts the cost into the pattern database
+            val current = queue.remove()
+            addCost(current.back, current.size().toByte())
+            //uses a 2-move history to prune some twists resulting in cubes that can be generated in fewer moves
+            val face1Previous = if(current.size() >= 1) Twist.getFace(current.path[current.size() - 1]) else null
+            val face2Previous = if(current.size() >= 2) Twist.getFace(current.path[current.size() - 2]) else null
+            //tries to expand off of each potentially viable twist
+            for(twist in SolverUtils.getOptions(face1Previous, face2Previous)) {
+                val nextCube = current.back.twist(twist)
+                if(!databaseContains(nextCube)) queue.add(current.add(twist))
+            }
+        }
+    }
+    /** Checks whether this configuration is already in the pattern database */
+    private fun databaseContains(cube: Cube): Boolean {
+        TODO("Not yet implemented")
+    }
+    /** Adds the cost to the pattern database */
+    private fun addCost(cube: Cube, cost: Byte) {
         TODO("Not yet implemented")
     }
 

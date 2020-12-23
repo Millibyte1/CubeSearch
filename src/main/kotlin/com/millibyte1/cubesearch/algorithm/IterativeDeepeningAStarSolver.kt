@@ -3,8 +3,8 @@ package com.millibyte1.cubesearch.algorithm
 import com.millibyte1.cubesearch.cube.Cube
 import com.millibyte1.cubesearch.cube.Twist
 import com.millibyte1.cubesearch.algorithm.heuristics.CostEvaluator
-import com.millibyte1.cubesearch.util.*
 
+import com.millibyte1.cubesearch.util.*
 import com.millibyte1.cubesearch.util.StandardCubeUtils.isSolved
 import com.millibyte1.cubesearch.util.failNotSolvable
 
@@ -25,10 +25,10 @@ class IterativeDeepeningAStarSolver(costEvaluator: CostEvaluator<Cube>) : Abstra
        if(isSolved(path.back)) return path.path
         var nextCube: Cube
         var solution: Path?
-
+        //uses a 2-move history to prune some twists that aren't viable and create an "options" list
         val face1Previous = if(path.size() >= 1) Twist.getFace(path.path[path.size() - 1]) else null
         val face2Previous = if(path.size() >= 2) Twist.getFace(path.path[path.size() - 2]) else null
-        //checks for solutions from taking each potentially effective move
+        //searches for solutions by taking each potentially viable move
         for(twist in SolverUtils.getOptions(face1Previous, face2Previous)) {
             nextCube = path.back.twist(twist)
             //if it's possible for this move to produce a solution below the depth limit, try it

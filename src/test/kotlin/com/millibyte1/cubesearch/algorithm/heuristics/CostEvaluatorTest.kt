@@ -1,9 +1,7 @@
-package com.millibyte1.cubesearch.algorithm
+package com.millibyte1.cubesearch.algorithm.heuristics
 
 import com.millibyte1.cubesearch.cube.Cube
 import com.millibyte1.cubesearch.cube.CubeFactory
-import com.millibyte1.cubesearch.algorithm.heuristics.CostEvaluator
-import com.millibyte1.cubesearch.algorithm.heuristics.ManhattanDistanceCostEvaluator
 import com.millibyte1.cubesearch.util.CubeGenerator
 
 import org.junit.jupiter.api.Assertions.assertEquals
