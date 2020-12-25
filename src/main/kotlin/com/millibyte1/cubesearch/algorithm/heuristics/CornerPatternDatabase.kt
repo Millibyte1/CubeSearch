@@ -1,7 +1,7 @@
 package com.millibyte1.cubesearch.algorithm.heuristics
 
-import com.millibyte1.cubesearch.cube.Cube
-import com.millibyte1.cubesearch.cube.CubeFactory
+import com.millibyte1.cubesearch.cube.ArrayCube
+import com.millibyte1.cubesearch.cube.ArrayCubeFactory
 import com.millibyte1.cubesearch.cube.Twist
 import com.millibyte1.cubesearch.util.*
 
@@ -10,7 +10,7 @@ import java.util.ArrayDeque
 
 import redis.clients.jedis.Jedis
 
-object CornerPatternDatabase : AbstractPatternDatabase<Cube>() {
+object CornerPatternDatabase : AbstractPatternDatabase<ArrayCube>() {
 
     internal const val CARDINALITY = 88179840
     internal const val ORIENTATION_CARDINALITY = 2187
@@ -40,7 +40,7 @@ object CornerPatternDatabase : AbstractPatternDatabase<Cube>() {
         //return tempDatabase[index]
     }
 
-    override fun getIndex(cube: Cube): Int {
+    override fun getIndex(cube: ArrayCube): Int {
         //(maxOrientationIndex * positionIndex) + orientationIndex
         return (2187 * getCornerPositionIndex(cube)) + getCornerOrientationIndex(cube)
     }
@@ -69,7 +69,7 @@ object CornerPatternDatabase : AbstractPatternDatabase<Cube>() {
     private fun populateDatabase() {
         //constructs the queue for the BFS and enqueues the solved cube
         val queue: Queue<PathWithBack> = ArrayDeque()
-        queue.add(PathWithBack(ArrayList(), CubeFactory().getSolvedCube()))
+        queue.add(PathWithBack(ArrayList(), ArrayCubeFactory().getSolvedCube()))
         //generates every possible corner configuration via a breadth-first traversal
         while(queue.isNotEmpty()) {
             //dequeues and inserts the cost into the pattern database
@@ -85,18 +85,18 @@ object CornerPatternDatabase : AbstractPatternDatabase<Cube>() {
             }
         }
     }
-    private fun queueContains(queue: Queue<PathWithBack>, cube: Cube): Boolean {
+    private fun queueContains(queue: Queue<PathWithBack>, cube: ArrayCube): Boolean {
         return queue.any { path -> path.back == cube }
     }
     /** Checks whether this configuration is already in the pattern database */
-    private fun databaseContains(cube: Cube): Boolean {
+    private fun databaseContains(cube: ArrayCube): Boolean {
         return jedis.hexists(key, getIndex(cube).toString())
         //return tempDatabase[getIndex(cube)].toInt() != -1
         //return jedis.hexists(orientationKey, getCornerOrientationIndex(cube).toString()) &&
         //       jedis.hexists(positionKey, getCornerPositionIndex(cube).toString())
     }
     /** Adds the cost to the pattern database */
-    private fun addCost(cube: Cube, cost: Byte) {
+    private fun addCost(cube: ArrayCube, cost: Byte) {
         jedis.hset(key, getIndex(cube).toString(), cost.toString())
         //jedis.hsetnx(orientationKey, getCornerOrientationIndex(cube).toString(), cost.toString())
         //jedis.hsetnx(positionKey, getCornerPositionIndex(cube).toString(), cost.toString())
@@ -110,7 +110,7 @@ object CornerPatternDatabase : AbstractPatternDatabase<Cube>() {
     }
 
     /** Gets the Lehmer code of the corner permutation of this cube and converts it to base 10 */
-    private fun getCornerPositionIndex(cube: Cube): Int {
+    private fun getCornerPositionIndex(cube: ArrayCube): Int {
         //val permutation = SolvabilityUtils.getCornerPermutation(cube)
         //val lehmer = PatternDatabaseUtils.getLehmerCode(permutation)
         val lehmer = PatternDatabaseUtils.getLehmerCode(SolvabilityUtils.getCornerPermutation(cube))
@@ -124,7 +124,7 @@ object CornerPatternDatabase : AbstractPatternDatabase<Cube>() {
                lehmer[6]
     }
     /** Computes the corner orientation index by converting the orientation string to a base 10 number */
-    private fun getCornerOrientationIndex(cube: Cube): Int {
+    private fun getCornerOrientationIndex(cube: ArrayCube): Int {
         val orientations = getCornerOrientationSequence(cube)
         //ignores orientations[7] since there are only 7 degrees of choice
         return orientations[0] * 729 +
@@ -136,7 +136,7 @@ object CornerPatternDatabase : AbstractPatternDatabase<Cube>() {
                orientations[6]
     }
     /** Encodes the orientations of this cube's corners as a sequence of integers */
-    private fun getCornerOrientationSequence(cube: Cube): IntArray {
+    private fun getCornerOrientationSequence(cube: ArrayCube): IntArray {
         val solvedCorners = StandardCubeUtils.getSolvedCorners()
         val orientations = IntArray(8)
         var corner: CornerCubie

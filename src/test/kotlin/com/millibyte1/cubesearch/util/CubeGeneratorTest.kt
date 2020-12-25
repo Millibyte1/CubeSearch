@@ -1,7 +1,7 @@
 package com.millibyte1.cubesearch.util
 
-import com.millibyte1.cubesearch.cube.Cube
-import com.millibyte1.cubesearch.cube.CubeFactory
+import com.millibyte1.cubesearch.cube.ArrayCube
+import com.millibyte1.cubesearch.cube.ArrayCubeFactory
 
 import org.junit.jupiter.api.Test
 
@@ -9,17 +9,17 @@ import org.junit.jupiter.api.Assertions.*
 
 class CubeGeneratorTest {
 
-    private val factory = CubeFactory()
+    private val factory = ArrayCubeFactory()
 
     //test fixtures
-    private fun simpleGenerator(): CubeGenerator<Cube> {
-        return CubeGenerator<Cube>(factory, 0, 2)
+    private fun simpleGenerator(): CubeGenerator<ArrayCube> {
+        return CubeGenerator<ArrayCube>(factory, 0, 2)
     }
-    private fun simpleGenerator2() : CubeGenerator<Cube> {
-        return CubeGenerator<Cube>(factory, 1, 2)
+    private fun simpleGenerator2() : CubeGenerator<ArrayCube> {
+        return CubeGenerator<ArrayCube>(factory, 1, 2)
     }
-    private fun oneMoveGenerator() : CubeGenerator<Cube> {
-        return CubeGenerator<Cube>(factory, 0, 0)
+    private fun oneMoveGenerator() : CubeGenerator<ArrayCube> {
+        return CubeGenerator<ArrayCube>(factory, 0, 0)
     }
 
     @Test

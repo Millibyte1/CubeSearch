@@ -12,10 +12,10 @@ import org.junit.jupiter.api.Assertions.assertFalse
  */
 class CubeTest {
 
-    private val factory = CubeFactory()
+    private val factory = ArrayCubeFactory()
 
     //test fixtures
-    private fun solved(): Cube {
+    private fun solved(): ArrayCube {
         return factory.getSolvedCube()
     }
     private fun solvedData(): Array<IntArray> {
@@ -256,9 +256,9 @@ class CubeTest {
     fun frontTwists() {
         //sets up and tests initial turns
         val start = solved()
-        var clone1: Cube = factory.getCube(start)
-        var clone2: Cube = factory.getCube(start)
-        var clone3: Cube = factory.getCube(start)
+        var clone1: ArrayCube = factory.getCube(start)
+        var clone2: ArrayCube = factory.getCube(start)
+        var clone3: ArrayCube = factory.getCube(start)
 
         clone1 = clone1.twist(Twist.FRONT_90)
         clone2 = clone2.twist(Twist.FRONT_180)
@@ -303,9 +303,9 @@ class CubeTest {
     fun backTwists() {
         //sets up and tests initial turns
         val start = solved()
-        var clone1: Cube = factory.getCube(start)
-        var clone2: Cube = factory.getCube(start)
-        var clone3: Cube = factory.getCube(start)
+        var clone1: ArrayCube = factory.getCube(start)
+        var clone2: ArrayCube = factory.getCube(start)
+        var clone3: ArrayCube = factory.getCube(start)
 
         clone1 = clone1.twist(Twist.BACK_90)
         clone2 = clone2.twist(Twist.BACK_180)
@@ -348,9 +348,9 @@ class CubeTest {
     fun leftTwists() {
         //sets up and tests initial turns
         val start = solved()
-        var clone1: Cube = factory.getCube(start)
-        var clone2: Cube = factory.getCube(start)
-        var clone3: Cube = factory.getCube(start)
+        var clone1: ArrayCube = factory.getCube(start)
+        var clone2: ArrayCube = factory.getCube(start)
+        var clone3: ArrayCube = factory.getCube(start)
 
         clone1 = clone1.twist(Twist.LEFT_90)
         clone2 = clone2.twist(Twist.LEFT_180)
@@ -393,9 +393,9 @@ class CubeTest {
     fun rightTwists() {
         //sets up and tests initial turns
         val start = solved()
-        var clone1: Cube = factory.getCube(start)
-        var clone2: Cube = factory.getCube(start)
-        var clone3: Cube = factory.getCube(start)
+        var clone1: ArrayCube = factory.getCube(start)
+        var clone2: ArrayCube = factory.getCube(start)
+        var clone3: ArrayCube = factory.getCube(start)
 
         clone1 = clone1.twist(Twist.RIGHT_90)
         clone2 = clone2.twist(Twist.RIGHT_180)
@@ -438,9 +438,9 @@ class CubeTest {
     fun upTwists() {
         //sets up and tests initial turns
         val start = solved()
-        var clone1: Cube = factory.getCube(start)
-        var clone2: Cube = factory.getCube(start)
-        var clone3: Cube = factory.getCube(start)
+        var clone1: ArrayCube = factory.getCube(start)
+        var clone2: ArrayCube = factory.getCube(start)
+        var clone3: ArrayCube = factory.getCube(start)
 
         clone1 = clone1.twist(Twist.UP_90)
         clone2 = clone2.twist(Twist.UP_180)
@@ -483,9 +483,9 @@ class CubeTest {
     fun downTwists() {
         //sets up and tests initial turns
         val start = solved()
-        var clone1: Cube = factory.getCube(start)
-        var clone2: Cube = factory.getCube(start)
-        var clone3: Cube = factory.getCube(start)
+        var clone1: ArrayCube = factory.getCube(start)
+        var clone2: ArrayCube = factory.getCube(start)
+        var clone3: ArrayCube = factory.getCube(start)
 
         clone1 = clone1.twist(Twist.DOWN_90)
         clone2 = clone2.twist(Twist.DOWN_180)
@@ -522,5 +522,28 @@ class CubeTest {
         clone1 = start.twist(Twist.DOWN_90)
         clone2 = factory.getCube(downData())
         assertEquals(clone1, clone2)
+    }
+
+    @Test
+    @Tag("CubeSimulationTest")
+    fun stressTestImmutableTwists() {
+        var cube = solved()
+        //performs 18 million twists using the copying twist implementation
+        for(i in 0 until 1000000) {
+            for(twist in Twist.values()) {
+                cube = cube.twist(twist)
+            }
+        }
+    }
+    @Test
+    @Tag("CubeSimulationTest")
+    fun stressTestMutableTwists() {
+        var cube = solved()
+        //performs 18 million twists using the no-copy twist implementation
+        for(i in 0 until 1000000) {
+            for(twist in Twist.values()) {
+                cube = cube.twistNoCopy(twist)
+            }
+        }
     }
 }

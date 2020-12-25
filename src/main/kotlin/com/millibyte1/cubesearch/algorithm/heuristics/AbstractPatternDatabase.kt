@@ -1,6 +1,6 @@
 package com.millibyte1.cubesearch.algorithm.heuristics
 
-import com.millibyte1.cubesearch.cube.AbstractCube
+import com.millibyte1.cubesearch.cube.AbstractStandardCube
 
 /*
  * For a cube with a solvable corner configuration and/or edge configuration, there are:
@@ -69,7 +69,7 @@ import com.millibyte1.cubesearch.cube.AbstractCube
  * of the pattern database, this can yield much better values for the heuristic while still allowing fast lookup.
  * @param T the type of cube this pattern database handles
  */
-abstract class AbstractPatternDatabase<T : AbstractCube<T>> : CostEvaluator<T> {
+abstract class AbstractPatternDatabase<T : AbstractStandardCube<T>> : CostEvaluator<T> {
     /**
      * Gets the cost of this cube as stored in the pattern database.
      * Gets the number of moves it takes to solve the most easily solved cube with this configuration of some subset of cubies.

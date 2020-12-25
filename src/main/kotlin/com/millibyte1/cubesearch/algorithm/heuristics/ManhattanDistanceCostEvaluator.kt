@@ -1,7 +1,7 @@
 package com.millibyte1.cubesearch.algorithm.heuristics
 
-import com.millibyte1.cubesearch.cube.Cube
-import com.millibyte1.cubesearch.cube.CubeFactory
+import com.millibyte1.cubesearch.cube.ArrayCube
+import com.millibyte1.cubesearch.cube.ArrayCubeFactory
 import com.millibyte1.cubesearch.cube.Twist
 import com.millibyte1.cubesearch.util.Cubie
 import com.millibyte1.cubesearch.util.SolvabilityUtils
@@ -18,7 +18,7 @@ import com.millibyte1.cubesearch.util.StandardCubeUtils
  * @constructor Tabulates the Manhattan distances of each possible cubie from the provided goal cube.
  * @param goal the cube we want to search for; usually the solved cube.
  */
-class ManhattanDistanceCostEvaluator(private val goal: Cube = CubeFactory().getSolvedCube()) : CostEvaluator<Cube> {
+class ManhattanDistanceCostEvaluator(private val goal: ArrayCube = ArrayCubeFactory().getSolvedCube()) : CostEvaluator<ArrayCube> {
 
     private val cubieManhattanDistances: MutableMap<Cubie, Int> = HashMap()
 
@@ -39,7 +39,7 @@ class ManhattanDistanceCostEvaluator(private val goal: Cube = CubeFactory().getS
      * @throws IllegalArgumentException if this cube is improperly stickered
      */
     @Throws(IllegalArgumentException::class)
-    override fun getCost(cube: Cube): Byte {
+    override fun getCost(cube: ArrayCube): Byte {
         return when {
             SolvabilityUtils.isCorrectlyStickered(cube) ->
                 (Integer.max(

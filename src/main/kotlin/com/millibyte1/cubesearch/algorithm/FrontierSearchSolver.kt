@@ -1,6 +1,6 @@
 package com.millibyte1.cubesearch.algorithm
 
-import com.millibyte1.cubesearch.cube.Cube
+import com.millibyte1.cubesearch.cube.ArrayCube
 import com.millibyte1.cubesearch.cube.Twist
 import com.millibyte1.cubesearch.algorithm.heuristics.CostEvaluator
 import com.millibyte1.cubesearch.util.*
@@ -11,7 +11,7 @@ import com.millibyte1.cubesearch.util.failNotSolvable
 import java.util.concurrent.PriorityBlockingQueue
 
 /** Implements the frontier search algorithm, which is like A* but without a table of already explored nodes */
-class FrontierSearchSolver(costEvaluator: CostEvaluator<Cube>) : AbstractSolver<Cube>(costEvaluator) {
+class FrontierSearchSolver(costEvaluator: CostEvaluator<ArrayCube>) : AbstractSolver<ArrayCube>(costEvaluator) {
 
     private val candidates: PriorityBlockingQueue<PathWithBack> = PriorityBlockingQueue(100, Comparator {
         path1: PathWithBack, path2: PathWithBack -> when {
@@ -23,7 +23,7 @@ class FrontierSearchSolver(costEvaluator: CostEvaluator<Cube>) : AbstractSolver<
 
     @Synchronized
     @Throws(IllegalArgumentException::class)
-    override fun getSolution(cube: Cube): Path {
+    override fun getSolution(cube: ArrayCube): Path {
         if(!SolvabilityUtils.isSolvable(cube)) throw failNotSolvable()
         reset()
 
@@ -31,8 +31,8 @@ class FrontierSearchSolver(costEvaluator: CostEvaluator<Cube>) : AbstractSolver<
         candidates.add(PathWithBack(ArrayList(), cube))
 
         var path: PathWithBack
-        var currentCube: Cube
-        var nextCube: Cube
+        var currentCube: ArrayCube
+        var nextCube: ArrayCube
 
         var face1Previous: Twist.Face?
         var face2Previous: Twist.Face?

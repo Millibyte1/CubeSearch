@@ -1,6 +1,6 @@
 package com.millibyte1.cubesearch.algorithm
 
-import com.millibyte1.cubesearch.cube.Cube
+import com.millibyte1.cubesearch.cube.ArrayCube
 import com.millibyte1.cubesearch.cube.Twist
 import com.millibyte1.cubesearch.algorithm.heuristics.CostEvaluator
 
@@ -8,9 +8,9 @@ import com.millibyte1.cubesearch.util.*
 import com.millibyte1.cubesearch.util.StandardCubeUtils.isSolved
 import com.millibyte1.cubesearch.util.failNotSolvable
 
-class IterativeDeepeningAStarSolver(costEvaluator: CostEvaluator<Cube>) : AbstractSolver<Cube>(costEvaluator) {
+class IterativeDeepeningAStarSolver(costEvaluator: CostEvaluator<ArrayCube>) : AbstractSolver<ArrayCube>(costEvaluator) {
     @Throws(IllegalArgumentException::class)
-    override fun getSolution(cube: Cube): Path {
+    override fun getSolution(cube: ArrayCube): Path {
         if(!SolvabilityUtils.isSolvable(cube)) throw failNotSolvable()
         var solution: Path?
         //searches for solutions with an iteratively deepening depth limit up to God's number
@@ -23,7 +23,7 @@ class IterativeDeepeningAStarSolver(costEvaluator: CostEvaluator<Cube>) : Abstra
     /** Performs an informed depth first search for the solution */
     private fun getSolution(path: PathWithBack, depthLimit: Int): Path? {
        if(isSolved(path.back)) return path.path
-        var nextCube: Cube
+        var nextCube: ArrayCube
         var solution: Path?
         //uses a 2-move history to prune some twists that aren't viable and create an "options" list
         val face1Previous = if(path.size() >= 1) Twist.getFace(path.path[path.size() - 1]) else null

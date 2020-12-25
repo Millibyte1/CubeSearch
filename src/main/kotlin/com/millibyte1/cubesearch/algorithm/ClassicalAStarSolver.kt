@@ -1,6 +1,6 @@
 package com.millibyte1.cubesearch.algorithm
 
-import com.millibyte1.cubesearch.cube.Cube
+import com.millibyte1.cubesearch.cube.ArrayCube
 import com.millibyte1.cubesearch.cube.Twist
 import com.millibyte1.cubesearch.algorithm.heuristics.CostEvaluator
 import com.millibyte1.cubesearch.util.*
@@ -10,9 +10,9 @@ import com.millibyte1.cubesearch.util.failNotSolvable
 
 import java.util.concurrent.PriorityBlockingQueue
 
-class ClassicalAStarSolver(costEvaluator: CostEvaluator<Cube>) : AbstractSolver<Cube>(costEvaluator) {
+class ClassicalAStarSolver(costEvaluator: CostEvaluator<ArrayCube>) : AbstractSolver<ArrayCube>(costEvaluator) {
 
-    private val visited: MutableMap<Cube, Int> = HashMap()
+    private val visited: MutableMap<ArrayCube, Int> = HashMap()
     private val candidates: PriorityBlockingQueue<PathWithBack> = PriorityBlockingQueue(100, Comparator {
         path1: PathWithBack, path2: PathWithBack -> when {
             path1.size() + getCost(path1.back) < path2.size() + getCost(path2.back) -> -1
@@ -23,7 +23,7 @@ class ClassicalAStarSolver(costEvaluator: CostEvaluator<Cube>) : AbstractSolver<
 
     @Synchronized
     @Throws(IllegalArgumentException::class)
-    override fun getSolution(cube: Cube): Path {
+    override fun getSolution(cube: ArrayCube): Path {
         if(!SolvabilityUtils.isSolvable(cube)) throw failNotSolvable()
         reset()
 
@@ -32,8 +32,8 @@ class ClassicalAStarSolver(costEvaluator: CostEvaluator<Cube>) : AbstractSolver<
         visited[cube] = 0
 
         var path: PathWithBack
-        var currentCube: Cube
-        var nextCube: Cube
+        var currentCube: ArrayCube
+        var nextCube: ArrayCube
 
         var face1Previous: Twist.Face?
         var face2Previous: Twist.Face?

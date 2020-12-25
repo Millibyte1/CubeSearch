@@ -1,7 +1,7 @@
 package com.millibyte1.cubesearch.algorithm.heuristics
 
-import com.millibyte1.cubesearch.cube.Cube
-import com.millibyte1.cubesearch.cube.CubeFactory
+import com.millibyte1.cubesearch.cube.ArrayCube
+import com.millibyte1.cubesearch.cube.ArrayCubeFactory
 import com.millibyte1.cubesearch.cube.Twist
 import com.millibyte1.cubesearch.util.CubeGenerator
 
@@ -11,9 +11,9 @@ import kotlin.test.assertTrue
 
 class CornerPatternDatabaseTest {
 
-    private val factory = CubeFactory()
+    private val factory = ArrayCubeFactory()
 
-    private fun solved(): Cube {
+    private fun solved(): ArrayCube {
         return factory.getSolvedCube()
     }
 

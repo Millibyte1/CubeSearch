@@ -1,6 +1,6 @@
 package com.millibyte1.cubesearch.util
 
-import com.millibyte1.cubesearch.cube.Cube
+import com.millibyte1.cubesearch.cube.ArrayCube
 import com.millibyte1.cubesearch.cube.Twist
 import com.millibyte1.cubesearch.cube.Twist.Face
 
@@ -33,7 +33,7 @@ object SolvabilityUtils {
      * @param cube the cube in question
      * @return whether the cube can be solvable or not
      */
-    fun isSolvable(cube: Cube): Boolean {
+    fun isSolvable(cube: ArrayCube): Boolean {
         return isCorrectlyStickered(cube) && passesParityTests(cube)
     }
 
@@ -42,7 +42,7 @@ object SolvabilityUtils {
      * @param cube the cube in question
      * @return whether every cubie on a standard rubik's cube is accounted for and the centers are in the right places
      */
-    fun isCorrectlyStickered(cube: Cube): Boolean {
+    fun isCorrectlyStickered(cube: ArrayCube): Boolean {
         return centersAreCorrectlyPlaced(cube) && containsAllRealCubies(cube)
     }
 
@@ -51,13 +51,13 @@ object SolvabilityUtils {
      * @param cube the cube in question
      * @return whether all center cubies are in the correct positions
      */
-    fun centersAreCorrectlyPlaced(cube: Cube): Boolean {
+    fun centersAreCorrectlyPlaced(cube: ArrayCube): Boolean {
         val centers = getCenters(cube)
         return getSolvedCenters().all { solved -> centers.any { unsolved -> unsolved == solved } }
     }
 
     /** Checks whether this cube contains all of the pieces present on a standard Rubik's cube */
-    fun containsAllRealCubies(cube: Cube): Boolean {
+    fun containsAllRealCubies(cube: ArrayCube): Boolean {
         val cubies = getCubies(cube)
         return getSolvedCubies().all { solved -> cubies.any { unsolved -> unsolved.colorEquals(solved) } }
     }
@@ -67,7 +67,7 @@ object SolvabilityUtils {
      * @param cube the cube in question
      * @return whether the cube passes all parity tests
      */
-    fun passesParityTests(cube: Cube): Boolean {
+    fun passesParityTests(cube: ArrayCube): Boolean {
         return (passesPermutationParityTest(cube) &&
                 passesCornerParityTest(cube) &&
                 passesEdgeParityTest(cube))
@@ -83,7 +83,7 @@ object SolvabilityUtils {
      * @param cube the cube in question
      * @return whether the corners and edges can all be solved at the same time
      */
-    fun passesPermutationParityTest(cube: Cube): Boolean {
+    fun passesPermutationParityTest(cube: ArrayCube): Boolean {
         return (getCornerPermutationParity(cube) == getEdgePermutationParity(cube))
     }
 
@@ -96,7 +96,7 @@ object SolvabilityUtils {
      * @param cube the cube in question
      * @return whether all the corners of this cube are solvable
      */
-    fun passesCornerParityTest(cube: Cube): Boolean {
+    fun passesCornerParityTest(cube: ArrayCube): Boolean {
         var orientationSum = 0
         for (cubie in getCorners(cube)) {
             val orientation = getCornerOrientation(cubie)
@@ -114,7 +114,7 @@ object SolvabilityUtils {
      * @param cube the cube in question
      * @return whether all the edges of this cube are solvable
      */
-    fun passesEdgeParityTest(cube: Cube): Boolean {
+    fun passesEdgeParityTest(cube: ArrayCube): Boolean {
         var orientationSum = 0
         for (cubie in getEdges(cube)) orientationSum += getEdgeOrientation(cubie, cube)
         return (orientationSum % 2 == 0)
@@ -161,7 +161,7 @@ object SolvabilityUtils {
     }
 
     /** Gets the orientation value of this cubie */
-    internal fun getEdgeOrientation(edge: EdgeCubie, cube: Cube): Int {
+    internal fun getEdgeOrientation(edge: EdgeCubie, cube: ArrayCube): Int {
         //Generates the sets of moves we can use that won't flip the orientation of the cubie (no front/back twists)
         val xTwists = arrayListOf(Twist.LEFT_90, Twist.LEFT_180, Twist.LEFT_270,
                 Twist.RIGHT_90, Twist.RIGHT_180, Twist.RIGHT_270, null)
@@ -172,9 +172,9 @@ object SolvabilityUtils {
         //TODO: precompute this rather than recomputing every time
         //brute-forces the cubie into the correct position and checks whether it's correctly oriented
         var newEdge: EdgeCubie
-        var firstCube: Cube
-        var secondCube: Cube
-        var thirdCube: Cube
+        var firstCube: ArrayCube
+        var secondCube: ArrayCube
+        var thirdCube: ArrayCube
         for (twist1 in xTwists) {
             firstCube = if (twist1 != null) cube.twist(twist1) else cube
             for (twist2 in yTwists) {
@@ -256,21 +256,21 @@ object SolvabilityUtils {
 
     /** Gets an array of the cubie numbers of each element */
     internal fun getCubiePermutation(cubies: List<Cubie>, solved: List<Cubie>): IntArray {
-        var retval = IntArray(cubies.size)
+        val retval = IntArray(cubies.size)
         for(i in cubies.indices) retval[i] = cubieNumber(cubies[i], solved)
         return retval
     }
     /** Gets an array of the cubie numbers of each corner */
-    internal fun getCornerPermutation(cube: Cube): IntArray {
-        return getCubiePermutation(StandardCubeUtils.getCorners(cube), StandardCubeUtils.getSolvedCorners())
+    internal fun getCornerPermutation(cube: ArrayCube): IntArray {
+        return getCubiePermutation(getCorners(cube), getSolvedCorners())
     }
     /** Gets an array of the cubie numbers of each edge */
-    internal fun getEdgePermutation(cube: Cube): IntArray {
-        return getCubiePermutation(StandardCubeUtils.getEdges(cube), StandardCubeUtils.getSolvedEdges())
+    internal fun getEdgePermutation(cube: ArrayCube): IntArray {
+        return getCubiePermutation(getEdges(cube), getSolvedEdges())
     }
 
     /** Gets the boolean parity of the set of corners on this cube */
-    private fun getCornerPermutationParity(cube: Cube): Boolean {
+    private fun getCornerPermutationParity(cube: ArrayCube): Boolean {
         val current = getCorners(cube)
         val solved = getSolvedCorners()
         var inversions = 0
@@ -285,7 +285,7 @@ object SolvabilityUtils {
     }
 
     /** Gets the boolean parity of the set of edges on this cube */
-    private fun getEdgePermutationParity(cube: Cube): Boolean {
+    private fun getEdgePermutationParity(cube: ArrayCube): Boolean {
         val current = getEdges(cube)
         val solved = getSolvedEdges()
         var inversions = 0

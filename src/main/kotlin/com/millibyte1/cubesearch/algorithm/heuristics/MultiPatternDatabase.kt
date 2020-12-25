@@ -1,6 +1,6 @@
 package com.millibyte1.cubesearch.algorithm.heuristics
 
-import com.millibyte1.cubesearch.cube.AbstractCube
+import com.millibyte1.cubesearch.cube.AbstractStandardCube
 
 /**
  * A CostEvaluator that uses multiple pattern databases to produce better heuristic values for the cost function.
@@ -8,7 +8,7 @@ import com.millibyte1.cubesearch.cube.AbstractCube
  * @constructor constructs a MultiPatternDatabase that considers the costs from all of the provided databases
  * @param databases the set of databases to consider when evaluating the cost of a given cube
  */
-class MultiPatternDatabase<T : AbstractCube<T>>(private vararg val databases: AbstractPatternDatabase<T>) : CostEvaluator<T> {
+class MultiPatternDatabase<T : AbstractStandardCube<T>>(private vararg val databases: AbstractPatternDatabase<T>) : CostEvaluator<T> {
     /**
      * Gets the cost of this cube based off the values in the pattern databases.
      * Gets the maximum of the costs for this cube from each pattern database this MultiPatternDatabase considers.
