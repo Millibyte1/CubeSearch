@@ -26,8 +26,7 @@ class CornerPatternDatabaseTest {
     fun testSingleMoveCubeCosts() {
         for(twist in Twist.values()) {
             val index = CornerPatternDatabase.getIndex(solved().twist(twist))
-            val foo = 2
-            //assertEquals(CornerPatternDatabase.getCost(solved().twist(twist)), 1)
+            assertEquals(CornerPatternDatabase.getCost(solved().twist(twist)), 1)
         }
     }
     @Test
@@ -38,13 +37,22 @@ class CornerPatternDatabaseTest {
             generator.setWalkLength(walkLength)
             for(i in 0 until 100) {
                 val cube = generator.nextCube()
-                //assertTrue(CornerPatternDatabase.getCost(cube) <= walkLength)
+                assertTrue(CornerPatternDatabase.getCost(cube) <= walkLength)
             }
         }
     }
+
     @Test
     fun testDatabaseSize() {
-        val foo = CornerPatternDatabase.getPopulation()
-        //assertEquals(CornerPatternDatabase.getPopulation(), CornerPatternDatabase.CARDINALITY)
+        assertEquals(CornerPatternDatabase.getPopulation(), CornerPatternDatabase.CARDINALITY)
     }
+    @Test
+    fun testOrientationDatabaseSize() {
+        assertEquals(CornerPatternDatabase.getOrientationPopulation(), CornerPatternDatabase.ORIENTATION_CARDINALITY)
+    }
+    @Test
+    fun testPositionDatabaseSize() {
+        assertEquals(CornerPatternDatabase.getPositionPopulation(), CornerPatternDatabase.POSITION_CARDINALITY)
+    }
+
 }

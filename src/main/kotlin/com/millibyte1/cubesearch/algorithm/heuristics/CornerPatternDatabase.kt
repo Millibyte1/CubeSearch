@@ -13,16 +13,31 @@ import redis.clients.jedis.Jedis
 object CornerPatternDatabase : AbstractPatternDatabase<Cube>() {
 
     internal const val CARDINALITY = 88179840
+    internal const val ORIENTATION_CARDINALITY = 2187
+    internal const val POSITION_CARDINALITY = 40320
+
+    private var generated = 0
 
     private val jedis = Jedis()
-    private val key = "cubesearch:corner-pattern-db"
+    private val key = "cubesearch:patterndb.corner.main"
+    private val orientationKey = "cubesearch:patterndb.corner.orientation"
+    private val positionKey = "cubesearch:patterndb.corner.position"
+
+    private val tempDatabase = ByteArray(CARDINALITY) { -1 }
+    private val tempOrientationDatabase = ByteArray(ORIENTATION_CARDINALITY) { -1 }
+    private val tempPositionDatabase = ByteArray(POSITION_CARDINALITY) { -1 }
 
     init {
-        if(!isPopulated()) populateDatabase()
+        //if(!isPopulated()) populateDatabase()
+        //for(i in 0 until CARDINALITY) tempDatabase[i] = -1
+        //for(i in 0 until ORIENTATION_CARDINALITY) tempOrientationDatabase[i] = -1
+        //for(i in 0 until  POSITION_CARDINALITY) tempPositionDatabase[i] = -1
+        populateDatabase()
     }
 
     override fun getCost(index: Int): Byte {
         return jedis.hget(key, index.toString()).toByte()
+        //return tempDatabase[index]
     }
 
     override fun getIndex(cube: Cube): Int {
@@ -37,6 +52,15 @@ object CornerPatternDatabase : AbstractPatternDatabase<Cube>() {
     /** Gets the number of entries in the pattern database */
     internal fun getPopulation(): Int {
         return jedis.hlen(key).toInt()
+        //return tempDatabase.fold(0) { total, item -> if(item.toInt() == -1) total else total + 1 }
+    }
+    internal fun getOrientationPopulation(): Int {
+        return jedis.hlen(orientationKey).toInt()
+        //return tempOrientationDatabase.fold(0) { total, item -> if(item.toInt() == -1) total else total + 1 }
+    }
+    internal fun getPositionPopulation(): Int {
+        return jedis.hlen(positionKey).toInt()
+        //return tempPositionDatabase.fold(0) { total, item -> if(item.toInt() == -1) total else total + 1 }
     }
     /**
      * Generates the pattern database to completion.
@@ -61,19 +85,36 @@ object CornerPatternDatabase : AbstractPatternDatabase<Cube>() {
             }
         }
     }
+    private fun queueContains(queue: Queue<PathWithBack>, cube: Cube): Boolean {
+        return queue.any { path -> path.back == cube }
+    }
     /** Checks whether this configuration is already in the pattern database */
     private fun databaseContains(cube: Cube): Boolean {
         return jedis.hexists(key, getIndex(cube).toString())
+        //return tempDatabase[getIndex(cube)].toInt() != -1
+        //return jedis.hexists(orientationKey, getCornerOrientationIndex(cube).toString()) &&
+        //       jedis.hexists(positionKey, getCornerPositionIndex(cube).toString())
     }
     /** Adds the cost to the pattern database */
     private fun addCost(cube: Cube, cost: Byte) {
         jedis.hset(key, getIndex(cube).toString(), cost.toString())
+        //jedis.hsetnx(orientationKey, getCornerOrientationIndex(cube).toString(), cost.toString())
+        //jedis.hsetnx(positionKey, getCornerPositionIndex(cube).toString(), cost.toString())
+        //tempDatabase[getIndex(cube)] = cost
+        //val orientationVal = tempOrientationDatabase[getCornerOrientationIndex(cube)]
+        //val positionVal = tempPositionDatabase[getCornerPositionIndex(cube)]
+        //if(orientationVal.toInt() == -1) tempOrientationDatabase[getCornerOrientationIndex(cube)] = cost
+        //if(positionVal.toInt() == -1) tempPositionDatabase[getCornerPositionIndex(cube)] = cost
+        generated++
+        if(generated % 100000 == 0) println(generated)
     }
 
     /** Gets the Lehmer code of the corner permutation of this cube and converts it to base 10 */
     private fun getCornerPositionIndex(cube: Cube): Int {
+        //val permutation = SolvabilityUtils.getCornerPermutation(cube)
+        //val lehmer = PatternDatabaseUtils.getLehmerCode(permutation)
         val lehmer = PatternDatabaseUtils.getLehmerCode(SolvabilityUtils.getCornerPermutation(cube))
-        //multiplies the value at each index by its factoradic base
+        //multiplies the value at each index by its factoradic place value
         return lehmer[0] * 5040 +
                lehmer[1] * 720 +
                lehmer[2] * 120 +

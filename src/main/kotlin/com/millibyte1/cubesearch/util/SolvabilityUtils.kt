@@ -257,7 +257,7 @@ object SolvabilityUtils {
     /** Gets an array of the cubie numbers of each element */
     internal fun getCubiePermutation(cubies: List<Cubie>, solved: List<Cubie>): IntArray {
         var retval = IntArray(cubies.size)
-        for(i in cubies.indices) retval += cubieNumber(cubies[i], solved)
+        for(i in cubies.indices) retval[i] = cubieNumber(cubies[i], solved)
         return retval
     }
     /** Gets an array of the cubie numbers of each corner */
