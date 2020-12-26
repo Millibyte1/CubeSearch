@@ -3,6 +3,7 @@ package com.millibyte1.cubesearch.cube
 /**
  * A simple mutable interface wrapping a single function, twistNoCopy, which takes a twist and applies it directly to this cube, modifying it.
  * Inherits a single function twist from the interface Cube, which returns a copy instead of modifying this cube.
+ * @param T the implementation class
  */
 interface MutableCube<T : MutableCube<T>> : Cube<T> {
     /**

@@ -1,6 +1,6 @@
 package com.millibyte1.cubesearch.util
 
-import com.millibyte1.cubesearch.cube.AbstractStandardCube
+import com.millibyte1.cubesearch.cube.StandardCube
 import com.millibyte1.cubesearch.cube.ArrayCube
 import com.millibyte1.cubesearch.cube.Twist
 
@@ -50,7 +50,7 @@ object SolverUtils {
      * @param path the sequence of twists to apply to this cube
      * @return the cube that this path yields (the "back" of the path, if it were cubes instead of twists)
      */
-    fun <T : AbstractStandardCube<T>> realizePath(initial: T, path: Path): T {
+    fun <T : StandardCube<T>> realizePath(initial: T, path: Path): T {
         var cube = initial
         for(twist in path) cube = cube.twist(twist)
         return cube

@@ -3,7 +3,7 @@ package com.millibyte1.cubesearch.cube
 import java.io.Serializable
 
 /**
- * Class representing the configuration of a 3x3 Rubik's cube
+ * Class representing the configuration of a 3x3 Rubik's cube using an internal 2D array.
  *
  * @property data a minimal representation of the state of the cube
  *
@@ -21,10 +21,7 @@ import java.io.Serializable
  *  . . . 3 D 5 . . . . . .
  *  . . . 6 7 8 . . . . . .
  */
-class ArrayCube internal constructor(
-        var data: Array<IntArray>
-) : AbstractMutableStandardCube<ArrayCube>(data),
-    Serializable {
+class ArrayCube internal constructor(var data: Array<IntArray>) : MutableStandardCube<ArrayCube>, Serializable {
 
     override fun twist(twist: Twist): ArrayCube {
         return when(twist) {

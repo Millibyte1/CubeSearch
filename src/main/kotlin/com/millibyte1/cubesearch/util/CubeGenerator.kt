@@ -1,6 +1,6 @@
 package com.millibyte1.cubesearch.util
 
-import com.millibyte1.cubesearch.cube.AbstractStandardCube
+import com.millibyte1.cubesearch.cube.StandardCube
 import com.millibyte1.cubesearch.cube.AbstractCubeFactory
 import com.millibyte1.cubesearch.cube.Twist
 import kotlin.random.Random
@@ -17,7 +17,7 @@ import kotlin.random.Random
  * @property walkLength the number of random twists performed when generating the next random cube. can be changed.
  *
  */
-class CubeGenerator<T : AbstractStandardCube<T>> {
+class CubeGenerator<T : StandardCube<T>> {
 
     private val factory: AbstractCubeFactory<T>
     private var random: Random

@@ -2,8 +2,6 @@ package com.millibyte1.cubesearch.cube
 
 /**
  * Describes all valid twists in the standard half-turn metric for the Rubik's Cube
- *
- *
  */
 enum class Twist {
 

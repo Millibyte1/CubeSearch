@@ -3,6 +3,7 @@ package com.millibyte1.cubesearch.cube
 /**
  * A simple interface wrapping a single function, twist, which takes a twist and returns the cube that results from it
  * without modifying the original.
+ * @param T the implementation class
  */
 interface Cube<T : Cube<T>> {
     /**
