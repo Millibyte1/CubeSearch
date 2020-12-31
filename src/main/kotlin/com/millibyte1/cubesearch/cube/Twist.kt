@@ -78,6 +78,14 @@ enum class Twist {
 
             }
         }
+
+        fun getEquivalentNumClockwiseQuarterTurns(twist: Twist): Int {
+            return when (twist) {
+                FRONT_90, BACK_90, LEFT_90, RIGHT_90, UP_90, DOWN_90 -> 1
+                FRONT_180, BACK_180, LEFT_180, RIGHT_180, UP_180, DOWN_180 -> 2
+                else -> 3
+            }
+        }
     }
 }
 

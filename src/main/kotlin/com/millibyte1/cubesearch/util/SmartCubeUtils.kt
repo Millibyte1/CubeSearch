@@ -1,5 +1,6 @@
 package com.millibyte1.cubesearch.util
 
+import com.millibyte1.cubesearch.cube.ArrayCube
 import com.millibyte1.cubesearch.cube.Twist
 
 //Typealiases for variants of sum types nested inside sealed classes
@@ -82,6 +83,19 @@ sealed class CubiePosition {
     abstract fun containsFace(face: Twist.Face): Boolean
     /** Returns whether this position lies on all of the provided faces */
     fun containsFaces(vararg faces: Twist.Face): Boolean { return faces.all { face -> containsFace(face) } }
+
+    companion object {
+        /** Factory function for all variants of CubiePosition */
+        fun makePosition(vararg faces: Twist.Face): CubiePosition {
+            faces.sort()
+            return when(faces.size) {
+                1 -> CenterCubiePosition(faces[0])
+                2 -> EdgeCubiePosition(faces[0], faces[1])
+                3 -> CornerCubiePosition(faces[0], faces[1], faces[2])
+                else -> throw failInvalidNumberOfFaces()
+            }
+        }
+    }
 }
 
 /** Algebraic sum type representing the coloration of a cubie on a 3x3 Rubik's cube */
@@ -153,6 +167,19 @@ sealed class CubieColor {
     abstract fun containsColor(color: Int): Boolean
     /** Returns whether this cubie has tiles with each of the provided colors */
     fun containsColors(vararg colors: Int): Boolean { return colors.all { color -> containsColor(color) } }
+
+    companion object {
+        /** Factory function for all variants of CubieColor */
+        fun makeColor(vararg colors: Int): CubieColor {
+            colors.sort()
+            return when(colors.size) {
+                1 -> CenterCubieColor(colors[0])
+                2 -> EdgeCubieColor(colors[0], colors[1])
+                3 -> CornerCubieColor(colors[0], colors[1], colors[2])
+                else -> throw failInvalidNumberOfColors()
+            }
+        }
+    }
 }
 
 /** Algebraic sum type representing a cubie on a 3x3 Rubik's cube */
@@ -250,4 +277,64 @@ sealed class OrientedCubie {
         result = 31 * result + getOrientation().hashCode()
         return result
     }
+}
+
+object SmartCubeUtils {
+    /** Gets an array of OrientedCubies from the data array */
+    fun getCubies(data: Array<IntArray>): Array<OrientedCubie> {
+        return getOrientedCubiesFromArrayCube(ArrayCube(data))
+    }
+    /** Gets an array of OrientedCubies from an ArrayCube */
+    private fun getOrientedCubiesFromArrayCube(cube: ArrayCube): Array<OrientedCubie> {
+        //gets the unoriented cubies of the array cubie
+        val centers = ArrayCubeUtils.getCenters(cube)
+        val edges = ArrayCubeUtils.getEdges(cube)
+        val corners = ArrayCubeUtils.getCorners(cube)
+
+        val retval = ArrayList<OrientedCubie>(26)
+        //builds the oriented centers
+        for(center in centers) {
+            val color = getCubieColorFromUnorientedCubie(center) as CenterCubieColor
+            val position = getCubiePositionFromUnorientedCubie(center) as CenterCubiePosition
+            retval.add(OrientedCenterCubie(position, color))
+        }
+        //builds the oriented edges
+        for(edge in edges) {
+            val color = getCubieColorFromUnorientedCubie(edge) as EdgeCubieColor
+            val position = getCubiePositionFromUnorientedCubie(edge) as EdgeCubiePosition
+            val orientation = SolvabilityUtils.getEdgeOrientation(edge, cube)
+            retval.add(OrientedEdgeCubie(position, color, orientation))
+        }
+        //builds the oriented corners
+        for(corner in corners) {
+            val color = getCubieColorFromUnorientedCubie(corner) as CornerCubieColor
+            val position = getCubiePositionFromUnorientedCubie(corner) as CornerCubiePosition
+            val orientation = SolvabilityUtils.getCornerOrientation(corner)
+            retval.add(OrientedCornerCubie(position, color, orientation))
+        }
+        //returns the array of all the oriented cubies
+        return retval.toTypedArray()
+    }
+    fun getCubieColorFromUnorientedCubie(cubie: Cubie): CubieColor {
+        return when(cubie) {
+            is CenterCubie -> CubieColor.makeColor(cubie.tile1.color)
+            is EdgeCubie -> CubieColor.makeColor(cubie.tile1.color, cubie.tile2.color)
+            is CornerCubie -> CubieColor.makeColor(cubie.tile1.color, cubie.tile2.color, cubie.tile3.color)
+        }
+    }
+    fun getCubiePositionFromUnorientedCubie(cubie: Cubie): CubiePosition {
+        return when(cubie) {
+            is CenterCubie -> CubiePosition.makePosition(cubie.tile1.pos.face)
+            is EdgeCubie -> CubiePosition.makePosition(cubie.tile1.pos.face, cubie.tile2.pos.face)
+            is CornerCubie -> CubiePosition.makePosition(cubie.tile1.pos.face, cubie.tile2.pos.face, cubie.tile3.pos.face)
+        }
+    }
+
+}
+
+private fun failInvalidNumberOfFaces(): IllegalArgumentException {
+    return IllegalArgumentException("invalid args: invalid number of faces provided")
+}
+private fun failInvalidNumberOfColors(): IllegalArgumentException {
+    return IllegalArgumentException("invalid args: invalid number of colors provided")
 }

@@ -137,11 +137,11 @@ object CornerPatternDatabase : AbstractPatternDatabase<ArrayCube>() {
     }
     /** Encodes the orientations of this cube's corners as a sequence of integers */
     private fun getCornerOrientationSequence(cube: ArrayCube): IntArray {
-        val solvedCorners = StandardCubeUtils.getSolvedCorners()
+        val solvedCorners = ArrayCubeUtils.getSolvedCorners()
         val orientations = IntArray(8)
         var corner: CornerCubie
         for(i in 0 until 8) {
-            corner = StandardCubeUtils.getCubieOnCube(cube, solvedCorners[i]) as CornerCubie
+            corner = ArrayCubeUtils.getCubieOnCube(cube, solvedCorners[i]) as CornerCubie
             orientations[i] = SolvabilityUtils.getCornerOrientation(corner)
         }
         return orientations

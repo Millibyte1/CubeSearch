@@ -5,7 +5,7 @@ import com.millibyte1.cubesearch.cube.ArrayCubeFactory
 import com.millibyte1.cubesearch.cube.Twist
 import com.millibyte1.cubesearch.util.Cubie
 import com.millibyte1.cubesearch.util.SolvabilityUtils
-import com.millibyte1.cubesearch.util.StandardCubeUtils
+import com.millibyte1.cubesearch.util.ArrayCubeUtils
 
 /**
  * Wrapper for a "Manhattan Distance" heuristic. This heuristic is less performant than large pattern databases
@@ -43,10 +43,10 @@ class ManhattanDistanceCostEvaluator(private val goal: ArrayCube = ArrayCubeFact
         return when {
             SolvabilityUtils.isCorrectlyStickered(cube) ->
                 (Integer.max(
-                        (StandardCubeUtils.getCorners(cube)
+                        (ArrayCubeUtils.getCorners(cube)
                                 .map { corner -> cubieManhattanDistances[corner] } as List<Int>)
                                 .reduce { sum, distance -> sum + distance },
-                        (StandardCubeUtils.getEdges(cube)
+                        (ArrayCubeUtils.getEdges(cube)
                                 .map { edge -> cubieManhattanDistances[edge] } as List<Int>)
                                 .reduce { sum, distance -> sum + distance }
                 ) / 4).toByte()
@@ -64,7 +64,7 @@ class ManhattanDistanceCostEvaluator(private val goal: ArrayCube = ArrayCubeFact
                 val cube2 = if(twist2 != null) cube1.twist(twist2) else cube1
                 for(twist3 in twists) {
                     val cube3 = if(twist3 != null) cube2.twist(twist3) else cube2
-                    for(cubie in StandardCubeUtils.getCubies(cube3)) {
+                    for(cubie in ArrayCubeUtils.getCubies(cube3)) {
                         val moves = (twist1 != null).toInt() + (twist2 != null).toInt() + (twist3 != null).toInt()
                         if(cubieManhattanDistances[cubie] == null) cubieManhattanDistances[cubie] = moves
                     }

@@ -161,7 +161,7 @@ data class Tile(val pos: TilePosition, val color: Int) : Comparable<Tile> {
     }
 }
 
-object StandardCubeUtils {
+object ArrayCubeUtils {
 /* ========================================= SOLVED CUBIE ACCESS FUNCTIONS ========================================== */
 
     private val solved = ArrayCubeFactory().getSolvedCube()

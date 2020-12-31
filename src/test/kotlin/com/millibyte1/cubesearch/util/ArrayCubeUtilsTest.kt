@@ -3,17 +3,17 @@ package com.millibyte1.cubesearch.util
 import com.millibyte1.cubesearch.cube.ArrayCubeFactory
 import com.millibyte1.cubesearch.cube.ArrayCube
 
-import com.millibyte1.cubesearch.util.StandardCubeUtils.getCubies
-import com.millibyte1.cubesearch.util.StandardCubeUtils.isOnCornerCubie
-import com.millibyte1.cubesearch.util.StandardCubeUtils.isOnEdgeCubie
-import com.millibyte1.cubesearch.util.StandardCubeUtils.isOnCenterCubie
-import com.millibyte1.cubesearch.util.StandardCubeUtils.isOnSameCubie
+import com.millibyte1.cubesearch.util.ArrayCubeUtils.getCubies
+import com.millibyte1.cubesearch.util.ArrayCubeUtils.isOnCornerCubie
+import com.millibyte1.cubesearch.util.ArrayCubeUtils.isOnEdgeCubie
+import com.millibyte1.cubesearch.util.ArrayCubeUtils.isOnCenterCubie
+import com.millibyte1.cubesearch.util.ArrayCubeUtils.isOnSameCubie
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Assertions.*
 
-class StandardCubeUtilsTest {
+class ArrayCubeUtilsTest {
 
 
     /* ========================================== TEST FIXTURES ===================================================== */

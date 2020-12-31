@@ -4,17 +4,17 @@ import com.millibyte1.cubesearch.cube.ArrayCube
 import com.millibyte1.cubesearch.cube.Twist
 import com.millibyte1.cubesearch.cube.Twist.Face
 
-import com.millibyte1.cubesearch.util.StandardCubeUtils.getCenters
-import com.millibyte1.cubesearch.util.StandardCubeUtils.getCorners
-import com.millibyte1.cubesearch.util.StandardCubeUtils.getCubieOnCube
-import com.millibyte1.cubesearch.util.StandardCubeUtils.getCubies
-import com.millibyte1.cubesearch.util.StandardCubeUtils.getEdges
-import com.millibyte1.cubesearch.util.StandardCubeUtils.getSolvedCenters
-import com.millibyte1.cubesearch.util.StandardCubeUtils.getSolvedCorners
-import com.millibyte1.cubesearch.util.StandardCubeUtils.getSolvedCubie
-import com.millibyte1.cubesearch.util.StandardCubeUtils.getSolvedCubies
-import com.millibyte1.cubesearch.util.StandardCubeUtils.getSolvedEdges
-import com.millibyte1.cubesearch.util.StandardCubeUtils.isOnFaces
+import com.millibyte1.cubesearch.util.ArrayCubeUtils.getCenters
+import com.millibyte1.cubesearch.util.ArrayCubeUtils.getCorners
+import com.millibyte1.cubesearch.util.ArrayCubeUtils.getCubieOnCube
+import com.millibyte1.cubesearch.util.ArrayCubeUtils.getCubies
+import com.millibyte1.cubesearch.util.ArrayCubeUtils.getEdges
+import com.millibyte1.cubesearch.util.ArrayCubeUtils.getSolvedCenters
+import com.millibyte1.cubesearch.util.ArrayCubeUtils.getSolvedCorners
+import com.millibyte1.cubesearch.util.ArrayCubeUtils.getSolvedCubie
+import com.millibyte1.cubesearch.util.ArrayCubeUtils.getSolvedCubies
+import com.millibyte1.cubesearch.util.ArrayCubeUtils.getSolvedEdges
+import com.millibyte1.cubesearch.util.ArrayCubeUtils.isOnFaces
 
 
 /**

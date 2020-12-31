@@ -5,7 +5,7 @@ import com.millibyte1.cubesearch.cube.Twist
 import com.millibyte1.cubesearch.algorithm.heuristics.CostEvaluator
 
 import com.millibyte1.cubesearch.util.*
-import com.millibyte1.cubesearch.util.StandardCubeUtils.isSolved
+import com.millibyte1.cubesearch.util.ArrayCubeUtils.isSolved
 import com.millibyte1.cubesearch.util.failNotSolvable
 
 class IterativeDeepeningAStarSolver(costEvaluator: CostEvaluator<ArrayCube>) : AbstractSolver<ArrayCube>(costEvaluator) {
