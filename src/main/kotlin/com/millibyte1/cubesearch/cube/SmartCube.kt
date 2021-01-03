@@ -73,17 +73,6 @@ class SmartCube internal constructor(private var cubies: Array<OrientedCubie>) :
     }
 
     /**
-     * Gets the cubie on this cube with the following position, if such a position exists
-     * @param position the position of the desired cubie
-     * @return the desired cubie
-     * @throws IllegalArgumentException if an invalid position is provided
-     */
-    @Throws(IllegalArgumentException::class)
-    fun getCubieWithPosition(position: CubiePosition): OrientedCubie {
-        for(cubie in cubies) if(cubie.getPosition() == position) return cubie
-        throw failInvalidPosition()
-    }
-    /**
      * Gets the cubie on this cube that lies on the following faces, if there is such a position.
      * @param faces the faces the desired cubie lies on
      * @return the desired cubie
@@ -91,7 +80,10 @@ class SmartCube internal constructor(private var cubies: Array<OrientedCubie>) :
      */
     @Throws(IllegalArgumentException::class)
     fun getCubieOnFaces(vararg faces: Twist.Face): OrientedCubie {
-        return getCubieWithPosition(CubiePosition.makePosition(*faces))
+        for(cubie in cubies) {
+            if(cubie.containsFaces(*faces)) return cubie
+        }
+        throw failInvalidPosition()
     }
     /**
      * Gets the cubie on this cube with the following color, if any cubie with this color is present
@@ -100,8 +92,10 @@ class SmartCube internal constructor(private var cubies: Array<OrientedCubie>) :
      * @throws IllegalArgumentException if no cubie on this cube has this color
      */
     @Throws(IllegalArgumentException::class)
-    fun getCubieWithColor(color: CubieColor): OrientedCubie {
-        for(cubie in cubies) if(cubie.getColor() == color) return cubie
+    fun getCubieWithColors(vararg colors: Int): OrientedCubie {
+        for(cubie in cubies) {
+            if(cubie.containsColors(*colors)) return cubie
+        }
         throw failColorNotPresent()
     }
 
@@ -121,17 +115,28 @@ class SmartCube internal constructor(private var cubies: Array<OrientedCubie>) :
          */
         //populates data from centers
         val centers = getCenters()
-        data[0][4] = centers[0].color.color1
-        data[1][4] = centers[1].color.color1
-        data[2][4] = centers[2].color.color1
-        data[3][4] = centers[3].color.color1
-        data[4][4] = centers[4].color.color1
-        data[5][4] = centers[5].color.color1
+        data[0][4] = centers[0].tileSet.tile1.color
+        data[1][4] = centers[1].tileSet.tile1.color
+        data[2][4] = centers[2].tileSet.tile1.color
+        data[3][4] = centers[3].tileSet.tile1.color
+        data[4][4] = centers[4].tileSet.tile1.color
+        data[5][4] = centers[5].tileSet.tile1.color
         //populates data from edges
         val edges = getEdges()
-        
+
         //populates data from corners
         val corners = getCorners()
+        //up-front-left
+        data[4][6] = corners[0].tileSet.tile1.color
+        data[0][0] = corners[0].tileSet.tile2.color
+        data[2][2] = corners[0].tileSet.tile3.color
+        //up-front-right
+        //up-back-left
+        //up-back-right
+        //down-front-left
+        //down-front-right
+        //down-back-left
+        //down-back-right
         TODO()
     }
 
@@ -194,18 +199,54 @@ private fun twist90(cubies: Array<OrientedCubie>, twist: Twist): Array<OrientedC
 
     //transforms and updates the corners
     val cornerOrientationIncrement = twistChangesCornerOrientations(twist)
-    copy[o2Index] = OrientedCornerCubie(o2.position, o1.color, (o1.orientation + (2 * cornerOrientationIncrement)) % 3)
-    copy[o3Index] = OrientedCornerCubie(o3.position, o2.color, (o2.orientation + (1 * cornerOrientationIncrement)) % 3)
-    copy[o4Index] = OrientedCornerCubie(o4.position, o3.color, (o3.orientation + (2 * cornerOrientationIncrement)) % 3)
-    copy[o5Index] = OrientedCornerCubie(o1.position, o4.color, (o4.orientation + (1 * cornerOrientationIncrement)) % 3)
+    copy[o2Index] = OrientedCornerCubie(getTwistedTileSet(o1, twist), (o1.orientation + (2 * cornerOrientationIncrement)) % 3)
+    copy[o3Index] = OrientedCornerCubie(getTwistedTileSet(o2, twist), (o2.orientation + (1 * cornerOrientationIncrement)) % 3)
+    copy[o4Index] = OrientedCornerCubie(getTwistedTileSet(o3, twist), (o3.orientation + (2 * cornerOrientationIncrement)) % 3)
+    copy[o5Index] = OrientedCornerCubie(getTwistedTileSet(o4, twist), (o4.orientation + (1 * cornerOrientationIncrement)) % 3)
     //transforms and updates the edges
     val edgeOrientationIncrement = twistChangesEdgeOrientations(twist)
-    copy[o6Index] = OrientedEdgeCubie(o6.position, o5.color, (o5.orientation + edgeOrientationIncrement) % 2)
-    copy[o7Index] = OrientedEdgeCubie(o7.position, o6.color, (o6.orientation + edgeOrientationIncrement) % 2)
-    copy[o8Index] = OrientedEdgeCubie(o8.position, o7.color, (o7.orientation + edgeOrientationIncrement) % 2)
-    copy[o5Index] = OrientedEdgeCubie(o5.position, o8.color, (o8.orientation + edgeOrientationIncrement) % 2)
+    copy[o6Index] = OrientedEdgeCubie(getTwistedTileSet(o5, twist), (o5.orientation + edgeOrientationIncrement) % 2)
+    copy[o7Index] = OrientedEdgeCubie(getTwistedTileSet(o6, twist), (o6.orientation + edgeOrientationIncrement) % 2)
+    copy[o8Index] = OrientedEdgeCubie(getTwistedTileSet(o7, twist), (o7.orientation + edgeOrientationIncrement) % 2)
+    copy[o5Index] = OrientedEdgeCubie(getTwistedTileSet(o8, twist), (o8.orientation + edgeOrientationIncrement) % 2)
     //returns
     return copy
+}
+/** Gets the tileset of a corner cubie after the given twist is applied */
+private fun getTwistedTileSet(oldCubie: OrientedCornerCubie, twist: Twist): CornerTileSet {
+    when {
+        oldCubie.containsFaces(Twist.Face.UP, Twist.Face.FRONT, Twist.Face.LEFT) -> {
+            when(twist) {
+                Twist.FRONT_90 -> { }
+                Twist.FRONT_180 -> { }
+                Twist.FRONT_270 -> { }
+                Twist.BACK_90 -> { }
+                Twist.BACK_180 -> { }
+                Twist.BACK_270 -> { }
+                Twist.LEFT_90 -> { }
+                Twist.LEFT_180 -> { }
+                Twist.LEFT_270 -> { }
+                Twist.RIGHT_90 -> { }
+                Twist.RIGHT_180 -> { }
+                Twist.RIGHT_270 -> { }
+                Twist.UP_90 -> { }
+                Twist.UP_180 -> { }
+                Twist.UP_270 -> { }
+            }
+        }
+        oldCubie.containsFaces(Twist.Face.UP, Twist.Face.FRONT, Twist.Face.RIGHT) -> { }
+        oldCubie.containsFaces(Twist.Face.UP, Twist.Face.BACK, Twist.Face.LEFT) -> { }
+        oldCubie.containsFaces(Twist.Face.UP, Twist.Face.BACK, Twist.Face.RIGHT) -> { }
+        oldCubie.containsFaces(Twist.Face.DOWN, Twist.Face.FRONT, Twist.Face.LEFT) -> { }
+        oldCubie.containsFaces(Twist.Face.DOWN, Twist.Face.FRONT, Twist.Face.RIGHT) -> { }
+        oldCubie.containsFaces(Twist.Face.UP, Twist.Face.BACK, Twist.Face.LEFT) -> { }
+        oldCubie.containsFaces(Twist.Face.UP, Twist.Face.BACK, Twist.Face.RIGHT) -> { }
+    }
+    TODO()
+}
+/** Gets the tileset of an edge cubie after the given twist is applied */
+private fun getTwistedTileSet(oldCubie: OrientedEdgeCubie, twist: Twist): EdgeTileSet {
+    TODO()
 }
 /** Gets whether this twist changes edge orientation values (0 or 1) */
 private fun twistChangesEdgeOrientations(twist: Twist): Int {
