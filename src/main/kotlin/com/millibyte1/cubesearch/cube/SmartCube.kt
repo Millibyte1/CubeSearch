@@ -1,154 +1,729 @@
 package com.millibyte1.cubesearch.cube
 
-import com.millibyte1.cubesearch.util.*
+import com.millibyte1.cubesearch.util.ArrayCubeUtils
+import com.millibyte1.cubesearch.util.SolvabilityUtils
 import java.io.Serializable
 
 /**
- * A cube implementation that directly stores cubie positions and orientations in order to rapidly compute
- * important information about the cube (solvability, configuration index, etc.)
+ * Class representing the configuration of a 3x3 Rubik's cube.
+ * Uses an internal array, but keeps track of the orientation values of individual cubies to enable rapid analysis of
+ * the state of the cube.
  *
- * @constructor constructs a SmartCube directly from an array of oriented cubies
- * @param cubies the array of all 26 cubies for this cube. Centers followed by edges followed by corners.
- *
- * Required order of center positions (0-5):
- * FRONT, BACK, LEFT, RIGHT, UP, DOWN.
- *
- * Required order of edge positions (6-17):
- * UP-FRONT, UP-BACK, UP-LEFT, UP-RIGHT,
- * DOWN-FRONT, DOWN-BACK, DOWN-LEFT, DOWN-RIGHT,
- * FRONT-LEFT, FRONT-RIGHT, BACK-LEFT, BACK-RIGHT,
- *
- * Required order of corner positions (18-25):
- * UP-FRONT-LEFT, UP-FRONT-RIGHT, UP-BACK-LEFT, UP-BACK-RIGHT,
- * DOWN-FRONT-LEFT, DOWN-FRONT-RIGHT, DOWN-BACK-LEFT, DOWN-BACK-RIGHT.
+ * @constructor constructs cube from a copy of the provided data
+ * @param data the 6x9 array representing the desired cube. Format: (front, back, left, right, up, down)
+ * Required layout of data:
+ *  . . . 0 1 2 . . . . . .
+ *  . . . 3 U 5 . . . . . .
+ *  . . . 6 7 8 . . . . . .
+ *  0 1 2 0 1 2 0 1 2 0 1 2
+ *  3 L 5 3 F 5 3 R 5 3 B 5
+ *  6 7 8 6 7 8 6 7 8 6 7 8
+ *  . . . 0 1 2 . . . . . .
+ *  . . . 3 D 5 . . . . . .
+ *  . . . 6 7 8 . . . . . .
+ * @param edgePositions the array of position values of the 12 edge cubies, ordered by cubie number (coloration).
+ * The enumeration of positions is as follows:
+ * up-front, up-back, up-left, up-right,
+ * down-front, down-back, down-left, down-right,
+ * front-left, front-right, back-left, back-right
+ * @param cornerPositions the array of position values of the 8 corner cubies, ordered by cubie number (coloration).
+ * The enumeration of positions is as follows:
+ * up-front-left, up-front-right, up-back-left, up-back-right,
+ * down-front-left, down-front-right, down-back-left, down-back-right
+ * @param edgeOrientations the array of orientation values of the 12 edge cubies, ordered by cubie number (coloration).
+ * @param cornerOrientations the array of orientation values of the 8 corner cubies, ordered by cubie number (coloration).
  *
  */
-class SmartCube internal constructor(private var cubies: Array<OrientedCubie>) : MutableStandardCube<SmartCube>, Serializable {
+class SmartCube internal constructor(
+    var data: Array<IntArray>,
+    var edgePositions: IntArray,
+    var cornerPositions: IntArray,
+    var edgeOrientations: IntArray,
+    var cornerOrientations: IntArray
+) : MutableStandardCube<SmartCube>, Serializable {
 
-    /**
-     * returns the cube resulting from applying the given twist, without modifying this cube.
-     * @param twist the twist we are applying to this cube
-     * @return the cube resulting from applying the given twist
-     */
+    /** Constructs the cube, computing initial orientations from the data array */
+    internal constructor(data: Array<IntArray>) : this(data, IntArray(12), IntArray(8), IntArray(12), IntArray(8)) {
+        //uses the existing array cube functionality to grab all the cubies
+        val arrayCube = this.toArrayCube()
+        val edges = ArrayCubeUtils.getEdges(arrayCube)
+        val corners = ArrayCubeUtils.getCorners(arrayCube)
+        //TODO("Fix orientation ordering")
+        //initializes edge positions
+        edgePositions = SolvabilityUtils.getEdgePermutation(arrayCube)
+        //initializes corner positions
+        cornerPositions = SolvabilityUtils.getCornerPermutation(arrayCube)
+        //initializes edge orientations
+        for(i in 0 until 12) edgeOrientations[i] = SolvabilityUtils.getEdgeOrientation(edges[edgePositions[i]], arrayCube)
+        //initializes corner orientations
+        for(i in 0 until 8) cornerOrientations[i] = SolvabilityUtils.getCornerOrientation(corners[cornerPositions[i]])
+    }
+
     override fun twist(twist: Twist): SmartCube {
-        return when(Twist.getEquivalentNumClockwiseQuarterTurns(twist)) {
-            1 -> SmartCube(twist90(cubies, twist))
-            2 -> SmartCube(twist90(SmartCube(twist90(cubies, twist)).cubies, twist))
-            else -> SmartCube(twist90(SmartCube(twist90(SmartCube(twist90(cubies, twist)).cubies, twist)).cubies, twist))
+        val newEO = getUpdatedEdgeOrientations(edgeOrientations, edgePositions, twist)
+        val newCO = getUpdatedCornerOrientations(cornerOrientations, cornerPositions, twist)
+        val newEP = getUpdatedEdgePositions(edgePositions, twist)
+        val newCP = getUpdatedCornerPositions(cornerPositions, twist)
+        return when(twist) {
+            Twist.FRONT_90 -> SmartCube(twistFront90(data), newEP, newCP, newEO, newCO)
+            Twist.FRONT_180 -> SmartCube(twistFront180(data), newEP, newCP, newEO, newCO)
+            Twist.FRONT_270 -> SmartCube(twistFront270(data), newEP, newCP, newEO, newCO)
+            Twist.BACK_90 -> SmartCube(twistBack90(data), newEP, newCP, newEO, newCO)
+            Twist.BACK_180 -> SmartCube(twistBack180(data), newEP, newCP, newEO, newCO)
+            Twist.BACK_270 -> SmartCube(twistBack270(data), newEP, newCP, newEO, newCO)
+            Twist.LEFT_90 -> SmartCube(twistLeft90(data), newEP, newCP, newEO, newCO)
+            Twist.LEFT_180 -> SmartCube(twistLeft180(data), newEP, newCP, newEO, newCO)
+            Twist.LEFT_270 -> SmartCube(twistLeft270(data), newEP, newCP, newEO, newCO)
+            Twist.RIGHT_90 -> SmartCube(twistRight90(data), newEP, newCP, newEO, newCO)
+            Twist.RIGHT_180 -> SmartCube(twistRight180(data), newEP, newCP, newEO, newCO)
+            Twist.RIGHT_270 -> SmartCube(twistRight270(data), newEP, newCP, newEO, newCO)
+            Twist.UP_90 -> SmartCube(twistUp90(data), newEP, newCP, newEO, newCO)
+            Twist.UP_180 -> SmartCube(twistUp180(data), newEP, newCP, newEO, newCO)
+            Twist.UP_270 -> SmartCube(twistUp270(data), newEP, newCP, newEO, newCO)
+            Twist.DOWN_90 -> SmartCube(twistDown90(data), newEP, newCP, newEO, newCO)
+            Twist.DOWN_180 -> SmartCube(twistDown180(data), newEP, newCP, newEO, newCO)
+            Twist.DOWN_270 -> SmartCube(twistDown270(data), newEP, newCP, newEO, newCO)
         }
     }
-    /**
-     * Applies the given twist to this cube. Modifies this, but returns this as well.
-     * @param twist the twist we are applying to this cube
-     * @return this cube
-     */
+
     override fun twistNoCopy(twist: Twist): SmartCube {
-        for(i in 0 until Twist.getEquivalentNumClockwiseQuarterTurns(twist)) {
-            cubies = twist90(cubies, twist)
+        this.edgePositions = getUpdatedEdgePositions(edgePositions, twist)
+        this.cornerPositions = getUpdatedCornerPositions(cornerPositions, twist)
+        this.edgeOrientations = getUpdatedEdgeOrientations(edgeOrientations, edgePositions, twist)
+        this.cornerOrientations = getUpdatedCornerOrientations(cornerOrientations, cornerPositions, twist)
+        when(twist) {
+            Twist.FRONT_90 -> { this.data = twistFront90(data); return this }
+            Twist.FRONT_180 -> { this.data = twistFront180(data); return this }
+            Twist.FRONT_270 -> { this.data = twistFront270(data); return this }
+            Twist.BACK_90 -> { this.data = twistBack90(data); return this }
+            Twist.BACK_180 -> { this.data = twistBack180(data); return this }
+            Twist.BACK_270 -> { this.data = twistBack270(data); return this }
+            Twist.LEFT_90 -> { this.data = twistLeft90(data); return this }
+            Twist.LEFT_180 -> { this.data = twistLeft180(data); return this }
+            Twist.LEFT_270 -> { this.data = twistLeft270(data); return this }
+            Twist.RIGHT_90 -> { this.data = twistRight90(data); return this }
+            Twist.RIGHT_180 -> { this.data = twistRight180(data); return this }
+            Twist.RIGHT_270 -> { this.data = twistRight270(data); return this }
+            Twist.UP_90 -> { this.data = twistUp90(data); return this }
+            Twist.UP_180 -> { this.data = twistUp180(data); return this }
+            Twist.UP_270 -> { this.data = twistUp270(data); return this }
+            Twist.DOWN_90 -> { this.data = twistDown90(data); return this }
+            Twist.DOWN_180 -> { this.data = twistDown180(data); return this }
+            Twist.DOWN_270 -> { this.data = twistDown270(data); return this }
         }
-        return this
     }
 
-    /** Gets a copy of the cubies, ordered by position */
-    fun getCubies(): Array<OrientedCubie> {
-        return cubies.copyOf()
-    }
-    /** Gets a copy of the centers, ordered by position */
-    fun getCenters(): Array<OrientedCenterCubie> {
-        val retval = ArrayList<OrientedCenterCubie>()
-        for(i in 0..5) retval.add(cubies[i] as OrientedCenterCubie)
-        return retval.toTypedArray()
-    }
-    /** Gets a copy of the edges, ordered by position */
-    fun getEdges(): Array<OrientedEdgeCubie> {
-        val retval = ArrayList<OrientedEdgeCubie>()
-        for(i in 6..17) retval.add(cubies[i] as OrientedEdgeCubie)
-        return retval.toTypedArray()
-    }
-    /** Gets a copy of the corners, ordered by position */
-    fun getCorners(): Array<OrientedCornerCubie> {
-        val retval = ArrayList<OrientedCornerCubie>()
-        for(i in 18..25) retval.add(cubies[i] as OrientedCornerCubie)
-        return retval.toTypedArray()
-    }
-
-    /**
-     * Gets the cubie on this cube that lies on the following faces, if there is such a position.
-     * @param faces the faces the desired cubie lies on
-     * @return the desired cubie
-     * @throws IllegalArgumentException if an invalid position is provided
-     */
-    @Throws(IllegalArgumentException::class)
-    fun getCubieOnFaces(vararg faces: Twist.Face): OrientedCubie {
-        for(cubie in cubies) {
-            if(cubie.containsFaces(*faces)) return cubie
-        }
-        throw failInvalidPosition()
-    }
-    /**
-     * Gets the cubie on this cube with the following color, if any cubie with this color is present
-     * @param color the color of the desired cubie
-     * @return the desired cubie
-     * @throws IllegalArgumentException if no cubie on this cube has this color
-     */
-    @Throws(IllegalArgumentException::class)
-    fun getCubieWithColors(vararg colors: Int): OrientedCubie {
-        for(cubie in cubies) {
-            if(cubie.containsColors(*colors)) return cubie
-        }
-        throw failColorNotPresent()
+    /** overridden equality to check whether the cubes have the same configuration */
+    override fun equals(other: Any?): Boolean {
+        if(this === other) return true
+        if(other !is SmartCube) return false
+        if(data.contentDeepEquals(other.data) &&
+           edgePositions.contentEquals(other.edgePositions) &&
+           cornerPositions.contentEquals(other.cornerPositions) &&
+           edgeOrientations.contentEquals(other.edgeOrientations) &&
+           cornerOrientations.contentEquals(other.cornerOrientations)) return true
+        return false
     }
 
     fun toArrayCube(): ArrayCube {
-        val data: Array<IntArray> = Array(6) { IntArray(9) { -1 } }
-        /*
-         * Required layout of data:
-         *  . . . 0 1 2 . . . . . .
-         *  . . . 3 U 5 . . . . . .
-         *  . . . 6 7 8 . . . . . .
-         *  0 1 2 0 1 2 0 1 2 0 1 2
-         *  3 L 5 3 F 5 3 R 5 3 B 5
-         *  6 7 8 6 7 8 6 7 8 6 7 8
-         *  . . . 0 1 2 . . . . . .
-         *  . . . 3 D 5 . . . . . .
-         *  . . . 6 7 8 . . . . . .
-         */
-        //populates data from centers
-        val centers = getCenters()
-        data[0][4] = centers[0].tileSet.tile1.color
-        data[1][4] = centers[1].tileSet.tile1.color
-        data[2][4] = centers[2].tileSet.tile1.color
-        data[3][4] = centers[3].tileSet.tile1.color
-        data[4][4] = centers[4].tileSet.tile1.color
-        data[5][4] = centers[5].tileSet.tile1.color
-        //populates data from edges
-        val edges = getEdges()
-
-        //populates data from corners
-        val corners = getCorners()
-        //up-front-left
-        data[4][6] = corners[0].tileSet.tile1.color
-        data[0][0] = corners[0].tileSet.tile2.color
-        data[2][2] = corners[0].tileSet.tile3.color
-        //up-front-right
-        //up-back-left
-        //up-back-right
-        //down-front-left
-        //down-front-right
-        //down-back-left
-        //down-back-right
-        TODO()
+        return ArrayCube(data)
+    }
+    /** prints each face individually */
+    override fun toString(): String {
+        var retval = ""
+        val faces = arrayOf("Front", "Back", "Left", "Right", "Up", "Down")
+        //prints out each face
+        for(i in 0 until 6) {
+            retval += '\n' + faces[i] + " face:"
+            for(j in 0 until 9) {
+                if(j % 3 == 0) retval += '\n'
+                retval += data[i][j]
+                retval += ' '
+            }
+        }
+        return retval
     }
 
-    override fun equals(other: Any?): Boolean {
-        if(other === this) return true
-        if(other !is SmartCube) return false
-        return cubies.contentEquals(other.cubies)
-    }
     override fun hashCode(): Int {
-        return cubies.contentHashCode()
+        var result = data.contentDeepHashCode()
+        result = 31 * result + edgeOrientations.contentHashCode()
+        result = 31 * result + cornerOrientations.contentHashCode()
+        result = 31 * result + edgePositions.contentHashCode()
+        result = 31 * result + cornerPositions.contentHashCode()
+        return result
     }
-    override fun toString(): String { return toArrayCube().toString() }
+
+}
+
+private fun twistFront90(data: Array<IntArray>) : Array<IntArray> {
+    val copy = data.copy()
+    //left face update
+    copy[2][8] = data[5][2]
+    copy[2][5] = data[5][1]
+    copy[2][2] = data[5][0]
+    //up face update
+    copy[4][6] = data[2][8]
+    copy[4][7] = data[2][5]
+    copy[4][8] = data[2][2]
+    //right face update
+    copy[3][0] = data[4][6]
+    copy[3][3] = data[4][7]
+    copy[3][6] = data[4][8]
+    //down face update
+    copy[5][2] = data[3][0]
+    copy[5][1] = data[3][3]
+    copy[5][0] = data[3][6]
+    //front face update
+    copy[0][0] = data[0][6]
+    copy[0][1] = data[0][3]
+    copy[0][2] = data[0][0]
+    copy[0][3] = data[0][7]
+    copy[0][5] = data[0][1]
+    copy[0][8] = data[0][2]
+    copy[0][7] = data[0][5]
+    copy[0][6] = data[0][8]
+    //return the updated array
+    return copy
+}
+private fun twistFront180(data: Array<IntArray>) : Array<IntArray> {
+    val copy = data.copy()
+    //left face update
+    copy[2][8] = data[3][0]
+    copy[2][5] = data[3][3]
+    copy[2][2] = data[3][6]
+    //up face update
+    copy[4][6] = data[5][2]
+    copy[4][7] = data[5][1]
+    copy[4][8] = data[5][0]
+    //right face update
+    copy[3][0] = data[2][8]
+    copy[3][3] = data[2][5]
+    copy[3][6] = data[2][2]
+    //down face update
+    copy[5][2] = data[4][6]
+    copy[5][1] = data[4][7]
+    copy[5][0] = data[4][8]
+    //front face update
+    copy[0][0] = data[0][8]
+    copy[0][1] = data[0][7]
+    copy[0][2] = data[0][6]
+    copy[0][3] = data[0][5]
+    copy[0][5] = data[0][3]
+    copy[0][8] = data[0][0]
+    copy[0][7] = data[0][1]
+    copy[0][6] = data[0][2]
+    //return the updated array
+    return copy
+}
+private fun twistFront270(data: Array<IntArray>) : Array<IntArray> {
+    val copy = data.copy()
+    //left face update
+    copy[2][8] = data[4][6]
+    copy[2][5] = data[4][7]
+    copy[2][2] = data[4][8]
+    //up face update
+    copy[4][6] = data[3][0]
+    copy[4][7] = data[3][3]
+    copy[4][8] = data[3][6]
+    //right face update
+    copy[3][0] = data[5][2]
+    copy[3][3] = data[5][1]
+    copy[3][6] = data[5][0]
+    //down face update
+    copy[5][2] = data[2][8]
+    copy[5][1] = data[2][5]
+    copy[5][0] = data[2][2]
+    //front face update
+    copy[0][0] = data[0][2]
+    copy[0][1] = data[0][5]
+    copy[0][2] = data[0][8]
+    copy[0][3] = data[0][1]
+    copy[0][5] = data[0][7]
+    copy[0][8] = data[0][6]
+    copy[0][7] = data[0][3]
+    copy[0][6] = data[0][0]
+    //return the updated array
+    return copy
+}
+private fun twistBack90(data: Array<IntArray>) : Array<IntArray> {
+    val copy = data.copy()
+    //right face update
+    copy[3][2] = data[5][8]
+    copy[3][5] = data[5][7]
+    copy[3][8] = data[5][6]
+    //up face update
+    copy[4][0] = data[3][2]
+    copy[4][1] = data[3][5]
+    copy[4][2] = data[3][8]
+    //left face update
+    copy[2][6] = data[4][0]
+    copy[2][3] = data[4][1]
+    copy[2][0] = data[4][2]
+    //down face update
+    copy[5][8] = data[2][6]
+    copy[5][7] = data[2][3]
+    copy[5][6] = data[2][0]
+    //back face update
+    copy[1][0] = data[1][6]
+    copy[1][1] = data[1][3]
+    copy[1][2] = data[1][0]
+    copy[1][3] = data[1][7]
+    copy[1][5] = data[1][1]
+    copy[1][8] = data[1][2]
+    copy[1][7] = data[1][5]
+    copy[1][6] = data[1][8]
+    //return the updated array
+    return copy
+}
+private fun twistBack180(data: Array<IntArray>) : Array<IntArray> {
+    val copy = data.copy()
+    //right face update
+    copy[3][2] = data[2][6]
+    copy[3][5] = data[2][3]
+    copy[3][8] = data[2][0]
+    //up face update
+    copy[4][0] = data[5][8]
+    copy[4][1] = data[5][7]
+    copy[4][2] = data[5][6]
+    //left face update
+    copy[2][6] = data[3][2]
+    copy[2][3] = data[3][5]
+    copy[2][0] = data[3][8]
+    //down face update
+    copy[5][8] = data[4][0]
+    copy[5][7] = data[4][1]
+    copy[5][6] = data[4][2]
+    //back face update
+    copy[1][0] = data[1][8]
+    copy[1][1] = data[1][7]
+    copy[1][2] = data[1][6]
+    copy[1][3] = data[1][5]
+    copy[1][5] = data[1][3]
+    copy[1][8] = data[1][0]
+    copy[1][7] = data[1][1]
+    copy[1][6] = data[1][2]
+    //return the updated array
+    return copy
+}
+private fun twistBack270(data: Array<IntArray>) : Array<IntArray> {
+    val copy = data.copy()
+    //right face update
+    copy[3][2] = data[4][0]
+    copy[3][5] = data[4][1]
+    copy[3][8] = data[4][2]
+    //up face update
+    copy[4][0] = data[2][6]
+    copy[4][1] = data[2][3]
+    copy[4][2] = data[2][0]
+    //left face update
+    copy[2][6] = data[5][8]
+    copy[2][3] = data[5][7]
+    copy[2][0] = data[5][6]
+    //down face update
+    copy[5][8] = data[3][2]
+    copy[5][7] = data[3][5]
+    copy[5][6] = data[3][8]
+    //back face update
+    copy[1][0] = data[1][2]
+    copy[1][1] = data[1][5]
+    copy[1][2] = data[1][8]
+    copy[1][3] = data[1][1]
+    copy[1][5] = data[1][7]
+    copy[1][8] = data[1][6]
+    copy[1][7] = data[1][3]
+    copy[1][6] = data[1][0]
+    //return the updated array
+    return copy
+}
+private fun twistLeft90(data: Array<IntArray>) : Array<IntArray> {
+    val copy = data.copy()
+    //back face update
+    copy[1][8] = data[5][0]
+    copy[1][5] = data[5][3]
+    copy[1][2] = data[5][6]
+    //up face update
+    copy[4][0] = data[1][8]
+    copy[4][3] = data[1][5]
+    copy[4][6] = data[1][2]
+    //front face update
+    copy[0][0] = data[4][0]
+    copy[0][3] = data[4][3]
+    copy[0][6] = data[4][6]
+    //down face update
+    copy[5][0] = data[0][0]
+    copy[5][3] = data[0][3]
+    copy[5][6] = data[0][6]
+    //left face update
+    copy[2][0] = data[2][6]
+    copy[2][1] = data[2][3]
+    copy[2][2] = data[2][0]
+    copy[2][3] = data[2][7]
+    copy[2][5] = data[2][1]
+    copy[2][8] = data[2][2]
+    copy[2][7] = data[2][5]
+    copy[2][6] = data[2][8]
+    //return the updated array
+    return copy
+}
+private fun twistLeft180(data: Array<IntArray>) : Array<IntArray> {
+    val copy = data.copy()
+    //back face update
+    copy[1][8] = data[0][0]
+    copy[1][5] = data[0][3]
+    copy[1][2] = data[0][6]
+    //up face update
+    copy[4][0] = data[5][0]
+    copy[4][3] = data[5][3]
+    copy[4][6] = data[5][6]
+    //front face update
+    copy[0][0] = data[1][8]
+    copy[0][3] = data[1][5]
+    copy[0][6] = data[1][2]
+    //down face update
+    copy[5][0] = data[4][0]
+    copy[5][3] = data[4][3]
+    copy[5][6] = data[4][6]
+    //left face update
+    copy[2][0] = data[2][8]
+    copy[2][1] = data[2][7]
+    copy[2][2] = data[2][6]
+    copy[2][3] = data[2][5]
+    copy[2][5] = data[2][3]
+    copy[2][8] = data[2][0]
+    copy[2][7] = data[2][1]
+    copy[2][6] = data[2][2]
+    //return the updated array
+    return copy
+}
+private fun twistLeft270(data: Array<IntArray>) : Array<IntArray> {
+    val copy = data.copy()
+    //back face update
+    copy[1][8] = data[4][0]
+    copy[1][5] = data[4][3]
+    copy[1][2] = data[4][6]
+    //up face update
+    copy[4][0] = data[0][0]
+    copy[4][3] = data[0][3]
+    copy[4][6] = data[0][6]
+    //front face update
+    copy[0][0] = data[5][0]
+    copy[0][3] = data[5][3]
+    copy[0][6] = data[5][6]
+    //down face update
+    copy[5][0] = data[1][8]
+    copy[5][3] = data[1][5]
+    copy[5][6] = data[1][2]
+    //left face update
+    copy[2][0] = data[2][2]
+    copy[2][1] = data[2][5]
+    copy[2][2] = data[2][8]
+    copy[2][3] = data[2][1]
+    copy[2][5] = data[2][7]
+    copy[2][8] = data[2][6]
+    copy[2][7] = data[2][3]
+    copy[2][6] = data[2][0]
+    return copy
+}
+private fun twistRight90(data: Array<IntArray>) : Array<IntArray> {
+    val copy = data.copy()
+    //front face update
+    copy[0][8] = data[5][8]
+    copy[0][5] = data[5][5]
+    copy[0][2] = data[5][2]
+    //up face update
+    copy[4][8] = data[0][8]
+    copy[4][5] = data[0][5]
+    copy[4][2] = data[0][2]
+    //back face update
+    copy[1][0] = data[4][8]
+    copy[1][3] = data[4][5]
+    copy[1][6] = data[4][2]
+    //down face update
+    copy[5][8] = data[1][0]
+    copy[5][5] = data[1][3]
+    copy[5][2] = data[1][6]
+    //right face update
+    copy[3][0] = data[3][6]
+    copy[3][1] = data[3][3]
+    copy[3][2] = data[3][0]
+    copy[3][3] = data[3][7]
+    copy[3][5] = data[3][1]
+    copy[3][8] = data[3][2]
+    copy[3][7] = data[3][5]
+    copy[3][6] = data[3][8]
+    //return the updated array
+    return copy
+}
+private fun twistRight180(data: Array<IntArray>) : Array<IntArray> {
+    val copy = data.copy()
+    //front face update
+    copy[0][8] = data[1][0]
+    copy[0][5] = data[1][3]
+    copy[0][2] = data[1][6]
+    //up face update
+    copy[4][8] = data[5][8]
+    copy[4][5] = data[5][5]
+    copy[4][2] = data[5][2]
+    //back face update
+    copy[1][0] = data[0][8]
+    copy[1][3] = data[0][5]
+    copy[1][6] = data[0][2]
+    //down face update
+    copy[5][8] = data[4][8]
+    copy[5][5] = data[4][5]
+    copy[5][2] = data[4][2]
+    //right face update
+    copy[3][0] = data[3][8]
+    copy[3][1] = data[3][7]
+    copy[3][2] = data[3][6]
+    copy[3][3] = data[3][5]
+    copy[3][5] = data[3][3]
+    copy[3][8] = data[3][0]
+    copy[3][7] = data[3][1]
+    copy[3][6] = data[3][2]
+    //return the updated array
+    return copy
+}
+private fun twistRight270(data: Array<IntArray>) : Array<IntArray> {
+    val copy = data.copy()
+    //front face update
+    copy[0][8] = data[4][8]
+    copy[0][5] = data[4][5]
+    copy[0][2] = data[4][2]
+    //up face update
+    copy[4][8] = data[1][0]
+    copy[4][5] = data[1][3]
+    copy[4][2] = data[1][6]
+    //back face update
+    copy[1][0] = data[5][8]
+    copy[1][3] = data[5][5]
+    copy[1][6] = data[5][2]
+    //down face update
+    copy[5][8] = data[0][8]
+    copy[5][5] = data[0][5]
+    copy[5][2] = data[0][2]
+    //right face update
+    copy[3][0] = data[3][2]
+    copy[3][1] = data[3][5]
+    copy[3][2] = data[3][8]
+    copy[3][3] = data[3][1]
+    copy[3][5] = data[3][7]
+    copy[3][8] = data[3][6]
+    copy[3][7] = data[3][3]
+    copy[3][6] = data[3][0]
+    //return the updated array
+    return copy
+}
+private fun twistUp90(data: Array<IntArray>) : Array<IntArray> {
+    val copy = data.copy()
+    //left face update
+    copy[2][2] = data[0][2]
+    copy[2][1] = data[0][1]
+    copy[2][0] = data[0][0]
+    //back face update
+    copy[1][2] = data[2][2]
+    copy[1][1] = data[2][1]
+    copy[1][0] = data[2][0]
+    //right face update
+    copy[3][2] = data[1][2]
+    copy[3][1] = data[1][1]
+    copy[3][0] = data[1][0]
+    //front face update
+    copy[0][2] = data[3][2]
+    copy[0][1] = data[3][1]
+    copy[0][0] = data[3][0]
+    //up face update
+    copy[4][0] = data[4][6]
+    copy[4][1] = data[4][3]
+    copy[4][2] = data[4][0]
+    copy[4][3] = data[4][7]
+    copy[4][5] = data[4][1]
+    copy[4][8] = data[4][2]
+    copy[4][7] = data[4][5]
+    copy[4][6] = data[4][8]
+    //return the updated array
+    return copy
+}
+private fun twistUp180(data: Array<IntArray>) : Array<IntArray> {
+    val copy = data.copy()
+    //left face update
+    copy[2][2] = data[3][2]
+    copy[2][1] = data[3][1]
+    copy[2][0] = data[3][0]
+    //back face update
+    copy[1][2] = data[0][2]
+    copy[1][1] = data[0][1]
+    copy[1][0] = data[0][0]
+    //right face update
+    copy[3][2] = data[2][2]
+    copy[3][1] = data[2][1]
+    copy[3][0] = data[2][0]
+    //front face update
+    copy[0][2] = data[1][2]
+    copy[0][1] = data[1][1]
+    copy[0][0] = data[1][0]
+    //up face update
+    copy[4][0] = data[4][8]
+    copy[4][1] = data[4][7]
+    copy[4][2] = data[4][6]
+    copy[4][3] = data[4][5]
+    copy[4][5] = data[4][3]
+    copy[4][8] = data[4][0]
+    copy[4][7] = data[4][1]
+    copy[4][6] = data[4][2]
+    //return the updated array
+    return copy
+}
+private fun twistUp270(data: Array<IntArray>) : Array<IntArray> {
+    val copy = data.copy()
+    //left face update
+    copy[2][2] = data[1][2]
+    copy[2][1] = data[1][1]
+    copy[2][0] = data[1][0]
+    //back face update
+    copy[1][2] = data[3][2]
+    copy[1][1] = data[3][1]
+    copy[1][0] = data[3][0]
+    //right face update
+    copy[3][2] = data[0][2]
+    copy[3][1] = data[0][1]
+    copy[3][0] = data[0][0]
+    //front face update
+    copy[0][2] = data[2][2]
+    copy[0][1] = data[2][1]
+    copy[0][0] = data[2][0]
+    //up face update
+    copy[4][0] = data[4][2]
+    copy[4][1] = data[4][5]
+    copy[4][2] = data[4][8]
+    copy[4][3] = data[4][1]
+    copy[4][5] = data[4][7]
+    copy[4][8] = data[4][6]
+    copy[4][7] = data[4][3]
+    copy[4][6] = data[4][0]
+    //return the updated array
+    return copy
+}
+private fun twistDown90(data: Array<IntArray>) : Array<IntArray> {
+    val copy = data.copy()
+    //left face update
+    copy[2][6] = data[1][6]
+    copy[2][7] = data[1][7]
+    copy[2][8] = data[1][8]
+    //front face update
+    copy[0][6] = data[2][6]
+    copy[0][7] = data[2][7]
+    copy[0][8] = data[2][8]
+    //right face update
+    copy[3][6] = data[0][6]
+    copy[3][7] = data[0][7]
+    copy[3][8] = data[0][8]
+    //back face update
+    copy[1][6] = data[3][6]
+    copy[1][7] = data[3][7]
+    copy[1][8] = data[3][8]
+    //down face update
+    copy[5][0] = data[5][6]
+    copy[5][1] = data[5][3]
+    copy[5][2] = data[5][0]
+    copy[5][3] = data[5][7]
+    copy[5][5] = data[5][1]
+    copy[5][8] = data[5][2]
+    copy[5][7] = data[5][5]
+    copy[5][6] = data[5][8]
+    //return the updated array
+    return copy
+}
+private fun twistDown180(data: Array<IntArray>) : Array<IntArray> {
+    val copy = data.copy()
+    //left face update
+    copy[2][6] = data[3][6]
+    copy[2][7] = data[3][7]
+    copy[2][8] = data[3][8]
+    //front face update
+    copy[0][6] = data[1][6]
+    copy[0][7] = data[1][7]
+    copy[0][8] = data[1][8]
+    //right face update
+    copy[3][6] = data[2][6]
+    copy[3][7] = data[2][7]
+    copy[3][8] = data[2][8]
+    //back face update
+    copy[1][6] = data[0][6]
+    copy[1][7] = data[0][7]
+    copy[1][8] = data[0][8]
+    //down face update
+    copy[5][0] = data[5][8]
+    copy[5][1] = data[5][7]
+    copy[5][2] = data[5][6]
+    copy[5][3] = data[5][5]
+    copy[5][5] = data[5][3]
+    copy[5][8] = data[5][0]
+    copy[5][7] = data[5][1]
+    copy[5][6] = data[5][2]
+    //return the updated array
+    return copy
+}
+private fun twistDown270(data: Array<IntArray>) : Array<IntArray> {
+    val copy = data.copy()
+    //left face update
+    copy[2][6] = data[0][6]
+    copy[2][7] = data[0][7]
+    copy[2][8] = data[0][8]
+    //front face update
+    copy[0][6] = data[3][6]
+    copy[0][7] = data[3][7]
+    copy[0][8] = data[3][8]
+    //right face update
+    copy[3][6] = data[1][6]
+    copy[3][7] = data[1][7]
+    copy[3][8] = data[1][8]
+    //back face update
+    copy[1][6] = data[2][6]
+    copy[1][7] = data[2][7]
+    copy[1][8] = data[2][8]
+    //down face update
+    copy[5][0] = data[5][2]
+    copy[5][1] = data[5][5]
+    copy[5][2] = data[5][8]
+    copy[5][3] = data[5][1]
+    copy[5][5] = data[5][7]
+    copy[5][8] = data[5][6]
+    copy[5][7] = data[5][3]
+    copy[5][6] = data[5][0]
+    //return the updated array
+    return copy
+}
+
+/*
+ * The edge orientation group is closed under arithmetic modulo 2 since each edge falls on 2 axes.
+ * Let's define an edge's orientation as follows:
+ * if an edge can be correctly positioned and oriented via only UP, DOWN, LEFT, and RIGHT twists, its orientation is 0,
+ * otherwise its orientation is 1.
+ *
+ * Let O5 be the edge originally at the top of a face, O6 at the right, O7 at the bottom, O8 at the left.
+ * When we twist this face clockwise,
+ * O5 becomes N6, O6 becomes N7, O7 becomes N8, O8 becomes N6.
+ * If this face is FRONT or BACK, all orientations are incremented, otherwise all orientations remain the same.
+ */
+private fun getUpdatedEdgeOrientations(oldOrientations: IntArray, oldPositions: IntArray, twist: Twist): IntArray {
+    val orientations = oldOrientations.copyOf()
+    val numQuarterTurns = Twist.getEquivalentNumClockwiseQuarterTurns(twist)
+    //gets edge indices
+    val o5Index = getO5Index(oldPositions, twist)
+    val o6Index = getO6Index(oldPositions, twist)
+    val o7Index = getO7Index(oldPositions, twist)
+    val o8Index = getO8Index(oldPositions, twist)
+    //computes new orientation values
+    val orientationIncrement = twistChangesEdgeOrientations(twist)
+    for(i in 0 until numQuarterTurns) {
+        orientations[o5Index] = (orientations[o5Index] + orientationIncrement) % 2
+        orientations[o6Index] = (orientations[o6Index] + orientationIncrement) % 2
+        orientations[o7Index] = (orientations[o7Index] + orientationIncrement) % 2
+        orientations[o8Index] = (orientations[o8Index] + orientationIncrement) % 2
+    }
+    //returns
+    return orientations
 }
 
 /*
@@ -162,91 +737,380 @@ class SmartCube internal constructor(private var cubies: Array<OrientedCubie>) :
  * O3 becomes N4 and orientation increases by 2.
  * O4 becomes N1 and orientation increases by 1.
  * If this face is UP or DOWN, all orientations remain the same.
- *
- * The edge orientation group is closed under arithmetic modulo 2 since each edge falls on 2 axes.
- * Let's define an edge's orientation as follows:
- * if an edge can be correctly positioned and oriented via only UP, DOWN, LEFT, and RIGHT twists, its orientation is 0,
- * otherwise its orientation is 1.
- *
- * Let O5 be the edge originally at the top of a face, O6 at the right, O7 at the bottom, O8 at the left.
- * When we twist this face clockwise,
- * O5 becomes N6, O6 becomes N7, O7 becomes N8, O8 becomes N6.
- * If this face is FRONT or BACK, all orientations are incremented, otherwise all orientations remain the same.
  */
-/** Returns the cubie array that results from a single 90 degree twist */
-private fun twist90(cubies: Array<OrientedCubie>, twist: Twist): Array<OrientedCubie> {
-    val copy = cubies.copyOf()
+private fun getUpdatedCornerOrientations(oldOrientations: IntArray, oldPositions: IntArray, twist: Twist): IntArray {
+    val orientations = oldOrientations.copyOf()
     //gets corner indices
-    val o1Index = getO1Index(twist)
-    val o2Index = getO2Index(twist)
-    val o3Index = getO3Index(twist)
-    val o4Index = getO4Index(twist)
-    //grabs the corners
-    val o1 = cubies[o1Index] as OrientedCornerCubie
-    val o2 = cubies[o2Index] as OrientedCornerCubie
-    val o3 = cubies[o3Index] as OrientedCornerCubie
-    val o4 = cubies[o4Index] as OrientedCornerCubie
-    //gets edge indices
-    val o5Index = getO5Index(twist)
-    val o6Index = getO6Index(twist)
-    val o7Index = getO7Index(twist)
-    val o8Index = getO8Index(twist)
-    //grabs the edges
-    val o5 = cubies[o5Index] as OrientedEdgeCubie
-    val o6 = cubies[o6Index] as OrientedEdgeCubie
-    val o7 = cubies[o7Index] as OrientedEdgeCubie
-    val o8 = cubies[o8Index] as OrientedEdgeCubie
-
-    //transforms and updates the corners
-    val cornerOrientationIncrement = twistChangesCornerOrientations(twist)
-    copy[o2Index] = OrientedCornerCubie(getTwistedTileSet(o1, twist), (o1.orientation + (2 * cornerOrientationIncrement)) % 3)
-    copy[o3Index] = OrientedCornerCubie(getTwistedTileSet(o2, twist), (o2.orientation + (1 * cornerOrientationIncrement)) % 3)
-    copy[o4Index] = OrientedCornerCubie(getTwistedTileSet(o3, twist), (o3.orientation + (2 * cornerOrientationIncrement)) % 3)
-    copy[o5Index] = OrientedCornerCubie(getTwistedTileSet(o4, twist), (o4.orientation + (1 * cornerOrientationIncrement)) % 3)
-    //transforms and updates the edges
-    val edgeOrientationIncrement = twistChangesEdgeOrientations(twist)
-    copy[o6Index] = OrientedEdgeCubie(getTwistedTileSet(o5, twist), (o5.orientation + edgeOrientationIncrement) % 2)
-    copy[o7Index] = OrientedEdgeCubie(getTwistedTileSet(o6, twist), (o6.orientation + edgeOrientationIncrement) % 2)
-    copy[o8Index] = OrientedEdgeCubie(getTwistedTileSet(o7, twist), (o7.orientation + edgeOrientationIncrement) % 2)
-    copy[o5Index] = OrientedEdgeCubie(getTwistedTileSet(o8, twist), (o8.orientation + edgeOrientationIncrement) % 2)
+    val o1Index = getO1Index(oldPositions, twist)
+    val o2Index = getO2Index(oldPositions, twist)
+    val o3Index = getO3Index(oldPositions, twist)
+    val o4Index = getO4Index(oldPositions, twist)
+    //computes new orientation values
+    val orientationIncrement = twistChangesCornerOrientations(twist)
+    orientations[o1Index] = (orientations[o1Index] + (2 * orientationIncrement)) % 3
+    orientations[o2Index] = (orientations[o2Index] + (1 * orientationIncrement)) % 3
+    orientations[o3Index] = (orientations[o3Index] + (2 * orientationIncrement)) % 3
+    orientations[o4Index] = (orientations[o4Index] + (1 * orientationIncrement)) % 3
     //returns
-    return copy
+    return orientations
+    //TODO: this is only for 90-degree turns. Fix.
 }
-/** Gets the tileset of a corner cubie after the given twist is applied */
-private fun getTwistedTileSet(oldCubie: OrientedCornerCubie, twist: Twist): CornerTileSet {
-    when {
-        oldCubie.containsFaces(Twist.Face.UP, Twist.Face.FRONT, Twist.Face.LEFT) -> {
+private fun getUpdatedEdgePositions(oldPositions: IntArray, twist: Twist): IntArray {
+    val positions = oldPositions.copyOf()
+    /*
+     * up-front, up-back, up-left, up-right,
+     * down-front, down-back, down-left, down-right,
+     * front-left, front-right, back-left, back-right
+     */
+    when(Twist.getFace(twist)) {
+        Twist.Face.FRONT -> {
+            //grabs the indices of the cubies currently in the front edge positions
+            val frontUpIndex = oldPositions.indexOf(0)
+            val frontRightIndex = oldPositions.indexOf(9)
+            val frontDownIndex = oldPositions.indexOf(4)
+            val frontLeftIndex = oldPositions.indexOf(8)
+            //updates the positions of these cubies
             when(twist) {
-                Twist.FRONT_90 -> { }
-                Twist.FRONT_180 -> { }
-                Twist.FRONT_270 -> { }
-                Twist.BACK_90 -> { }
-                Twist.BACK_180 -> { }
-                Twist.BACK_270 -> { }
-                Twist.LEFT_90 -> { }
-                Twist.LEFT_180 -> { }
-                Twist.LEFT_270 -> { }
-                Twist.RIGHT_90 -> { }
-                Twist.RIGHT_180 -> { }
-                Twist.RIGHT_270 -> { }
-                Twist.UP_90 -> { }
-                Twist.UP_180 -> { }
-                Twist.UP_270 -> { }
+                Twist.FRONT_90 -> {
+                    positions[frontUpIndex] = 9
+                    positions[frontRightIndex] = 4
+                    positions[frontDownIndex] = 8
+                    positions[frontLeftIndex] = 0
+                }
+                Twist.FRONT_180 -> {
+                    positions[frontUpIndex] = 4
+                    positions[frontRightIndex] = 8
+                    positions[frontDownIndex] = 0
+                    positions[frontLeftIndex] = 9
+                }
+                else -> {
+                    positions[frontUpIndex] = 8
+                    positions[frontRightIndex] = 0
+                    positions[frontDownIndex] = 9
+                    positions[frontLeftIndex] = 4
+                }
             }
         }
-        oldCubie.containsFaces(Twist.Face.UP, Twist.Face.FRONT, Twist.Face.RIGHT) -> { }
-        oldCubie.containsFaces(Twist.Face.UP, Twist.Face.BACK, Twist.Face.LEFT) -> { }
-        oldCubie.containsFaces(Twist.Face.UP, Twist.Face.BACK, Twist.Face.RIGHT) -> { }
-        oldCubie.containsFaces(Twist.Face.DOWN, Twist.Face.FRONT, Twist.Face.LEFT) -> { }
-        oldCubie.containsFaces(Twist.Face.DOWN, Twist.Face.FRONT, Twist.Face.RIGHT) -> { }
-        oldCubie.containsFaces(Twist.Face.UP, Twist.Face.BACK, Twist.Face.LEFT) -> { }
-        oldCubie.containsFaces(Twist.Face.UP, Twist.Face.BACK, Twist.Face.RIGHT) -> { }
+        Twist.Face.BACK -> {
+            //grabs the indices of the cubies currently in the back edge positions
+            val backUpIndex = oldPositions.indexOf(1)
+            val backLeftIndex = oldPositions.indexOf(10)
+            val backDownIndex = oldPositions.indexOf(5)
+            val backRightIndex = oldPositions.indexOf(11)
+            //updates the positions of these cubies
+            when(twist) {
+                Twist.BACK_90 -> {
+                    positions[backUpIndex] = 10
+                    positions[backLeftIndex] = 5
+                    positions[backDownIndex] = 11
+                    positions[backRightIndex] = 1
+                }
+                Twist.BACK_180 -> {
+                    positions[backUpIndex] = 5
+                    positions[backLeftIndex] = 11
+                    positions[backDownIndex] = 1
+                    positions[backRightIndex] = 10
+                }
+                else -> {
+                    positions[backUpIndex] = 11
+                    positions[backLeftIndex] = 1
+                    positions[backDownIndex] = 10
+                    positions[backRightIndex] = 5
+                }
+            }
+        }
+        Twist.Face.LEFT -> {
+            //grabs the indices of the cubies currently in the left edge positions
+            val leftUpIndex = oldPositions.indexOf(2)
+            val leftFrontIndex = oldPositions.indexOf(8)
+            val leftDownIndex = oldPositions.indexOf(6)
+            val leftBackIndex = oldPositions.indexOf(10)
+            //updates the positions of these cubies
+            when(twist) {
+                Twist.LEFT_90 -> {
+                    positions[leftUpIndex] = 8
+                    positions[leftFrontIndex] = 6
+                    positions[leftDownIndex] = 10
+                    positions[leftBackIndex] = 2
+                }
+                Twist.LEFT_180 -> {
+                    positions[leftUpIndex] = 6
+                    positions[leftFrontIndex] = 10
+                    positions[leftDownIndex] = 2
+                    positions[leftBackIndex] = 8
+                }
+                else -> {
+                    positions[leftUpIndex] = 10
+                    positions[leftFrontIndex] = 2
+                    positions[leftDownIndex] = 8
+                    positions[leftBackIndex] = 6
+                }
+            }
+        }
+        Twist.Face.RIGHT -> {
+            //grabs the indices of the cubies currently in the right edge positions
+            val rightUpIndex = oldPositions.indexOf(3)
+            val rightBackIndex = oldPositions.indexOf(11)
+            val rightDownIndex = oldPositions.indexOf(7)
+            val rightFrontIndex = oldPositions.indexOf(9)
+            //updates the positions of these cubies
+            when(twist) {
+                Twist.RIGHT_90 -> {
+                    positions[rightUpIndex] = 11
+                    positions[rightFrontIndex] = 7
+                    positions[rightDownIndex] = 9
+                    positions[rightBackIndex] = 3
+                }
+                Twist.RIGHT_180 -> {
+                    positions[rightUpIndex] = 7
+                    positions[rightFrontIndex] = 9
+                    positions[rightDownIndex] = 3
+                    positions[rightBackIndex] = 11
+                }
+                else -> {
+                    positions[rightUpIndex] = 9
+                    positions[rightFrontIndex] = 3
+                    positions[rightDownIndex] = 11
+                    positions[rightBackIndex] = 7
+                }
+            }
+        }
+        Twist.Face.UP -> {
+            //grabs the indices of the cubies currently in the up edge positions
+            val upBackIndex = oldPositions.indexOf(1)
+            val upRightIndex = oldPositions.indexOf(3)
+            val upFrontIndex = oldPositions.indexOf(0)
+            val upLeftIndex = oldPositions.indexOf(2)
+            //updates the positions of these cubies
+            when(twist) {
+                Twist.UP_90 -> {
+                    positions[upBackIndex] = 3
+                    positions[upRightIndex] = 0
+                    positions[upFrontIndex] = 2
+                    positions[upLeftIndex] = 1
+                }
+                Twist.UP_180 -> {
+                    positions[upBackIndex] = 0
+                    positions[upRightIndex] = 2
+                    positions[upFrontIndex] = 1
+                    positions[upLeftIndex] = 3
+                }
+                else -> {
+                    positions[upBackIndex] = 2
+                    positions[upRightIndex] = 1
+                    positions[upFrontIndex] = 3
+                    positions[upLeftIndex] = 0
+                }
+            }
+        }
+        Twist.Face.DOWN -> {
+            //grabs the indices of the cubies currently in the down edge positions
+            val downFrontIndex = oldPositions.indexOf(4)
+            val downRightIndex = oldPositions.indexOf(7)
+            val downBackIndex = oldPositions.indexOf(5)
+            val downLeftIndex = oldPositions.indexOf(6)
+            //updates the positions of these cubies
+            when(twist) {
+                Twist.DOWN_90 -> {
+                    positions[downFrontIndex] = 7
+                    positions[downRightIndex] = 5
+                    positions[downBackIndex] = 6
+                    positions[downLeftIndex] = 4
+                }
+                Twist.DOWN_180 -> {
+                    positions[downFrontIndex] = 5
+                    positions[downRightIndex] = 6
+                    positions[downBackIndex] = 4
+                    positions[downLeftIndex] = 7
+                }
+                else -> {
+                    positions[downFrontIndex] = 6
+                    positions[downRightIndex] = 4
+                    positions[downBackIndex] = 7
+                    positions[downLeftIndex] = 5
+                }
+            }
+        }
     }
-    TODO()
+    return positions
 }
-/** Gets the tileset of an edge cubie after the given twist is applied */
-private fun getTwistedTileSet(oldCubie: OrientedEdgeCubie, twist: Twist): EdgeTileSet {
-    TODO()
+private fun getUpdatedCornerPositions(oldPositions: IntArray, twist: Twist): IntArray {
+    val positions = oldPositions.copyOf()
+    /*
+     * up-front-left, up-front-right, up-back-left, up-back-right,
+     * down-front-left, down-front-right, down-back-left, down-back-right
+     */
+    when(Twist.getFace(twist)) {
+        Twist.Face.FRONT -> {
+            //grabs the indices of the cubies currently in the front corner positions
+            val frontUpLeftIndex = oldPositions.indexOf(0)
+            val frontUpRightIndex = oldPositions.indexOf(1)
+            val frontDownRightIndex = oldPositions.indexOf(5)
+            val frontDownLeftIndex = oldPositions.indexOf(4)
+            //updates the positions of these cubies
+            when(twist) {
+                Twist.FRONT_90 -> {
+                    positions[frontUpLeftIndex] = 1
+                    positions[frontUpRightIndex] = 5
+                    positions[frontDownRightIndex] = 4
+                    positions[frontDownLeftIndex] = 0
+                }
+                Twist.FRONT_180 -> {
+                    positions[frontUpLeftIndex] = 5
+                    positions[frontUpRightIndex] = 4
+                    positions[frontDownRightIndex] = 0
+                    positions[frontDownLeftIndex] = 1
+                }
+                else -> {
+                    positions[frontUpLeftIndex] = 4
+                    positions[frontUpRightIndex] = 0
+                    positions[frontDownRightIndex] = 1
+                    positions[frontDownLeftIndex] = 5
+                }
+            }
+        }
+        Twist.Face.BACK -> {
+            //grabs the indices of the cubies currently in the back edge positions
+            val backUpRightIndex = oldPositions.indexOf(3)
+            val backUpLeftIndex = oldPositions.indexOf(2)
+            val backDownLeftIndex = oldPositions.indexOf(6)
+            val backDownRightIndex = oldPositions.indexOf(7)
+            //updates the positions of these cubies
+            when(twist) {
+                Twist.BACK_90 -> {
+                    positions[backUpRightIndex] = 2
+                    positions[backUpLeftIndex] = 6
+                    positions[backDownLeftIndex] = 7
+                    positions[backDownRightIndex] = 3
+                }
+                Twist.BACK_180 -> {
+                    positions[backUpRightIndex] = 6
+                    positions[backUpLeftIndex] = 7
+                    positions[backDownLeftIndex] = 3
+                    positions[backDownRightIndex] = 2
+                }
+                else -> {
+                    positions[backUpRightIndex] = 7
+                    positions[backUpLeftIndex] = 3
+                    positions[backDownLeftIndex] = 2
+                    positions[backDownRightIndex] = 6
+                }
+            }
+        }
+        Twist.Face.LEFT -> {
+            //grabs the indices of the cubies currently in the left edge positions
+            val leftUpBackIndex = oldPositions.indexOf(2)
+            val leftUpFrontIndex = oldPositions.indexOf(0)
+            val leftDownFrontIndex = oldPositions.indexOf(4)
+            val leftDownBackIndex = oldPositions.indexOf(6)
+            //updates the positions of these cubies
+            when(twist) {
+                Twist.LEFT_90 -> {
+                    positions[leftUpBackIndex] = 0
+                    positions[leftUpFrontIndex] = 4
+                    positions[leftDownFrontIndex] = 6
+                    positions[leftDownBackIndex] = 2
+                }
+                Twist.LEFT_180 -> {
+                    positions[leftUpBackIndex] = 4
+                    positions[leftUpFrontIndex] = 6
+                    positions[leftDownFrontIndex] = 2
+                    positions[leftDownBackIndex] = 0
+                }
+                else -> {
+                    positions[leftUpBackIndex] = 6
+                    positions[leftUpFrontIndex] = 2
+                    positions[leftDownFrontIndex] = 0
+                    positions[leftDownBackIndex] = 4
+                }
+            }
+        }
+        Twist.Face.RIGHT -> {
+            //grabs the indices of the cubies currently in the right edge positions
+            val rightUpFrontIndex = oldPositions.indexOf(1)
+            val rightUpBackIndex = oldPositions.indexOf(3)
+            val rightDownBackIndex = oldPositions.indexOf(7)
+            val rightDownFrontIndex = oldPositions.indexOf(5)
+            //updates the positions of these cubies
+            when(twist) {
+                Twist.RIGHT_90 -> {
+                    positions[rightUpFrontIndex] = 3
+                    positions[rightUpBackIndex] = 7
+                    positions[rightDownBackIndex] = 5
+                    positions[rightDownFrontIndex] = 1
+                }
+                Twist.RIGHT_180 -> {
+                    positions[rightUpFrontIndex] = 7
+                    positions[rightUpBackIndex] = 5
+                    positions[rightDownBackIndex] = 1
+                    positions[rightDownFrontIndex] = 3
+                }
+                else -> {
+                    positions[rightUpFrontIndex] = 5
+                    positions[rightUpBackIndex] = 1
+                    positions[rightDownBackIndex] = 3
+                    positions[rightDownFrontIndex] = 7
+                }
+            }
+        }
+        Twist.Face.UP -> {
+            //grabs the indices of the cubies currently in the up edge positions
+            val upBackLeftIndex = oldPositions.indexOf(2)
+            val upBackRightIndex = oldPositions.indexOf(3)
+            val upFrontRightIndex = oldPositions.indexOf(1)
+            val upFrontLeftIndex = oldPositions.indexOf(0)
+            //updates the positions of these cubies
+            when(twist) {
+                Twist.UP_90 -> {
+                    positions[upBackLeftIndex] = 3
+                    positions[upBackRightIndex] = 1
+                    positions[upFrontRightIndex] = 0
+                    positions[upFrontLeftIndex] = 2
+                }
+                Twist.UP_180 -> {
+                    positions[upBackLeftIndex] = 1
+                    positions[upBackRightIndex] = 0
+                    positions[upFrontRightIndex] = 2
+                    positions[upFrontLeftIndex] = 3
+                }
+                else -> {
+                    positions[upBackLeftIndex] = 0
+                    positions[upBackRightIndex] = 2
+                    positions[upFrontRightIndex] = 3
+                    positions[upFrontLeftIndex] = 1
+                }
+            }
+        }
+        Twist.Face.DOWN -> {
+            //grabs the indices of the cubies currently in the down edge positions
+            val downFrontLeftIndex = oldPositions.indexOf(4)
+            val downFrontRightIndex = oldPositions.indexOf(5)
+            val downBackRightIndex = oldPositions.indexOf(7)
+            val downBackLeftIndex = oldPositions.indexOf(6)
+            //updates the positions of these cubies
+            when(twist) {
+                Twist.DOWN_90 -> {
+                    positions[downFrontLeftIndex] = 5
+                    positions[downFrontRightIndex] = 7
+                    positions[downBackRightIndex] = 6
+                    positions[downBackLeftIndex] = 4
+                }
+                Twist.DOWN_180 -> {
+                    positions[downFrontLeftIndex] = 7
+                    positions[downFrontRightIndex] = 6
+                    positions[downBackRightIndex] = 4
+                    positions[downBackLeftIndex] = 5
+                }
+                else -> {
+                    positions[downFrontLeftIndex] = 6
+                    positions[downFrontRightIndex] = 4
+                    positions[downBackRightIndex] = 5
+                    positions[downBackLeftIndex] = 7
+                }
+            }
+        }
+    }
+    return positions
 }
 /** Gets whether this twist changes edge orientation values (0 or 1) */
 private fun twistChangesEdgeOrientations(twist: Twist): Int {
@@ -256,105 +1120,83 @@ private fun twistChangesEdgeOrientations(twist: Twist): Int {
 private fun twistChangesCornerOrientations(twist: Twist): Int {
     return if(Twist.getFace(twist) == Twist.Face.UP || Twist.getFace(twist) == Twist.Face.DOWN) 0 else 1
 }
-/*
- * Required order of center positions (0-5):
- * FRONT, BACK, LEFT, RIGHT, UP, DOWN.
- *
- * Required order of edge positions (6-17):
- * UP-FRONT, UP-BACK, UP-LEFT, UP-RIGHT,
- * DOWN-FRONT, DOWN-BACK, DOWN-LEFT, DOWN-RIGHT,
- * FRONT-LEFT, FRONT-RIGHT, BACK-LEFT, BACK-RIGHT,
- *
- * Required order of corner positions (18-25):
- * UP-FRONT-LEFT, UP-FRONT-RIGHT, UP-BACK-LEFT, UP-BACK-RIGHT,
- * DOWN-FRONT-LEFT, DOWN-FRONT-RIGHT, DOWN-BACK-LEFT, DOWN-BACK-RIGHT
-*/
-private fun getO1Index(twist: Twist): Int {
+private fun getO1Index(positions: IntArray, twist: Twist): Int {
     return when(Twist.getFace(twist)) {
-        Twist.Face.FRONT -> 18 //up-front-left
-        Twist.Face.BACK -> 21 //up-back-right
-        Twist.Face.LEFT -> 20 //up-back-left
-        Twist.Face.RIGHT -> 19 //up-front-right
-        Twist.Face.UP -> 20 //up-back-left
-        Twist.Face.DOWN -> 22 //down-front-left
+        Twist.Face.FRONT -> positions.indexOf(0) //up-front-left
+        Twist.Face.BACK -> positions.indexOf(3) //up-back-right
+        Twist.Face.LEFT -> positions.indexOf(2) //up-back-left
+        Twist.Face.RIGHT -> positions.indexOf(1) //up-front-right
+        Twist.Face.UP -> positions.indexOf(2) //up-back-left
+        Twist.Face.DOWN -> positions.indexOf(4) //down-front-left
     }
 }
-private fun getO2Index(twist: Twist): Int {
+private fun getO2Index(positions: IntArray, twist: Twist): Int {
     return when(Twist.getFace(twist)) {
-        Twist.Face.FRONT -> 19 //up-front-right
-        Twist.Face.BACK -> 20 // up-back-left
-        Twist.Face.LEFT -> 18 // up-front-left
-        Twist.Face.RIGHT -> 21 //up-back-right
-        Twist.Face.UP -> 21 //up-back-right
-        Twist.Face.DOWN -> 23 //down-front-right
+        Twist.Face.FRONT -> positions.indexOf(1) //up-front-right
+        Twist.Face.BACK -> positions.indexOf(2) // up-back-left
+        Twist.Face.LEFT -> positions.indexOf(0) // up-front-left
+        Twist.Face.RIGHT -> positions.indexOf(3) //up-back-right
+        Twist.Face.UP -> positions.indexOf(3) //up-back-right
+        Twist.Face.DOWN -> positions.indexOf(5) //down-front-right
     }
 }
-private fun getO3Index(twist: Twist): Int {
+private fun getO3Index(positions: IntArray, twist: Twist): Int {
     return when(Twist.getFace(twist)) {
-        Twist.Face.FRONT -> 18 //down-front-right
-        Twist.Face.BACK -> 24 //down-back-left
-        Twist.Face.LEFT -> 22 //down-front-left
-        Twist.Face.RIGHT -> 25 //down-back-right
-        Twist.Face.UP -> 19 //up-front-right
-        Twist.Face.DOWN -> 25 //down-back-right
+        Twist.Face.FRONT -> positions.indexOf(5) //down-front-right
+        Twist.Face.BACK -> positions.indexOf(6) //down-back-left
+        Twist.Face.LEFT -> positions.indexOf(4) //down-front-left
+        Twist.Face.RIGHT -> positions.indexOf(7) //down-back-right
+        Twist.Face.UP -> positions.indexOf(1) //up-front-right
+        Twist.Face.DOWN -> positions.indexOf(7) //down-back-right
     }
 }
-private fun getO4Index(twist: Twist): Int {
+private fun getO4Index(positions: IntArray, twist: Twist): Int {
     return when(Twist.getFace(twist)) {
-        Twist.Face.FRONT -> 18 //down-front-left
-        Twist.Face.BACK -> 25 //down-back-right
-        Twist.Face.LEFT -> 24 //down-back-left
-        Twist.Face.RIGHT -> 23 //down-front-right
-        Twist.Face.UP -> 18 //up-front-left
-        Twist.Face.DOWN -> 24 //down-back-left
+        Twist.Face.FRONT -> positions.indexOf(4) //down-front-left
+        Twist.Face.BACK -> positions.indexOf(7) //down-back-right
+        Twist.Face.LEFT -> positions.indexOf(6) //down-back-left
+        Twist.Face.RIGHT -> positions.indexOf(5) //down-front-right
+        Twist.Face.UP -> positions.indexOf(0) //up-front-left
+        Twist.Face.DOWN -> positions.indexOf(6) //down-back-left
     }
 }
-private fun getO5Index(twist: Twist): Int {
+private fun getO5Index(positions: IntArray, twist: Twist): Int {
     return when(Twist.getFace(twist)) {
-        Twist.Face.FRONT -> 6 //up-front
-        Twist.Face.BACK -> 7 //up-back
-        Twist.Face.LEFT -> 8 //up-left
-        Twist.Face.RIGHT -> 9 //up-right
-        Twist.Face.UP -> 7 //up-back
-        Twist.Face.DOWN -> 10 //down-front
+        Twist.Face.FRONT -> positions.indexOf(0) //up-front
+        Twist.Face.BACK -> positions.indexOf(1) //up-back
+        Twist.Face.LEFT -> positions.indexOf(2) //up-left
+        Twist.Face.RIGHT -> positions.indexOf(3) //up-right
+        Twist.Face.UP -> positions.indexOf(1) //up-back
+        Twist.Face.DOWN -> positions.indexOf(4) //down-front
     }
 }
-private fun getO6Index(twist: Twist): Int {
+private fun getO6Index(positions: IntArray, twist: Twist): Int {
     return when(Twist.getFace(twist)) {
-        Twist.Face.FRONT -> 15 //front-right
-        Twist.Face.BACK -> 16 //back-left
-        Twist.Face.LEFT -> 14 //front-left
-        Twist.Face.RIGHT -> 17 //back-right
-        Twist.Face.UP -> 9 //up-right
-        Twist.Face.DOWN -> 13 //down-right
+        Twist.Face.FRONT -> positions.indexOf(9) //front-right
+        Twist.Face.BACK ->  positions.indexOf(10) //back-left
+        Twist.Face.LEFT -> positions.indexOf(8) //front-left
+        Twist.Face.RIGHT ->  positions.indexOf(11) //back-right
+        Twist.Face.UP -> positions.indexOf(3) //up-right
+        Twist.Face.DOWN -> positions.indexOf(7) //down-right
     }
 }
-private fun getO7Index(twist: Twist): Int {
+private fun getO7Index(positions: IntArray, twist: Twist): Int {
     return when(Twist.getFace(twist)) {
-        Twist.Face.FRONT -> 10 //down-front
-        Twist.Face.BACK -> 11 //down-back
-        Twist.Face.LEFT -> 12 //down-left
-        Twist.Face.RIGHT -> 13 //down-right
-        Twist.Face.UP -> 6 //up-front
-        Twist.Face.DOWN -> 11 //down-back
+        Twist.Face.FRONT -> positions.indexOf(4) //down-front
+        Twist.Face.BACK -> positions.indexOf(5) //down-back
+        Twist.Face.LEFT -> positions.indexOf(6) //down-left
+        Twist.Face.RIGHT -> positions.indexOf(7) //down-right
+        Twist.Face.UP -> positions.indexOf(0) //up-front
+        Twist.Face.DOWN -> positions.indexOf(5) //down-back
     }
 }
-private fun getO8Index(twist: Twist): Int {
+private fun getO8Index(positions: IntArray, twist: Twist): Int {
     return when(Twist.getFace(twist)) {
-        Twist.Face.FRONT -> 14 //front-left
-        Twist.Face.BACK -> 17 //back-right
-        Twist.Face.LEFT -> 16 //back-left
-        Twist.Face.RIGHT -> 15 //front-right
-        Twist.Face.UP -> 8 //up-left
-        Twist.Face.DOWN -> 12 //down-left
+        Twist.Face.FRONT -> positions.indexOf(8) //front-left
+        Twist.Face.BACK ->  positions.indexOf(11) //back-right
+        Twist.Face.LEFT ->  positions.indexOf(10) //back-left
+        Twist.Face.RIGHT -> positions.indexOf(9) //front-right
+        Twist.Face.UP -> positions.indexOf(2) //up-left
+        Twist.Face.DOWN -> positions.indexOf(6) //down-left
     }
-}
-
-/* =============================================== ERROR FUNCTIONS =================================================  */
-
-private fun failInvalidPosition(): IllegalArgumentException {
-    return IllegalArgumentException("invalid args: the position provided is geometrically impossible */")
-}
-private fun failColorNotPresent(): IllegalArgumentException {
-    return IllegalArgumentException("invalid args: no cubie with the provided coloration is present on this cube")
 }

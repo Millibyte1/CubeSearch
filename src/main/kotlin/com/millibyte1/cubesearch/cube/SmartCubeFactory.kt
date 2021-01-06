@@ -1,8 +1,5 @@
 package com.millibyte1.cubesearch.cube
 
-import com.millibyte1.cubesearch.util.OrientedCubie
-import com.millibyte1.cubesearch.util.SmartCubeUtils
-
 class SmartCubeFactory : AbstractCubeFactory<SmartCube>() {
     /**
      * Constructs a cube from the contents of [data]
@@ -10,22 +7,39 @@ class SmartCubeFactory : AbstractCubeFactory<SmartCube>() {
      * @return the constructed cube
      */
     override fun getCube(data: Array<IntArray>): SmartCube {
-        return SmartCube(SmartCubeUtils.getCubies(data))
+        return SmartCube(data)
     }
     /**
-     * Constructs a cube from the contents of [cubies]
-     * @param cubies the array of cubies this cube should contain
+     * Constructs a cube from the contents of the data and orientation arrays
+     * @param data the 6xN array representing the faces of the cube
+     * @param edgePositions the 12-array representing the positions of the edges ordered by cubie number (coloration)
+     * @param cornerPositions the 8-array representing the positions of the corners ordered by cubie number (coloration)
+     * @param edgeOrientations the 12-array representing the orientations of the edges ordered by position
+     * @param cornerOrientations the 8-array representing the orientations of the corners ordered by position
      * @return the constructed cube
      */
-    fun getCube(cubies: Array<OrientedCubie>): SmartCube {
-        return SmartCube(cubies)
+    fun getCube(
+        data: Array<IntArray>,
+        edgePositions: IntArray,
+        cornerPositions: IntArray,
+        edgeOrientations: IntArray,
+        cornerOrientations: IntArray
+    ): SmartCube {
+        return SmartCube(data, edgePositions, cornerPositions, edgeOrientations, cornerOrientations)
     }
     /** Returns a copy of this cube
      * @param cube the cube to copy
      * @return the constructed cube
      */
     override fun getCube(cube: SmartCube): SmartCube {
-        return SmartCube(cube.getCubies())
+        return SmartCube(cube.data, cube.edgePositions, cube.cornerPositions, cube.edgeOrientations, cube.cornerOrientations)
+    }
+    /** Returns a SmartCube from this ArrayCube
+     * @param cube the cube to copy
+     * @return the constructed cube
+     */
+    fun getCube(cube: ArrayCube): SmartCube {
+        return SmartCube(cube.data)
     }
 
     /**
