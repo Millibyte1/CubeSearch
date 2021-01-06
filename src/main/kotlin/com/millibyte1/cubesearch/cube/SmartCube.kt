@@ -48,7 +48,7 @@ class SmartCube internal constructor(
         val arrayCube = this.toArrayCube()
         val edges = ArrayCubeUtils.getEdges(arrayCube)
         val corners = ArrayCubeUtils.getCorners(arrayCube)
-        //TODO("Fix orientation ordering")
+        //TODO("position twists do not match up with ")
         //initializes edge positions
         edgePositions = SolvabilityUtils.getEdgePermutation(arrayCube)
         //initializes corner positions
@@ -60,10 +60,10 @@ class SmartCube internal constructor(
     }
 
     override fun twist(twist: Twist): SmartCube {
-        val newEO = getUpdatedEdgeOrientations(edgeOrientations, edgePositions, twist)
-        val newCO = getUpdatedCornerOrientations(cornerOrientations, cornerPositions, twist)
         val newEP = getUpdatedEdgePositions(edgePositions, twist)
         val newCP = getUpdatedCornerPositions(cornerPositions, twist)
+        val newEO = getUpdatedEdgeOrientations(edgeOrientations, edgePositions, twist)
+        val newCO = getUpdatedCornerOrientations(cornerOrientations, cornerPositions, twist)
         return when(twist) {
             Twist.FRONT_90 -> SmartCube(twistFront90(data), newEP, newCP, newEO, newCO)
             Twist.FRONT_180 -> SmartCube(twistFront180(data), newEP, newCP, newEO, newCO)
@@ -87,10 +87,11 @@ class SmartCube internal constructor(
     }
 
     override fun twistNoCopy(twist: Twist): SmartCube {
-        this.edgePositions = getUpdatedEdgePositions(edgePositions, twist)
-        this.cornerPositions = getUpdatedCornerPositions(cornerPositions, twist)
+        //calculating edge orientations before positions is necessary here because orientations depend on old positions
         this.edgeOrientations = getUpdatedEdgeOrientations(edgeOrientations, edgePositions, twist)
         this.cornerOrientations = getUpdatedCornerOrientations(cornerOrientations, cornerPositions, twist)
+        this.edgePositions = getUpdatedEdgePositions(edgePositions, twist)
+        this.cornerPositions = getUpdatedCornerPositions(cornerPositions, twist)
         when(twist) {
             Twist.FRONT_90 -> { this.data = twistFront90(data); return this }
             Twist.FRONT_180 -> { this.data = twistFront180(data); return this }
@@ -731,7 +732,7 @@ private fun getUpdatedEdgeOrientations(oldOrientations: IntArray, oldPositions: 
  * Let's define a corner's orientation as the number of clockwise rotations it takes to orient its up- or down-colored tile up or down.
  *
  * Let O1 be the corner originally in the top left of the face, O2 in the top right, O3 in the bottom right, O4 in the bottom left.
- * When we twist this face clockwise,
+ * When we twist this face clockwise 90 degrees,
  * O1 becomes N2 and orientation increases by 2.
  * O2 becomes N3 and orientation increases by 1.
  * O3 becomes N4 and orientation increases by 2.
@@ -740,6 +741,7 @@ private fun getUpdatedEdgeOrientations(oldOrientations: IntArray, oldPositions: 
  */
 private fun getUpdatedCornerOrientations(oldOrientations: IntArray, oldPositions: IntArray, twist: Twist): IntArray {
     val orientations = oldOrientations.copyOf()
+    val numQuarterTurns = Twist.getEquivalentNumClockwiseQuarterTurns(twist)
     //gets corner indices
     val o1Index = getO1Index(oldPositions, twist)
     val o2Index = getO2Index(oldPositions, twist)
@@ -747,10 +749,12 @@ private fun getUpdatedCornerOrientations(oldOrientations: IntArray, oldPositions
     val o4Index = getO4Index(oldPositions, twist)
     //computes new orientation values
     val orientationIncrement = twistChangesCornerOrientations(twist)
-    orientations[o1Index] = (orientations[o1Index] + (2 * orientationIncrement)) % 3
-    orientations[o2Index] = (orientations[o2Index] + (1 * orientationIncrement)) % 3
-    orientations[o3Index] = (orientations[o3Index] + (2 * orientationIncrement)) % 3
-    orientations[o4Index] = (orientations[o4Index] + (1 * orientationIncrement)) % 3
+    if(numQuarterTurns != 2) {
+        orientations[o1Index] = (orientations[o1Index] + (2 * orientationIncrement)) % 3
+        orientations[o2Index] = (orientations[o2Index] + (1 * orientationIncrement)) % 3
+        orientations[o3Index] = (orientations[o3Index] + (2 * orientationIncrement)) % 3
+        orientations[o4Index] = (orientations[o4Index] + (1 * orientationIncrement)) % 3
+    }
     //returns
     return orientations
     //TODO: this is only for 90-degree turns. Fix.
@@ -772,10 +776,10 @@ private fun getUpdatedEdgePositions(oldPositions: IntArray, twist: Twist): IntAr
             //updates the positions of these cubies
             when(twist) {
                 Twist.FRONT_90 -> {
-                    positions[frontUpIndex] = 9
-                    positions[frontRightIndex] = 4
-                    positions[frontDownIndex] = 8
-                    positions[frontLeftIndex] = 0
+                    positions[frontUpIndex] = 8
+                    positions[frontRightIndex] = 0
+                    positions[frontDownIndex] = 9
+                    positions[frontLeftIndex] = 4
                 }
                 Twist.FRONT_180 -> {
                     positions[frontUpIndex] = 4
@@ -784,10 +788,10 @@ private fun getUpdatedEdgePositions(oldPositions: IntArray, twist: Twist): IntAr
                     positions[frontLeftIndex] = 9
                 }
                 else -> {
-                    positions[frontUpIndex] = 8
-                    positions[frontRightIndex] = 0
-                    positions[frontDownIndex] = 9
-                    positions[frontLeftIndex] = 4
+                    positions[frontUpIndex] = 9
+                    positions[frontRightIndex] = 4
+                    positions[frontDownIndex] = 8
+                    positions[frontLeftIndex] = 0
                 }
             }
         }
@@ -800,10 +804,10 @@ private fun getUpdatedEdgePositions(oldPositions: IntArray, twist: Twist): IntAr
             //updates the positions of these cubies
             when(twist) {
                 Twist.BACK_90 -> {
-                    positions[backUpIndex] = 10
-                    positions[backLeftIndex] = 5
-                    positions[backDownIndex] = 11
-                    positions[backRightIndex] = 1
+                    positions[backUpIndex] = 11
+                    positions[backLeftIndex] = 1
+                    positions[backDownIndex] = 10
+                    positions[backRightIndex] = 5
                 }
                 Twist.BACK_180 -> {
                     positions[backUpIndex] = 5
@@ -812,10 +816,10 @@ private fun getUpdatedEdgePositions(oldPositions: IntArray, twist: Twist): IntAr
                     positions[backRightIndex] = 10
                 }
                 else -> {
-                    positions[backUpIndex] = 11
-                    positions[backLeftIndex] = 1
-                    positions[backDownIndex] = 10
-                    positions[backRightIndex] = 5
+                    positions[backUpIndex] = 10
+                    positions[backLeftIndex] = 5
+                    positions[backDownIndex] = 11
+                    positions[backRightIndex] = 1
                 }
             }
         }
@@ -828,10 +832,10 @@ private fun getUpdatedEdgePositions(oldPositions: IntArray, twist: Twist): IntAr
             //updates the positions of these cubies
             when(twist) {
                 Twist.LEFT_90 -> {
-                    positions[leftUpIndex] = 8
-                    positions[leftFrontIndex] = 6
-                    positions[leftDownIndex] = 10
-                    positions[leftBackIndex] = 2
+                    positions[leftUpIndex] = 10
+                    positions[leftFrontIndex] = 2
+                    positions[leftDownIndex] = 8
+                    positions[leftBackIndex] = 6
                 }
                 Twist.LEFT_180 -> {
                     positions[leftUpIndex] = 6
@@ -840,10 +844,10 @@ private fun getUpdatedEdgePositions(oldPositions: IntArray, twist: Twist): IntAr
                     positions[leftBackIndex] = 8
                 }
                 else -> {
-                    positions[leftUpIndex] = 10
-                    positions[leftFrontIndex] = 2
-                    positions[leftDownIndex] = 8
-                    positions[leftBackIndex] = 6
+                    positions[leftUpIndex] = 8
+                    positions[leftFrontIndex] = 6
+                    positions[leftDownIndex] = 10
+                    positions[leftBackIndex] = 2
                 }
             }
         }
@@ -856,22 +860,22 @@ private fun getUpdatedEdgePositions(oldPositions: IntArray, twist: Twist): IntAr
             //updates the positions of these cubies
             when(twist) {
                 Twist.RIGHT_90 -> {
-                    positions[rightUpIndex] = 11
-                    positions[rightFrontIndex] = 7
-                    positions[rightDownIndex] = 9
+                    positions[rightUpIndex] = 9
                     positions[rightBackIndex] = 3
+                    positions[rightDownIndex] = 11
+                    positions[rightFrontIndex] = 7
                 }
                 Twist.RIGHT_180 -> {
                     positions[rightUpIndex] = 7
-                    positions[rightFrontIndex] = 9
+                    positions[rightBackIndex] = 9
                     positions[rightDownIndex] = 3
-                    positions[rightBackIndex] = 11
+                    positions[rightFrontIndex] = 11
                 }
                 else -> {
-                    positions[rightUpIndex] = 9
-                    positions[rightFrontIndex] = 3
-                    positions[rightDownIndex] = 11
+                    positions[rightUpIndex] = 11
                     positions[rightBackIndex] = 7
+                    positions[rightDownIndex] = 9
+                    positions[rightFrontIndex] = 3
                 }
             }
         }
@@ -884,10 +888,10 @@ private fun getUpdatedEdgePositions(oldPositions: IntArray, twist: Twist): IntAr
             //updates the positions of these cubies
             when(twist) {
                 Twist.UP_90 -> {
-                    positions[upBackIndex] = 3
-                    positions[upRightIndex] = 0
-                    positions[upFrontIndex] = 2
-                    positions[upLeftIndex] = 1
+                    positions[upBackIndex] = 2
+                    positions[upRightIndex] = 1
+                    positions[upFrontIndex] = 3
+                    positions[upLeftIndex] = 0
                 }
                 Twist.UP_180 -> {
                     positions[upBackIndex] = 0
@@ -896,10 +900,10 @@ private fun getUpdatedEdgePositions(oldPositions: IntArray, twist: Twist): IntAr
                     positions[upLeftIndex] = 3
                 }
                 else -> {
-                    positions[upBackIndex] = 2
-                    positions[upRightIndex] = 1
-                    positions[upFrontIndex] = 3
-                    positions[upLeftIndex] = 0
+                    positions[upBackIndex] = 3
+                    positions[upRightIndex] = 0
+                    positions[upFrontIndex] = 2
+                    positions[upLeftIndex] = 1
                 }
             }
         }
@@ -912,10 +916,10 @@ private fun getUpdatedEdgePositions(oldPositions: IntArray, twist: Twist): IntAr
             //updates the positions of these cubies
             when(twist) {
                 Twist.DOWN_90 -> {
-                    positions[downFrontIndex] = 7
-                    positions[downRightIndex] = 5
-                    positions[downBackIndex] = 6
-                    positions[downLeftIndex] = 4
+                    positions[downFrontIndex] = 6
+                    positions[downRightIndex] = 4
+                    positions[downBackIndex] = 7
+                    positions[downLeftIndex] = 5
                 }
                 Twist.DOWN_180 -> {
                     positions[downFrontIndex] = 5
@@ -924,10 +928,10 @@ private fun getUpdatedEdgePositions(oldPositions: IntArray, twist: Twist): IntAr
                     positions[downLeftIndex] = 7
                 }
                 else -> {
-                    positions[downFrontIndex] = 6
-                    positions[downRightIndex] = 4
-                    positions[downBackIndex] = 7
-                    positions[downLeftIndex] = 5
+                    positions[downFrontIndex] = 7
+                    positions[downRightIndex] = 5
+                    positions[downBackIndex] = 6
+                    positions[downLeftIndex] = 4
                 }
             }
         }
@@ -950,10 +954,10 @@ private fun getUpdatedCornerPositions(oldPositions: IntArray, twist: Twist): Int
             //updates the positions of these cubies
             when(twist) {
                 Twist.FRONT_90 -> {
-                    positions[frontUpLeftIndex] = 1
-                    positions[frontUpRightIndex] = 5
-                    positions[frontDownRightIndex] = 4
-                    positions[frontDownLeftIndex] = 0
+                    positions[frontUpLeftIndex] = 4
+                    positions[frontUpRightIndex] = 0
+                    positions[frontDownRightIndex] = 1
+                    positions[frontDownLeftIndex] = 5
                 }
                 Twist.FRONT_180 -> {
                     positions[frontUpLeftIndex] = 5
@@ -962,10 +966,10 @@ private fun getUpdatedCornerPositions(oldPositions: IntArray, twist: Twist): Int
                     positions[frontDownLeftIndex] = 1
                 }
                 else -> {
-                    positions[frontUpLeftIndex] = 4
-                    positions[frontUpRightIndex] = 0
-                    positions[frontDownRightIndex] = 1
-                    positions[frontDownLeftIndex] = 5
+                    positions[frontUpLeftIndex] = 1
+                    positions[frontUpRightIndex] = 5
+                    positions[frontDownRightIndex] = 4
+                    positions[frontDownLeftIndex] = 0
                 }
             }
         }
@@ -978,10 +982,10 @@ private fun getUpdatedCornerPositions(oldPositions: IntArray, twist: Twist): Int
             //updates the positions of these cubies
             when(twist) {
                 Twist.BACK_90 -> {
-                    positions[backUpRightIndex] = 2
-                    positions[backUpLeftIndex] = 6
-                    positions[backDownLeftIndex] = 7
-                    positions[backDownRightIndex] = 3
+                    positions[backUpRightIndex] = 7
+                    positions[backUpLeftIndex] = 3
+                    positions[backDownLeftIndex] = 2
+                    positions[backDownRightIndex] = 6
                 }
                 Twist.BACK_180 -> {
                     positions[backUpRightIndex] = 6
@@ -990,10 +994,10 @@ private fun getUpdatedCornerPositions(oldPositions: IntArray, twist: Twist): Int
                     positions[backDownRightIndex] = 2
                 }
                 else -> {
-                    positions[backUpRightIndex] = 7
-                    positions[backUpLeftIndex] = 3
-                    positions[backDownLeftIndex] = 2
-                    positions[backDownRightIndex] = 6
+                    positions[backUpRightIndex] = 2
+                    positions[backUpLeftIndex] = 6
+                    positions[backDownLeftIndex] = 7
+                    positions[backDownRightIndex] = 3
                 }
             }
         }
@@ -1006,10 +1010,10 @@ private fun getUpdatedCornerPositions(oldPositions: IntArray, twist: Twist): Int
             //updates the positions of these cubies
             when(twist) {
                 Twist.LEFT_90 -> {
-                    positions[leftUpBackIndex] = 0
-                    positions[leftUpFrontIndex] = 4
-                    positions[leftDownFrontIndex] = 6
-                    positions[leftDownBackIndex] = 2
+                    positions[leftUpBackIndex] = 6
+                    positions[leftUpFrontIndex] = 2
+                    positions[leftDownFrontIndex] = 0
+                    positions[leftDownBackIndex] = 4
                 }
                 Twist.LEFT_180 -> {
                     positions[leftUpBackIndex] = 4
@@ -1018,10 +1022,10 @@ private fun getUpdatedCornerPositions(oldPositions: IntArray, twist: Twist): Int
                     positions[leftDownBackIndex] = 0
                 }
                 else -> {
-                    positions[leftUpBackIndex] = 6
-                    positions[leftUpFrontIndex] = 2
-                    positions[leftDownFrontIndex] = 0
-                    positions[leftDownBackIndex] = 4
+                    positions[leftUpBackIndex] = 0
+                    positions[leftUpFrontIndex] = 4
+                    positions[leftDownFrontIndex] = 6
+                    positions[leftDownBackIndex] = 2
                 }
             }
         }
@@ -1034,10 +1038,10 @@ private fun getUpdatedCornerPositions(oldPositions: IntArray, twist: Twist): Int
             //updates the positions of these cubies
             when(twist) {
                 Twist.RIGHT_90 -> {
-                    positions[rightUpFrontIndex] = 3
-                    positions[rightUpBackIndex] = 7
-                    positions[rightDownBackIndex] = 5
-                    positions[rightDownFrontIndex] = 1
+                    positions[rightUpFrontIndex] = 5
+                    positions[rightUpBackIndex] = 1
+                    positions[rightDownBackIndex] = 3
+                    positions[rightDownFrontIndex] = 7
                 }
                 Twist.RIGHT_180 -> {
                     positions[rightUpFrontIndex] = 7
@@ -1046,10 +1050,10 @@ private fun getUpdatedCornerPositions(oldPositions: IntArray, twist: Twist): Int
                     positions[rightDownFrontIndex] = 3
                 }
                 else -> {
-                    positions[rightUpFrontIndex] = 5
-                    positions[rightUpBackIndex] = 1
-                    positions[rightDownBackIndex] = 3
-                    positions[rightDownFrontIndex] = 7
+                    positions[rightUpFrontIndex] = 3
+                    positions[rightUpBackIndex] = 7
+                    positions[rightDownBackIndex] = 5
+                    positions[rightDownFrontIndex] = 1
                 }
             }
         }
@@ -1062,10 +1066,10 @@ private fun getUpdatedCornerPositions(oldPositions: IntArray, twist: Twist): Int
             //updates the positions of these cubies
             when(twist) {
                 Twist.UP_90 -> {
-                    positions[upBackLeftIndex] = 3
-                    positions[upBackRightIndex] = 1
-                    positions[upFrontRightIndex] = 0
-                    positions[upFrontLeftIndex] = 2
+                    positions[upBackLeftIndex] = 0
+                    positions[upBackRightIndex] = 2
+                    positions[upFrontRightIndex] = 3
+                    positions[upFrontLeftIndex] = 1
                 }
                 Twist.UP_180 -> {
                     positions[upBackLeftIndex] = 1
@@ -1074,10 +1078,10 @@ private fun getUpdatedCornerPositions(oldPositions: IntArray, twist: Twist): Int
                     positions[upFrontLeftIndex] = 3
                 }
                 else -> {
-                    positions[upBackLeftIndex] = 0
-                    positions[upBackRightIndex] = 2
-                    positions[upFrontRightIndex] = 3
-                    positions[upFrontLeftIndex] = 1
+                    positions[upBackLeftIndex] = 3
+                    positions[upBackRightIndex] = 1
+                    positions[upFrontRightIndex] = 0
+                    positions[upFrontLeftIndex] = 2
                 }
             }
         }
@@ -1090,10 +1094,10 @@ private fun getUpdatedCornerPositions(oldPositions: IntArray, twist: Twist): Int
             //updates the positions of these cubies
             when(twist) {
                 Twist.DOWN_90 -> {
-                    positions[downFrontLeftIndex] = 5
-                    positions[downFrontRightIndex] = 7
-                    positions[downBackRightIndex] = 6
-                    positions[downBackLeftIndex] = 4
+                    positions[downFrontLeftIndex] = 6
+                    positions[downFrontRightIndex] = 4
+                    positions[downBackRightIndex] = 5
+                    positions[downBackLeftIndex] = 7
                 }
                 Twist.DOWN_180 -> {
                     positions[downFrontLeftIndex] = 7
@@ -1102,10 +1106,10 @@ private fun getUpdatedCornerPositions(oldPositions: IntArray, twist: Twist): Int
                     positions[downBackLeftIndex] = 5
                 }
                 else -> {
-                    positions[downFrontLeftIndex] = 6
-                    positions[downFrontRightIndex] = 4
-                    positions[downBackRightIndex] = 5
-                    positions[downBackLeftIndex] = 7
+                    positions[downFrontLeftIndex] = 5
+                    positions[downFrontRightIndex] = 7
+                    positions[downBackRightIndex] = 6
+                    positions[downBackLeftIndex] = 4
                 }
             }
         }

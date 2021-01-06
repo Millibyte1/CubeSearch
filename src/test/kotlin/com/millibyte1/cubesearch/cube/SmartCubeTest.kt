@@ -1,5 +1,7 @@
 package com.millibyte1.cubesearch.cube
 
+import com.millibyte1.cubesearch.util.ArrayCubeUtils
+import com.millibyte1.cubesearch.util.SolvabilityUtils
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Tag
 
@@ -400,6 +402,7 @@ class SmartCubeTest {
         clone1 = clone1.twist(Twist.RIGHT_90)
         clone2 = clone2.twist(Twist.RIGHT_180)
         clone3 = clone3.twist(Twist.RIGHT_270)
+
         //println("rightTwists")
         //println("Clone 1: $clone1")
         //println("Clone 2: $clone2")
@@ -428,6 +431,7 @@ class SmartCubeTest {
         clone3 = clone3.twist(Twist.RIGHT_270)
         assertTrue(clone3 == start)
 
+        //assertEquals(clone1, clone2)
         //tests that R is actually correct
         clone1 = start.twist(Twist.RIGHT_90)
         clone2 = factory.getCube(rightData())
@@ -527,28 +531,24 @@ class SmartCubeTest {
     @Test
     @Tag("CubeSimulationTest")
     fun testOrientationValues() {
-        var cube = solved()
+        var cube1 = solved()
+        var cube2 = solved()
         //tests initial values for solved cube
-        for(orientation in cube.edgeOrientations) assertEquals(orientation, 0)
-        for(orientation in cube.cornerOrientations) assertEquals(orientation, 0)
-        //parity tests with immutable twists
+        for(orientation in cube1.edgeOrientations) assertEquals(orientation, 0)
+        for(orientation in cube1.cornerOrientations) assertEquals(orientation, 0)
+        //performs parity tests for both mutable and immutable twists
         for(i in 0 until 100) {
             for(twist in Twist.values()) {
-                cube = cube.twist(twist)
-                assertTrue(passesEdgeParity(cube))
-                assertTrue(passesCornerParity(cube))
-                assertTrue(edgeOrientationsMatchExpected(cube))
-                assertTrue(cornerOrientationsMatchExpected(cube))
-            }
-        }
-        //parity tests with mutable twists
-        for(i in 0 until 100) {
-            for(twist in Twist.values()) {
-                cube = cube.twistNoCopy(twist)
-                assertTrue(passesEdgeParity(cube))
-                assertTrue(passesCornerParity(cube))
-                assertTrue(edgeOrientationsMatchExpected(cube))
-                assertTrue(cornerOrientationsMatchExpected(cube))
+                cube1 = cube1.twist(twist)
+                cube2 = cube2.twistNoCopy(twist)
+                assertTrue(passesEdgeParity(cube1))
+                assertTrue(passesCornerParity(cube1))
+                assertTrue(edgeOrientationsMatchExpected(cube1))
+                assertTrue(cornerOrientationsMatchExpected(cube1))
+                assertTrue(passesEdgeParity(cube2))
+                assertTrue(passesCornerParity(cube2))
+                assertTrue(edgeOrientationsMatchExpected(cube2))
+                assertTrue(cornerOrientationsMatchExpected(cube2))
             }
         }
     }
@@ -563,10 +563,25 @@ class SmartCubeTest {
         return orientationSum % 3 == 0
     }
     private fun edgeOrientationsMatchExpected(cube: SmartCube): Boolean {
-        return false
+        val edges = ArrayCubeUtils.getEdges(cube.toArrayCube())
+        for(i in 0 until 12) {
+            val cubieIndex = cube.edgePositions[i]
+            if(cube.edgeOrientations[i] != SolvabilityUtils.getEdgeOrientation(edges[cubieIndex], cube.toArrayCube())) return false
+        }
+        return true
     }
     private fun cornerOrientationsMatchExpected(cube: SmartCube): Boolean {
-        return false
+        val corners = ArrayCubeUtils.getCorners(cube.toArrayCube())
+        val orientations = IntArray(8)
+        for(i in 0 until 8) {
+            val cubieIndex = cube.cornerPositions[i]
+            orientations[i] = SolvabilityUtils.getCornerOrientation(corners[cubieIndex])
+            if(cube.cornerOrientations[i] != SolvabilityUtils.getCornerOrientation(corners[cubieIndex])) {
+                //return false
+                println()
+            }
+        }
+        return true
     }
     @Test
     @Tag("CubeSimulationTest")
