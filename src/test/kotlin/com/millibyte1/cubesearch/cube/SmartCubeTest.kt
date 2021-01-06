@@ -1,5 +1,6 @@
 package com.millibyte1.cubesearch.cube
 
+import com.millibyte1.cubesearch.algorithm.heuristics.CornerPatternDatabase
 import com.millibyte1.cubesearch.util.ArrayCubeUtils
 import com.millibyte1.cubesearch.util.SolvabilityUtils
 import org.junit.jupiter.api.Test
@@ -602,6 +603,51 @@ class SmartCubeTest {
         for(i in 0 until 1000000) {
             for(twist in Twist.values()) {
                 cube = cube.twistNoCopy(twist)
+            }
+        }
+    }
+
+    @Test
+    fun stressTestSmartCubeMutableTwistAndHash() {
+        var cube = solved()
+        //performs 1.8 million twists and corner hashes using the no-copy twist implementation
+        for(i in 0 until 100000) {
+            for(twist in Twist.values()) {
+                cube = cube.twistNoCopy(twist)
+                val index = CornerPatternDatabase.getIndex(cube)
+            }
+        }
+    }
+    @Test
+    fun stressTestSmartCubeImmutableTwistAndHash() {
+        var cube = solved()
+        //performs 1.8 million twists and corner hashes using the copying twist implementation
+        for(i in 0 until 100000) {
+            for(twist in Twist.values()) {
+                cube = cube.twist(twist)
+                val index = CornerPatternDatabase.getIndex(cube)
+            }
+        }
+    }
+    @Test
+    fun stressTestArrayCubeMutableTwistAndHash() {
+        var cube = solved().toArrayCube()
+        //performs 1.8 million twists and corner hashes using the no-copy twist implementation
+        for(i in 0 until 100000) {
+            for(twist in Twist.values()) {
+                cube = cube.twistNoCopy(twist)
+                val index = CornerPatternDatabase.getIndex(cube)
+            }
+        }
+    }
+    @Test
+    fun stressTestArrayCubeImmutableTwistAndHash() {
+        var cube = solved().toArrayCube()
+        //performs 1.8 million twists and corner hashes using the copying twist implementation
+        for(i in 0 until 100000) {
+            for(twist in Twist.values()) {
+                cube = cube.twist(twist)
+                val index = CornerPatternDatabase.getIndex(cube)
             }
         }
     }

@@ -2,6 +2,7 @@ package com.millibyte1.cubesearch.algorithm.heuristics
 
 import com.millibyte1.cubesearch.cube.ArrayCube
 import com.millibyte1.cubesearch.cube.ArrayCubeFactory
+import com.millibyte1.cubesearch.cube.SmartCube
 import com.millibyte1.cubesearch.cube.Twist
 import com.millibyte1.cubesearch.util.*
 
@@ -42,6 +43,10 @@ object CornerPatternDatabase : AbstractPatternDatabase<ArrayCube>() {
 
     override fun getIndex(cube: ArrayCube): Int {
         //(maxOrientationIndex * positionIndex) + orientationIndex
+        return (2187 * getCornerPositionIndex(cube)) + getCornerOrientationIndex(cube)
+    }
+    /** TODO */
+    fun getIndex(cube: SmartCube): Int {
         return (2187 * getCornerPositionIndex(cube)) + getCornerOrientationIndex(cube)
     }
 
@@ -123,6 +128,23 @@ object CornerPatternDatabase : AbstractPatternDatabase<ArrayCube>() {
                lehmer[5] * 2 +
                lehmer[6]
     }
+    /** TODO */
+    private fun getCornerPositionIndex(cube: SmartCube): Int {
+        val lehmer = IntArray(8)
+        //mathematically inverts the position array; we could skip this and produce a different perfect minimal hash function
+        for(cubieNumber in 0 until 8) {
+            val position = cube.cornerPositions[cubieNumber]
+            lehmer[position] = cubieNumber
+        }
+        //multiplies the value at each index by its factoradic place value
+        return lehmer[0] * 5040 +
+                lehmer[1] * 720 +
+                lehmer[2] * 120 +
+                lehmer[3] * 24 +
+                lehmer[4] * 6 +
+                lehmer[5] * 2 +
+                lehmer[6]
+    }
     /** Computes the corner orientation index by converting the orientation string to a base 10 number */
     private fun getCornerOrientationIndex(cube: ArrayCube): Int {
         val orientations = getCornerOrientationSequence(cube)
@@ -134,6 +156,18 @@ object CornerPatternDatabase : AbstractPatternDatabase<ArrayCube>() {
                orientations[4] * 9 +
                orientations[5] * 3 +
                orientations[6]
+    }
+    /** TODO */
+    private fun getCornerOrientationIndex(cube: SmartCube): Int {
+        val orientations = cube.cornerOrientations
+        //ignores orientations[7] since there are only 7 degrees of choice
+        return orientations[0] * 729 +
+                orientations[1] * 243 +
+                orientations[2] * 81 +
+                orientations[3] * 27 +
+                orientations[4] * 9 +
+                orientations[5] * 3 +
+                orientations[6]
     }
     /** Encodes the orientations of this cube's corners as a sequence of integers */
     private fun getCornerOrientationSequence(cube: ArrayCube): IntArray {
