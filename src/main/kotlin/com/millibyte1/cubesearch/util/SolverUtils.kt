@@ -2,16 +2,17 @@ package com.millibyte1.cubesearch.util
 
 import com.millibyte1.cubesearch.cube.StandardCube
 import com.millibyte1.cubesearch.cube.ArrayCube
+import com.millibyte1.cubesearch.cube.Cube
 import com.millibyte1.cubesearch.cube.Twist
 
 typealias Path = MutableList<Twist>
 
-data class PathWithBack(val path: Path, val back: ArrayCube) {
+data class PathWithBack<T : Cube<T>>(val path: Path, val back: T) {
     fun size(): Int {
         return path.size
     }
 
-    fun add(twist: Twist): PathWithBack {
+    fun add(twist: Twist): PathWithBack<T> {
         val newPath = path.copy()
         newPath.add(twist)
         return PathWithBack(newPath, back.twist(twist))

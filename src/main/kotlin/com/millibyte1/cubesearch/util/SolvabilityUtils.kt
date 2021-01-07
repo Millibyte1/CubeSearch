@@ -268,6 +268,28 @@ object SolvabilityUtils {
     internal fun getEdgePermutation(cube: ArrayCube): IntArray {
         return getCubiePermutation(getEdges(cube), getSolvedEdges())
     }
+    /** Gets an array of the orientations of cubies ordered by cubie number */
+    internal fun getEdgeOrientationSequence(cube: ArrayCube): IntArray {
+        val solvedEdges = getSolvedEdges()
+        val orientations = IntArray(8)
+        var edge: EdgeCubie
+        for(i in 0 until 8) {
+            edge = getCubieOnCube(cube, solvedEdges[i]) as EdgeCubie
+            orientations[i] = getEdgeOrientation(edge, cube)
+        }
+        return orientations
+    }
+    /** Gets an array of the orientations of cubies ordered by cubie number */
+    internal fun getCornerOrientationSequence(cube: ArrayCube): IntArray {
+        val solvedCorners = getSolvedCorners()
+        val orientations = IntArray(8)
+        var corner: CornerCubie
+        for(i in 0 until 8) {
+            corner = getCubieOnCube(cube, solvedCorners[i]) as CornerCubie
+            orientations[i] = getCornerOrientation(corner)
+        }
+        return orientations
+    }
 
     /** Gets the boolean parity of the set of corners on this cube */
     private fun getCornerPermutationParity(cube: ArrayCube): Boolean {

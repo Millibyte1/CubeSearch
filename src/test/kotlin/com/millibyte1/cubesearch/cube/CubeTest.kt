@@ -538,11 +538,11 @@ class CubeTest {
     @Test
     @Tag("CubeSimulationTest")
     fun stressTestMutableTwists() {
-        var cube = solved()
+        val cube = solved()
         //performs 18 million twists using the no-copy twist implementation
         for(i in 0 until 1000000) {
             for(twist in Twist.values()) {
-                cube = cube.twistNoCopy(twist)
+                cube.twistNoCopy(twist)
             }
         }
     }

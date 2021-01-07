@@ -13,8 +13,8 @@ import java.util.concurrent.PriorityBlockingQueue
 /** Implements the frontier search algorithm, which is like A* but without a table of already explored nodes */
 class FrontierSearchSolver(costEvaluator: CostEvaluator<ArrayCube>) : AbstractSolver<ArrayCube>(costEvaluator) {
 
-    private val candidates: PriorityBlockingQueue<PathWithBack> = PriorityBlockingQueue(100, Comparator {
-        path1: PathWithBack, path2: PathWithBack -> when {
+    private val candidates: PriorityBlockingQueue<PathWithBack<ArrayCube>> = PriorityBlockingQueue(100, Comparator {
+        path1: PathWithBack<ArrayCube>, path2: PathWithBack<ArrayCube> -> when {
             path1.size() + getCost(path1.back) < path2.size() + getCost(path2.back) -> -1
             path1.size() + getCost(path1.back) == path2.size() + getCost(path2.back) -> 0
             else -> 1
@@ -28,9 +28,9 @@ class FrontierSearchSolver(costEvaluator: CostEvaluator<ArrayCube>) : AbstractSo
         reset()
 
         //puts the initial cube into the candidates queue
-        candidates.add(PathWithBack(ArrayList(), cube))
+        candidates.add(PathWithBack<ArrayCube>(ArrayList(), cube))
 
-        var path: PathWithBack
+        var path: PathWithBack<ArrayCube>
         var currentCube: ArrayCube
         var nextCube: ArrayCube
 

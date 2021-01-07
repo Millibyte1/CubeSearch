@@ -22,12 +22,12 @@ import java.io.Serializable
  *  . . . 3 D 5 . . . . . .
  *  . . . 6 7 8 . . . . . .
  * @param edgePositions the array of position values of the 12 edge cubies, ordered by cubie number (coloration).
- * The enumeration of positions is as follows:
+ * The enumeration of edge positions is as follows:
  * up-front, up-back, up-left, up-right,
  * down-front, down-back, down-left, down-right,
  * front-left, front-right, back-left, back-right
  * @param cornerPositions the array of position values of the 8 corner cubies, ordered by cubie number (coloration).
- * The enumeration of positions is as follows:
+ * The enumeration of corner positions is as follows:
  * up-front-left, up-front-right, up-back-left, up-back-right,
  * down-front-left, down-front-right, down-back-left, down-back-right
  * @param edgeOrientations the array of orientation values of the 12 edge cubies, ordered by cubie number (coloration).
@@ -40,7 +40,7 @@ class SmartCube internal constructor(
     var cornerPositions: IntArray,
     var edgeOrientations: IntArray,
     var cornerOrientations: IntArray
-) : MutableStandardCube<SmartCube>, Serializable {
+) : AnalyzableMutableStandardCube<SmartCube>, Serializable {
 
     /** Constructs the cube, computing initial orientations from the data array */
     internal constructor(data: Array<IntArray>) : this(data, IntArray(12), IntArray(8), IntArray(12), IntArray(8)) {
@@ -112,6 +112,19 @@ class SmartCube internal constructor(
             Twist.DOWN_180 -> { this.data = twistDown180(data); return this }
             Twist.DOWN_270 -> { this.data = twistDown270(data); return this }
         }
+    }
+
+    override fun getEdgePositionPermutation(): IntArray {
+        return edgePositions
+    }
+    override fun getCornerPositionPermutation(): IntArray {
+        return cornerPositions
+    }
+    override fun getEdgeOrientationPermutation(): IntArray {
+        return edgeOrientations
+    }
+    override fun getCornerOrientationPermutation(): IntArray {
+        return cornerOrientations
     }
 
     /** overridden equality to check whether the cubes have the same configuration */
@@ -726,7 +739,6 @@ private fun getUpdatedEdgeOrientations(oldOrientations: IntArray, oldPositions: 
     //returns
     return orientations
 }
-
 /*
  * The corner orientation group is closed under arithmetic modulo 3 since each corner falls on 3 axes.
  * Let's define a corner's orientation as the number of clockwise rotations it takes to orient its up- or down-colored tile up or down.

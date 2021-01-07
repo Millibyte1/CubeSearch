@@ -15,13 +15,13 @@ class IterativeDeepeningAStarSolver(costEvaluator: CostEvaluator<ArrayCube>) : A
         var solution: Path?
         //searches for solutions with an iteratively deepening depth limit up to God's number
         for(depthLimit in 0..20) {
-            solution = getSolution(PathWithBack(ArrayList(), cube), depthLimit)
+            solution = getSolution(PathWithBack<ArrayCube>(ArrayList(), cube), depthLimit)
             if(solution != null) return solution
         }
         throw failCouldNotSolve()
     }
     /** Performs an informed depth first search for the solution */
-    private fun getSolution(path: PathWithBack, depthLimit: Int): Path? {
+    private fun getSolution(path: PathWithBack<ArrayCube>, depthLimit: Int): Path? {
        if(isSolved(path.back)) return path.path
         var nextCube: ArrayCube
         var solution: Path?

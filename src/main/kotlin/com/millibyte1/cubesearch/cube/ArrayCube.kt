@@ -1,5 +1,6 @@
 package com.millibyte1.cubesearch.cube
 
+import com.millibyte1.cubesearch.util.SolvabilityUtils
 import java.io.Serializable
 
 /**
@@ -21,7 +22,7 @@ import java.io.Serializable
  *  . . . 3 D 5 . . . . . .
  *  . . . 6 7 8 . . . . . .
  */
-class ArrayCube internal constructor(var data: Array<IntArray>) : MutableStandardCube<ArrayCube>, Serializable {
+class ArrayCube internal constructor(var data: Array<IntArray>) : AnalyzableMutableStandardCube<ArrayCube>, Serializable {
 
     override fun twist(twist: Twist): ArrayCube {
         return when(twist) {
@@ -67,6 +68,34 @@ class ArrayCube internal constructor(var data: Array<IntArray>) : MutableStandar
             Twist.DOWN_180 -> { this.data = twistDown180(data); return this }
             Twist.DOWN_270 -> { this.data = twistDown270(data); return this }
         }
+    }
+
+    override fun getEdgePositionPermutation(): IntArray {
+        //inverts the array of cubie numbers sorted by positions grabbed from SolvabilityUtils
+        val cubieNumbersInPositions = SolvabilityUtils.getEdgePermutation(this)
+        val permutation = IntArray(12)
+        for(position in 0 until 12) {
+            val cubieNumber = cubieNumbersInPositions[position]
+            permutation[cubieNumber] = position
+        }
+        return permutation
+    }
+    override fun getCornerPositionPermutation(): IntArray {
+        //inverts the array of cubie numbers sorted by positions grabbed from SolvabilityUtils
+        val cubieNumbersInPositions = SolvabilityUtils.getCornerPermutation(this)
+        val permutation = IntArray(8)
+        for(position in 0 until 8) {
+            val cubieNumber = cubieNumbersInPositions[position]
+            permutation[cubieNumber] = position
+        }
+        return permutation
+    }
+    override fun getEdgeOrientationPermutation(): IntArray {
+        return SolvabilityUtils.getEdgeOrientationSequence(this)
+    }
+
+    override fun getCornerOrientationPermutation(): IntArray {
+        return SolvabilityUtils.getCornerOrientationSequence(this)
     }
 
     /**
