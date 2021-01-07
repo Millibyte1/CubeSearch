@@ -7,14 +7,13 @@ import java.util.Queue
 import java.util.ArrayDeque
 
 import redis.clients.jedis.Jedis
-
 object CornerPatternDatabase : AbstractPatternDatabase<SmartCube>() {
 
     internal const val CARDINALITY = 88179840
     internal const val ORIENTATION_CARDINALITY = 2187
     internal const val POSITION_CARDINALITY = 40320
 
-    private const val USE_REDIS = false //TODO
+    private const val USE_REDIS = false
 
     private var generated = 0
 
@@ -35,6 +34,10 @@ object CornerPatternDatabase : AbstractPatternDatabase<SmartCube>() {
             for (i in 0 until POSITION_CARDINALITY) tempPositionDatabase[i] = -1
         }
         populateDatabase()
+        TODO("change of plan in how we generate this. First generate locally in an array," +
+                "then split the database and insert into redis in parallel non-atomically. Should implement a caching scheme for " +
+                "the pattern database look-ups to reduce the memory overhead of the cost evaluator." +
+                "also should add a file-based implementation of persistence as an alternative to redis.")
     }
 
     override fun getCost(index: Int): Byte {
