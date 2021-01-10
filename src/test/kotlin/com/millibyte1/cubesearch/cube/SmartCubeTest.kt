@@ -1,5 +1,8 @@
 package com.millibyte1.cubesearch.cube
 
+import com.millibyte1.cubesearch.algorithm.heuristics.CornerPatternDatabase
+import com.millibyte1.cubesearch.util.ArrayCubeUtils
+import com.millibyte1.cubesearch.util.SolvabilityUtils
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Tag
 
@@ -8,198 +11,198 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertFalse
 
 /**
- * Unit and stress tests for the ArrayCube implementation
+ * Unit and stress tests for the SmartCube implementation
  */
-class CubeTest {
+class SmartCubeTest {
 
-    private val factory = ArrayCubeFactory()
+    private val factory = SmartCubeFactory()
 
     //test fixtures
-    private fun solved(): ArrayCube {
+    private fun solved(): SmartCube {
         return factory.getSolvedCube()
     }
     private fun solvedData(): Array<IntArray> {
         return arrayOf(
-                IntArray(9) { 0 }, //front face
-                IntArray(9) { 1 }, //back face
-                IntArray(9) { 2 }, //left face
-                IntArray(9) { 3 }, //right face
-                IntArray(9) { 4 }, //up face
-                IntArray(9) { 5 }  //down face
+            IntArray(9) { 0 }, //front face
+            IntArray(9) { 1 }, //back face
+            IntArray(9) { 2 }, //left face
+            IntArray(9) { 3 }, //right face
+            IntArray(9) { 4 }, //up face
+            IntArray(9) { 5 }  //down face
         )
     }
     /** The data of a solved cube after a single F */
     private fun frontData(): Array<IntArray> {
         return arrayOf(
-                //front face
-                IntArray(9) { 0 },
-                //back face
-                IntArray(9) { 1 },
-                //left face
-                intArrayOf(2, 2, 5,
-                           2, 2, 5,
-                           2, 2, 5
-                ),
-                //right face
-                intArrayOf(4, 3, 3,
-                           4, 3, 3,
-                           4, 3, 3
-                ),
-                //up face
-                intArrayOf(4, 4, 4,
-                           4, 4, 4,
-                           2, 2, 2
-                ),
-                //down face
-                intArrayOf(3, 3, 3,
-                           5, 5, 5,
-                           5, 5, 5
-                )
+            //front face
+            IntArray(9) { 0 },
+            //back face
+            IntArray(9) { 1 },
+            //left face
+            intArrayOf(2, 2, 5,
+                2, 2, 5,
+                2, 2, 5
+            ),
+            //right face
+            intArrayOf(4, 3, 3,
+                4, 3, 3,
+                4, 3, 3
+            ),
+            //up face
+            intArrayOf(4, 4, 4,
+                4, 4, 4,
+                2, 2, 2
+            ),
+            //down face
+            intArrayOf(3, 3, 3,
+                5, 5, 5,
+                5, 5, 5
+            )
         )
     }
     /** The data of a solved cube after a single B */
     private fun backData(): Array<IntArray> {
         return arrayOf(
-                //front face
-                IntArray(9) { 0 },
-                //back face
-                IntArray(9) { 1 },
-                //left face
-                intArrayOf(4, 2, 2,
-                           4, 2, 2,
-                           4, 2, 2
-                ),
-                //right face
-                intArrayOf(3, 3, 5,
-                           3, 3, 5,
-                           3, 3, 5
-                ),
-                //up face
-                intArrayOf(3, 3, 3,
-                           4, 4, 4,
-                           4, 4, 4
-                ),
-                //down face
-                intArrayOf(5, 5, 5,
-                           5, 5, 5,
-                           2, 2, 2
-                )
+            //front face
+            IntArray(9) { 0 },
+            //back face
+            IntArray(9) { 1 },
+            //left face
+            intArrayOf(4, 2, 2,
+                4, 2, 2,
+                4, 2, 2
+            ),
+            //right face
+            intArrayOf(3, 3, 5,
+                3, 3, 5,
+                3, 3, 5
+            ),
+            //up face
+            intArrayOf(3, 3, 3,
+                4, 4, 4,
+                4, 4, 4
+            ),
+            //down face
+            intArrayOf(5, 5, 5,
+                5, 5, 5,
+                2, 2, 2
+            )
         )
     }
     /** The data of a solved cube after a single L */
     private fun leftData(): Array<IntArray> {
         return arrayOf(
-                //front face
-                intArrayOf(4, 0, 0,
-                           4, 0, 0,
-                           4, 0, 0
-                ),
-                //back face
-                intArrayOf(1, 1, 5,
-                           1, 1, 5,
-                           1, 1, 5
-                ),
-                //left face
-                IntArray(9) { 2 },
-                //right face
-                IntArray(9) { 3 },
-                //up face
-                intArrayOf(1, 4, 4,
-                           1, 4, 4,
-                           1, 4, 4
-                ),
-                //down face
-                intArrayOf(0, 5, 5,
-                           0, 5, 5,
-                           0, 5, 5
-                )
+            //front face
+            intArrayOf(4, 0, 0,
+                4, 0, 0,
+                4, 0, 0
+            ),
+            //back face
+            intArrayOf(1, 1, 5,
+                1, 1, 5,
+                1, 1, 5
+            ),
+            //left face
+            IntArray(9) { 2 },
+            //right face
+            IntArray(9) { 3 },
+            //up face
+            intArrayOf(1, 4, 4,
+                1, 4, 4,
+                1, 4, 4
+            ),
+            //down face
+            intArrayOf(0, 5, 5,
+                0, 5, 5,
+                0, 5, 5
+            )
         )
     }
     /** The data of a solved cube after a single R */
     private fun rightData(): Array<IntArray> {
         return arrayOf(
-                //front face
-                intArrayOf(0, 0, 5,
-                           0, 0, 5,
-                           0, 0, 5
-                ),
-                //back face
-                intArrayOf(4, 1, 1,
-                           4, 1, 1,
-                           4, 1, 1
-                ),
-                //left face
-                IntArray(9) { 2 },
-                //right face
-                IntArray(9) { 3 },
-                //up face
-                intArrayOf(4, 4, 0,
-                           4, 4, 0,
-                           4, 4, 0
-                ),
-                //down face
-                intArrayOf(5, 5, 1,
-                           5, 5, 1,
-                           5, 5, 1
-                )
+            //front face
+            intArrayOf(0, 0, 5,
+                0, 0, 5,
+                0, 0, 5
+            ),
+            //back face
+            intArrayOf(4, 1, 1,
+                4, 1, 1,
+                4, 1, 1
+            ),
+            //left face
+            IntArray(9) { 2 },
+            //right face
+            IntArray(9) { 3 },
+            //up face
+            intArrayOf(4, 4, 0,
+                4, 4, 0,
+                4, 4, 0
+            ),
+            //down face
+            intArrayOf(5, 5, 1,
+                5, 5, 1,
+                5, 5, 1
+            )
         )
     }
     /** The data of a solved cube after a single U */
     private fun upData(): Array<IntArray> {
         return arrayOf(
-                //front face
-                intArrayOf(3, 3, 3,
-                           0, 0, 0,
-                           0, 0, 0
-                ),
-                //back face
-                intArrayOf(2, 2, 2,
-                           1, 1, 1,
-                           1, 1, 1
-                ),
-                //left face
-                intArrayOf(0, 0, 0,
-                           2, 2, 2,
-                           2, 2, 2
-                ),
-                //right face
-                intArrayOf(1, 1, 1,
-                           3, 3, 3,
-                           3, 3, 3
-                ),
-                //up face
-                IntArray(9) { 4 },
-                //down face
-                IntArray(9) { 5 }
+            //front face
+            intArrayOf(3, 3, 3,
+                0, 0, 0,
+                0, 0, 0
+            ),
+            //back face
+            intArrayOf(2, 2, 2,
+                1, 1, 1,
+                1, 1, 1
+            ),
+            //left face
+            intArrayOf(0, 0, 0,
+                2, 2, 2,
+                2, 2, 2
+            ),
+            //right face
+            intArrayOf(1, 1, 1,
+                3, 3, 3,
+                3, 3, 3
+            ),
+            //up face
+            IntArray(9) { 4 },
+            //down face
+            IntArray(9) { 5 }
         )
     }
     /** The data of a solved cube after a single D */
     private fun downData(): Array<IntArray> {
         return arrayOf(
-                //front face
-                intArrayOf(0, 0, 0,
-                           0, 0, 0,
-                           2, 2, 2
-                ),
-                //back face
-                intArrayOf(1, 1, 1,
-                           1, 1, 1,
-                           3, 3, 3
-                ),
-                //left face
-                intArrayOf(2, 2, 2,
-                           2, 2, 2,
-                           1, 1, 1
-                ),
-                //right face
-                intArrayOf(3, 3, 3,
-                           3, 3, 3,
-                           0, 0, 0
-                ),
-                //up face
-                IntArray(9) { 4 },
-                //down face
-                IntArray(9) { 5 }
+            //front face
+            intArrayOf(0, 0, 0,
+                0, 0, 0,
+                2, 2, 2
+            ),
+            //back face
+            intArrayOf(1, 1, 1,
+                1, 1, 1,
+                3, 3, 3
+            ),
+            //left face
+            intArrayOf(2, 2, 2,
+                2, 2, 2,
+                1, 1, 1
+            ),
+            //right face
+            intArrayOf(3, 3, 3,
+                3, 3, 3,
+                0, 0, 0
+            ),
+            //up face
+            IntArray(9) { 4 },
+            //down face
+            IntArray(9) { 5 }
         )
     }
 
@@ -256,9 +259,9 @@ class CubeTest {
     fun frontTwists() {
         //sets up and tests initial turns
         val start = solved()
-        var clone1: ArrayCube = factory.getCube(start)
-        var clone2: ArrayCube = factory.getCube(start)
-        var clone3: ArrayCube = factory.getCube(start)
+        var clone1: SmartCube = factory.getCube(start)
+        var clone2: SmartCube = factory.getCube(start)
+        var clone3: SmartCube = factory.getCube(start)
 
         clone1 = clone1.twist(Twist.FRONT_90)
         clone2 = clone2.twist(Twist.FRONT_180)
@@ -303,9 +306,9 @@ class CubeTest {
     fun backTwists() {
         //sets up and tests initial turns
         val start = solved()
-        var clone1: ArrayCube = factory.getCube(start)
-        var clone2: ArrayCube = factory.getCube(start)
-        var clone3: ArrayCube = factory.getCube(start)
+        var clone1: SmartCube = factory.getCube(start)
+        var clone2: SmartCube = factory.getCube(start)
+        var clone3: SmartCube = factory.getCube(start)
 
         clone1 = clone1.twist(Twist.BACK_90)
         clone2 = clone2.twist(Twist.BACK_180)
@@ -348,9 +351,9 @@ class CubeTest {
     fun leftTwists() {
         //sets up and tests initial turns
         val start = solved()
-        var clone1: ArrayCube = factory.getCube(start)
-        var clone2: ArrayCube = factory.getCube(start)
-        var clone3: ArrayCube = factory.getCube(start)
+        var clone1: SmartCube = factory.getCube(start)
+        var clone2: SmartCube = factory.getCube(start)
+        var clone3: SmartCube = factory.getCube(start)
 
         clone1 = clone1.twist(Twist.LEFT_90)
         clone2 = clone2.twist(Twist.LEFT_180)
@@ -393,13 +396,14 @@ class CubeTest {
     fun rightTwists() {
         //sets up and tests initial turns
         val start = solved()
-        var clone1: ArrayCube = factory.getCube(start)
-        var clone2: ArrayCube = factory.getCube(start)
-        var clone3: ArrayCube = factory.getCube(start)
+        var clone1: SmartCube = factory.getCube(start)
+        var clone2: SmartCube = factory.getCube(start)
+        var clone3: SmartCube = factory.getCube(start)
 
         clone1 = clone1.twist(Twist.RIGHT_90)
         clone2 = clone2.twist(Twist.RIGHT_180)
         clone3 = clone3.twist(Twist.RIGHT_270)
+
         //println("rightTwists")
         //println("Clone 1: $clone1")
         //println("Clone 2: $clone2")
@@ -428,6 +432,7 @@ class CubeTest {
         clone3 = clone3.twist(Twist.RIGHT_270)
         assertTrue(clone3 == start)
 
+        //assertEquals(clone1, clone2)
         //tests that R is actually correct
         clone1 = start.twist(Twist.RIGHT_90)
         clone2 = factory.getCube(rightData())
@@ -438,9 +443,9 @@ class CubeTest {
     fun upTwists() {
         //sets up and tests initial turns
         val start = solved()
-        var clone1: ArrayCube = factory.getCube(start)
-        var clone2: ArrayCube = factory.getCube(start)
-        var clone3: ArrayCube = factory.getCube(start)
+        var clone1: SmartCube = factory.getCube(start)
+        var clone2: SmartCube = factory.getCube(start)
+        var clone3: SmartCube = factory.getCube(start)
 
         clone1 = clone1.twist(Twist.UP_90)
         clone2 = clone2.twist(Twist.UP_180)
@@ -483,9 +488,9 @@ class CubeTest {
     fun downTwists() {
         //sets up and tests initial turns
         val start = solved()
-        var clone1: ArrayCube = factory.getCube(start)
-        var clone2: ArrayCube = factory.getCube(start)
-        var clone3: ArrayCube = factory.getCube(start)
+        var clone1: SmartCube = factory.getCube(start)
+        var clone2: SmartCube = factory.getCube(start)
+        var clone3: SmartCube = factory.getCube(start)
 
         clone1 = clone1.twist(Twist.DOWN_90)
         clone2 = clone2.twist(Twist.DOWN_180)
@@ -526,6 +531,61 @@ class CubeTest {
 
     @Test
     @Tag("CubeSimulationTest")
+    fun testOrientationValues() {
+        var cube1 = solved()
+        var cube2 = solved()
+        //tests initial values for solved cube
+        for(orientation in cube1.edgeOrientations) assertEquals(orientation, 0)
+        for(orientation in cube1.cornerOrientations) assertEquals(orientation, 0)
+        //performs parity tests for both mutable and immutable twists
+        for(i in 0 until 100) {
+            for(twist in Twist.values()) {
+                cube1 = cube1.twist(twist)
+                cube2 = cube2.twistNoCopy(twist)
+                assertTrue(passesEdgeParity(cube1))
+                assertTrue(passesCornerParity(cube1))
+                assertTrue(edgeOrientationsMatchExpected(cube1))
+                assertTrue(cornerOrientationsMatchExpected(cube1))
+                assertTrue(passesEdgeParity(cube2))
+                assertTrue(passesCornerParity(cube2))
+                assertTrue(edgeOrientationsMatchExpected(cube2))
+                assertTrue(cornerOrientationsMatchExpected(cube2))
+            }
+        }
+    }
+    private fun passesEdgeParity(cube: SmartCube): Boolean {
+        var orientationSum = 0
+        for(orientation in cube.edgeOrientations) orientationSum += orientation
+        return orientationSum % 2 == 0
+    }
+    private fun passesCornerParity(cube: SmartCube): Boolean {
+        var orientationSum = 0
+        for(orientation in cube.cornerOrientations) orientationSum += orientation
+        return orientationSum % 3 == 0
+    }
+    private fun edgeOrientationsMatchExpected(cube: SmartCube): Boolean {
+        val edges = ArrayCubeUtils.getEdges(cube.toArrayCube())
+        for(i in 0 until 12) {
+            val cubieIndex = cube.edgePositions[i]
+            if(cube.edgeOrientations[i] != SolvabilityUtils.getEdgeOrientation(edges[cubieIndex], cube.toArrayCube())) return false
+        }
+        return true
+    }
+    private fun cornerOrientationsMatchExpected(cube: SmartCube): Boolean {
+        val corners = ArrayCubeUtils.getCorners(cube.toArrayCube())
+        val orientations = IntArray(8)
+        for(i in 0 until 8) {
+            val cubieIndex = cube.cornerPositions[i]
+            orientations[i] = SolvabilityUtils.getCornerOrientation(corners[cubieIndex])
+            if(cube.cornerOrientations[i] != SolvabilityUtils.getCornerOrientation(corners[cubieIndex])) {
+                //return false
+                println()
+            }
+        }
+        return true
+    }
+    @Test
+    @Tag("CubeSimulationTest")
     fun stressTestImmutableTwists() {
         var cube = solved()
         //performs 18 million twists using the copying twist implementation
@@ -543,6 +603,51 @@ class CubeTest {
         for(i in 0 until 1000000) {
             for(twist in Twist.values()) {
                 cube.twistNoCopy(twist)
+            }
+        }
+    }
+
+    @Test
+    fun stressTestSmartCubeMutableTwistAndHash() {
+        val cube = solved()
+        //performs 18 million twists and corner hashes using the no-copy twist implementation
+        for(i in 0 until 100000) {
+            for(twist in Twist.values()) {
+                cube.twistNoCopy(twist)
+                CornerPatternDatabase.getIndex(cube)
+            }
+        }
+    }
+    @Test
+    fun stressTestSmartCubeImmutableTwistAndHash() {
+        var cube = solved()
+        //performs 18 million twists and corner hashes using the copying twist implementation
+        for(i in 0 until 100000) {
+            for(twist in Twist.values()) {
+                cube = cube.twist(twist)
+                CornerPatternDatabase.getIndex(cube)
+            }
+        }
+    }
+    @Test
+    fun stressTestArrayCubeMutableTwistAndHash() {
+        val cube = solved().toArrayCube()
+        //performs 1.8 million twists and corner hashes using the no-copy twist implementation
+        for(i in 0 until 100000) {
+            for(twist in Twist.values()) {
+                cube.twistNoCopy(twist)
+                CornerPatternDatabase.getIndex(cube)
+            }
+        }
+    }
+    @Test
+    fun stressTestArrayCubeImmutableTwistAndHash() {
+        var cube = solved().toArrayCube()
+        //performs 1.8 million twists and corner hashes using the copying twist implementation
+        for(i in 0 until 100000) {
+            for(twist in Twist.values()) {
+                cube = cube.twist(twist)
+                CornerPatternDatabase.getIndex(cube)
             }
         }
     }

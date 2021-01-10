@@ -2,8 +2,6 @@ package com.millibyte1.cubesearch.cube
 
 /**
  * Describes all valid twists in the standard half-turn metric for the Rubik's Cube
- *
- *
  */
 enum class Twist {
 
@@ -48,6 +46,44 @@ enum class Twist {
                 Face.RIGHT -> Face.LEFT
                 Face.UP -> Face.DOWN
                 Face.DOWN -> Face.UP
+            }
+        }
+
+        fun getReverse(twist: Twist): Twist {
+            return when(twist) {
+
+                FRONT_90 -> FRONT_270
+                FRONT_180 -> FRONT_180
+                FRONT_270 -> FRONT_90
+
+                BACK_90 -> BACK_270
+                BACK_180 -> BACK_180
+                BACK_270 -> BACK_90
+
+                LEFT_90 -> LEFT_270
+                LEFT_180 -> LEFT_180
+                LEFT_270 -> LEFT_90
+
+                RIGHT_90 -> RIGHT_270
+                RIGHT_180 -> RIGHT_180
+                RIGHT_270 -> RIGHT_90
+
+                UP_90 -> UP_270
+                UP_180 -> UP_180
+                UP_270 -> UP_90
+
+                DOWN_90 -> DOWN_270
+                DOWN_180 -> DOWN_180
+                DOWN_270 -> DOWN_90
+
+            }
+        }
+
+        fun getEquivalentNumClockwiseQuarterTurns(twist: Twist): Int {
+            return when (twist) {
+                FRONT_90, BACK_90, LEFT_90, RIGHT_90, UP_90, DOWN_90 -> 1
+                FRONT_180, BACK_180, LEFT_180, RIGHT_180, UP_180, DOWN_180 -> 2
+                else -> 3
             }
         }
     }

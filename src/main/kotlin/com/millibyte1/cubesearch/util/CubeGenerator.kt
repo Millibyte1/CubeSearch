@@ -1,88 +1,72 @@
 package com.millibyte1.cubesearch.util
 
-import com.millibyte1.cubesearch.cube.AbstractCube
+import com.millibyte1.cubesearch.cube.StandardCube
 import com.millibyte1.cubesearch.cube.AbstractCubeFactory
-import com.millibyte1.cubesearch.cube.Cube
 import com.millibyte1.cubesearch.cube.Twist
 import kotlin.random.Random
 
 /**
- * Generates random cubes of a specific difficulty to solve, defined by minimum solution depth.
- * Works for any Cube implementation with a factory. Can reset the RNG and change the generated cube difficulty.
+ * Generates random cubes of a specific walkLength to solve, defined by minimum solution depth.
+ * Works for any Cube implementation with a factory. Can reset the RNG and change the generated cube walkLength.
  * Thread-safe.
  * @param T the cube implementation to be generated
  *
  * @property factory the factory to use to create cubes
  * @property random the random number generator being used internally. can be reset.
  * @property seed the seed of the internal RNG
- * @property difficulty the approximate solution length of cubes being generated. if null, random difficulties will be chosen each time nextCube() is called. can be changed.
+ * @property walkLength the number of random twists performed when generating the next random cube. can be changed.
  *
  */
-class CubeGenerator<T : AbstractCube<T>> {
+class CubeGenerator<T : StandardCube<T>> {
 
     private val factory: AbstractCubeFactory<T>
     private var random: Random
     private val seed: Int
 
-    private var difficulty: Int?
+    private var walkLength: Int = 100
 
     /**
-     * constructs a new CubeGenerator with the given seed and initial difficulty
+     * constructs a new CubeGenerator with the given seed and initial walkLength
      * @param factory the factory to use to create cubes
      * @param seed the seed to create the internal RNG from. if none is provided, a random seed will be used.
-     * @param difficulty the approximate solution length of cubes being generated. if null or not provided, random difficulties will be chosen each time nextCube() is called.
-     * @throws IllegalArgumentException if [difficulty] is negative or greater than 20.
+     * @property walkLength the number of random twists performed when generating the next random cube. can be changed.
+     * @throws IllegalArgumentException if [walkLength] is negative.
      */
     @Throws(IllegalArgumentException::class)
-    constructor(factory: AbstractCubeFactory<T>, seed: Int = Random.nextInt(), difficulty: Int? = null) {
+    constructor(factory: AbstractCubeFactory<T>, seed: Int = Random.nextInt(), walkLength: Int = 100) {
+        if(walkLength < 0) throw IllegalArgumentException("Error: negative walk length provided")
         this.factory = factory
         this.seed = seed
         this.random = Random(seed)
-        if(difficulty != null) {
-            if(difficulty < 0 || difficulty > 20) {
-                throw IllegalArgumentException("difficulty must be between 0 and 20 (inclusive)")
-            }
-        }
-        this.difficulty = difficulty
+        this.walkLength = walkLength
     }
 
     /**
      * Returns a new randomly generated cube.
-     * Uses proper move pruning to attempt to make the difficulty accurate.
+     * Uses proper move pruning to attempt to make the walkLength accurate.
      *
      * @return a new randomly generated cube. fully predictable based on seed and iteration.
      */
     @Synchronized
     fun nextCube(): T {
-        //TODO: implement advanced move pruning. determine if difficulty is or could be 100% accurate
-        var cube = factory.getSolvedCube()
-        val solutionDepth = when(difficulty) {
-            null -> Random.nextInt(20)
-            else -> difficulty!!
-        }
 
+        var cube = factory.getSolvedCube()
         var options: Array<Twist>
         var previousMove: Twist?
-        var previousFace: Twist.Face? = null
-        for(i in 1..solutionDepth) {
-            //performs simple move-pruning on options
-            options = when(previousFace) {
-                null -> Twist.values()
-                else -> Twist.values()
-                        .filter { twist -> Twist.getFace(twist) != previousFace }
-                        .toTypedArray()
-            }
+        var face1Previous: Twist.Face? = null
+        var face2Previous: Twist.Face? = null
+
+        //generates a random sequence of twists
+        for(i in 1..walkLength) {
+            //eliminates twists that would necessarily result in a cube that could be reached in fewer moves
+            options = SolverUtils.getOptions(face1Previous, face2Previous)
+            //performs the twist and updates move history
+            face2Previous = face1Previous
             previousMove = options[random.nextInt(options.size)]
-            //TODO remove temp debugging code
-            val previousCube = cube
+            face1Previous = Twist.getFace(previousMove)
             cube = cube.twist(previousMove)
-            if(!isCorrectlyStickered(cube as Cube)) {
-                println("previous: $previousCube")
-                println("move: $previousMove")
-                println("current: $cube")
-            }
-            previousFace = Twist.getFace(previousMove)
         }
+
         return cube
     }
 
@@ -90,10 +74,12 @@ class CubeGenerator<T : AbstractCube<T>> {
     @Synchronized
     fun reset() {
         this.random = Random(seed)
+        setWalkLength(100)
     }
-    /** Changes the difficulty of future cubes generated by this CubeGenerator. */
+    /** Changes the walkLength of future cubes generated by this CubeGenerator. */
     @Synchronized
-    fun setDifficulty(difficulty: Int) {
-        this.difficulty = difficulty
+    fun setWalkLength(walkLength: Int) {
+        this.walkLength = walkLength
     }
+
 }

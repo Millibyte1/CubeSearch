@@ -1,45 +1,48 @@
 package com.millibyte1.cubesearch.util
 
-import com.millibyte1.cubesearch.util.Cubie
-
-import com.millibyte1.cubesearch.cube.CubeFactory
-import com.millibyte1.cubesearch.cube.Cube
+import com.millibyte1.cubesearch.cube.ArrayCubeFactory
+import com.millibyte1.cubesearch.cube.ArrayCube
 import com.millibyte1.cubesearch.cube.Twist
-import com.millibyte1.cubesearch.cube.Twist.Face
+
+import com.millibyte1.cubesearch.util.SolvabilityUtils.isSolvable
+import com.millibyte1.cubesearch.util.SolvabilityUtils.isCorrectlyStickered
+import com.millibyte1.cubesearch.util.SolvabilityUtils.passesParityTests
+import com.millibyte1.cubesearch.util.SolvabilityUtils.passesCornerParityTest
+import com.millibyte1.cubesearch.util.SolvabilityUtils.passesEdgeParityTest
+import com.millibyte1.cubesearch.util.SolvabilityUtils.passesPermutationParityTest
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Assertions.*
-import kotlin.test.assertFailsWith
 
-class SolverUtilsTest {
+class SolvabilityUtilsTest {
 
     /* ========================================== TEST FIXTURES ===================================================== */
 
-    private val factory = CubeFactory()
-    private val generator = CubeGenerator<Cube>(factory)
+    private val factory = ArrayCubeFactory()
+    private val generator = CubeGenerator<ArrayCube>(factory)
 
-    private fun solved(): Cube {
+    private fun solved(): ArrayCube {
         return factory.getSolvedCube()
     }
-    private fun randomValidCube(): Cube {
+    private fun randomValidCube(): ArrayCube {
         return generator.nextCube()
     }
     /** Should fail on stickering only */
-    private fun switchedCenters(): Cube {
+    private fun switchedCenters(): ArrayCube {
         val cube = solved()
         cube.data[0][4] = 1
         cube.data[1][4] = 0
         return cube
     }
     /** Should fail on stickering only */
-    private fun duplicateCenters(): Cube {
+    private fun duplicateCenters(): ArrayCube {
         val cube = solved()
         cube.data[0][4] = 1
         return cube
     }
     /** Should fail on corner parity only */
-    private fun oneCornerTwisted(): Cube {
+    private fun oneCornerTwisted(): ArrayCube {
         val cube = solved()
         cube.data[0][0] = 4
         cube.data[2][2] = 0
@@ -47,14 +50,14 @@ class SolverUtilsTest {
         return cube
     }
     /** Should fail on edge parity only */
-    private fun oneEdgeTwisted(): Cube {
+    private fun oneEdgeTwisted(): ArrayCube {
         val cube = solved()
         cube.data[0][1] = 4
         cube.data[4][7] = 0
         return cube
     }
     /** Should fail on permutation parity only */
-    private fun twoEdgesSwapped(): Cube {
+    private fun twoEdgesSwapped(): ArrayCube {
         val cube = solved()
         val copy = factory.getCube(cube)
         //front-up edge
@@ -66,7 +69,7 @@ class SolverUtilsTest {
         return copy
     }
     /** Should pass everything */
-    private fun superFlip(): Cube {
+    private fun superFlip(): ArrayCube {
         val cube = solved()
         //front-up
         cube.data[0][1] = 4
@@ -107,7 +110,7 @@ class SolverUtilsTest {
         return cube
     }
     /** Should pass everything */
-    private fun threeEdgesSwapped(): Cube {
+    private fun threeEdgesSwapped(): ArrayCube {
         val cube = solved()
         val copy = factory.getCube(cube)
         //front-up edge
@@ -122,7 +125,7 @@ class SolverUtilsTest {
         return copy
     }
     /** Should pass everything */
-    private fun threeCornersSwapped(): Cube {
+    private fun threeCornersSwapped(): ArrayCube {
         val cube = solved()
         val copy = factory.getCube(cube)
         //front-left-up corner
@@ -140,7 +143,7 @@ class SolverUtilsTest {
         return copy
     }
     /** Should pass everything */
-    private fun threeEdgesAndCornersSwapped(): Cube {
+    private fun threeEdgesAndCornersSwapped(): ArrayCube {
         val cube = solved()
         val copy = factory.getCube(cube)
         //front-up edge
@@ -167,7 +170,7 @@ class SolverUtilsTest {
         return copy
     }
     /** Should pass everything */
-    private fun extraEdgeParityTestCase(): Cube {
+    private fun extraEdgeParityTestCase(): ArrayCube {
         val data = arrayOf(
                 intArrayOf(2, 2, 2,
                            0, 0, 5,
