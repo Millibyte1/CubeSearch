@@ -80,7 +80,7 @@ object CornerPatternDatabase : AbstractPatternDatabase<SmartCube>() {
     }
     /**
      * Generates the pattern database to completion.
-     * Should only require a partial BFS w/o heuristic pruning to depth 10 to generate all possible corner configurations.
+     * Should only require a partial BFS w/o to depth 10 to generate all possible corner configurations.
      */
     private fun populateDatabase() {
         //constructs the queue for the BFS and enqueues the solved cube

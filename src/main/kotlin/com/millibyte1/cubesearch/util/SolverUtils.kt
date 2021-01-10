@@ -29,7 +29,6 @@ object SolverUtils {
      * After the first two moves, the average branching factor will be 14.4
      */
     fun getOptions(face1Previous: Twist.Face?, face2Previous: Twist.Face?): Array<Twist> {
-        //TODO: find a way to improve branching factor
         return when {
             (face1Previous == null) && (face2Previous == null) -> Twist.values()
             (face2Previous == null) ->
