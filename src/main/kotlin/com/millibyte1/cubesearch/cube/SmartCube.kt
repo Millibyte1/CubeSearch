@@ -40,7 +40,7 @@ class SmartCube internal constructor(
     var cornerPositions: IntArray,
     var edgeOrientations: IntArray,
     var cornerOrientations: IntArray
-) : AnalyzableMutableStandardCube<SmartCube>, Serializable {
+) : AnalyzableStandardCube<SmartCube>, Serializable {
 
     /** Constructs the cube, computing initial orientations from the data array */
     internal constructor(data: Array<IntArray>) : this(data, IntArray(12), IntArray(8), IntArray(12), IntArray(8)) {

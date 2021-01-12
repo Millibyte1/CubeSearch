@@ -7,7 +7,7 @@ import java.util.Queue
 import java.util.ArrayDeque
 
 import redis.clients.jedis.Jedis
-object CornerPatternDatabase : AbstractPatternDatabase<SmartCube>() {
+object CornerPatternDatabase : AbstractPatternDatabase() {
 
     internal const val CARDINALITY = 88179840
     internal const val ORIENTATION_CARDINALITY = 2187
@@ -62,11 +62,8 @@ object CornerPatternDatabase : AbstractPatternDatabase<SmartCube>() {
         return tempDatabase[index]
     }
 
-    override fun getIndex(cube: SmartCube): Int {
+    override fun getIndex(cube: AnalyzableStandardCube<*>): Int {
         //(maxOrientationIndex * positionIndex) + orientationIndex
-        return (2187 * getCornerPositionIndex(cube)) + getCornerOrientationIndex(cube)
-    }
-    fun getIndex(cube: Analyzable): Int {
         return (2187 * getCornerPositionIndex(cube)) + getCornerOrientationIndex(cube)
     }
 
@@ -93,8 +90,8 @@ object CornerPatternDatabase : AbstractPatternDatabase<SmartCube>() {
      */
     private fun populateDatabaseBFS() {
         //constructs the queue for the BFS and enqueues the solved cube
-        val queue: Queue<PathWithBack<SmartCube>> = ArrayDeque()
-        queue.add(PathWithBack<SmartCube>(ArrayList(), factory.getSolvedCube()))
+        val queue: Queue<PathWithBack> = ArrayDeque()
+        queue.add(PathWithBack(ArrayList(), factory.getSolvedCube()))
         addCost(factory.getSolvedCube(), 0)
         //generates every possible corner configuration via a breadth-first traversal
         while(queue.isNotEmpty()) {
@@ -155,7 +152,7 @@ object CornerPatternDatabase : AbstractPatternDatabase<SmartCube>() {
      * This search function is used by both the DFS and IDDFS modes.
      */
     private fun populateDatabaseDFS(
-        path: PathWithBack<SmartCube>,
+        path: PathWithBack,
         closedList: ByteArray,
         pRecord: ByteArray,
         oRecord: ByteArray,
@@ -195,12 +192,12 @@ object CornerPatternDatabase : AbstractPatternDatabase<SmartCube>() {
         for(i in 0 until CARDINALITY) if(closedList[i].toInt() != -1) addCost(i, closedList[i])
     }
     /** Checks whether this configuration is already in the pattern database */
-    private fun databaseContains(cube: SmartCube): Boolean {
+    private fun databaseContains(cube: AnalyzableStandardCube<*>): Boolean {
         if(USE_REDIS) return jedis.hexists(key, getIndex(cube).toString())
         return tempDatabase[getIndex(cube)].toInt() != -1
     }
     /** Adds the cost to the pattern database */
-    private fun addCost(cube: SmartCube, cost: Byte) {
+    private fun addCost(cube: AnalyzableStandardCube<*>, cost: Byte) {
         tempDatabase[getIndex(cube)] = cost
         val orientationVal = tempOrientationDatabase[getCornerOrientationIndex(cube)]
         val positionVal = tempPositionDatabase[getCornerPositionIndex(cube)]
@@ -222,7 +219,7 @@ object CornerPatternDatabase : AbstractPatternDatabase<SmartCube>() {
     }
 
     /** Gets the Lehmer code of the corner permutation of this cube and converts it to base 10 */
-    fun getCornerPositionIndex(cube: Analyzable): Int {
+    fun getCornerPositionIndex(cube: AnalyzableStandardCube<*>): Int {
         //val permutation = SolvabilityUtils.getCornerPermutation(cube)
         //val lehmer = PatternDatabaseUtils.getLehmerCode(permutation)
         //val lehmer = PatternDatabaseUtils.getLehmerCode(SolvabilityUtils.getCornerPermutation(cube))
@@ -237,7 +234,7 @@ object CornerPatternDatabase : AbstractPatternDatabase<SmartCube>() {
                lehmer[6]
     }
     /** Computes the corner orientation index by converting the orientation string to a base 10 number */
-    fun getCornerOrientationIndex(cube: Analyzable): Int {
+    fun getCornerOrientationIndex(cube: AnalyzableStandardCube<*>): Int {
         //val orientations = getCornerOrientationSequence(cube)
         val orientations = cube.getCornerOrientationPermutation()
         //ignores orientations[7] since there are only 7 degrees of choice
