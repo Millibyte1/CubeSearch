@@ -1,6 +1,6 @@
 package com.millibyte1.cubesearch.util
 
-import com.millibyte1.cubesearch.cube.ArrayCube
+import com.millibyte1.cubesearch.cube.AnalyzableStandardCube
 import com.millibyte1.cubesearch.cube.ArrayCubeFactory
 import com.millibyte1.cubesearch.cube.Twist.Face
 
@@ -122,7 +122,7 @@ sealed class Cubie {
          * @throws IllegalArgumentException if an invalid number of tiles are provided
          */
         @Throws(IllegalArgumentException::class)
-        fun makeCubie(cube: ArrayCube, vararg tiles: TilePosition): Cubie {
+        fun makeCubie(cube: AnalyzableStandardCube, vararg tiles: TilePosition): Cubie {
             tiles.sort()
             return when(tiles.size) {
                 1 -> CenterCubie(Tile(cube, tiles[0]))
@@ -149,7 +149,7 @@ data class TilePosition(val face: Face, val index: Int) : Comparable<TilePositio
 }
 /** A simple data class representing a single tile on a single cubie on a cube */
 data class Tile(val pos: TilePosition, val color: Int) : Comparable<Tile> {
-    constructor(cube: ArrayCube, pos: TilePosition) : this(pos, cube.data[pos.face.ordinal][pos.index])
+    constructor(cube: AnalyzableStandardCube, pos: TilePosition) : this(pos, cube.getTiles()[pos.face.ordinal][pos.index])
     override fun compareTo(other: Tile): Int {
         return when {
             pos < other.pos -> -1
@@ -167,8 +167,8 @@ object ArrayCubeUtils {
     private val solved = ArrayCubeFactory().getSolvedCube()
 
     /** Returns whether the given cube is solved */
-    fun isSolved(cube: ArrayCube): Boolean {
-        return cube == solved
+    fun isSolved(cube: AnalyzableStandardCube): Boolean {
+        return cube.getTiles().contentDeepEquals(solved.getTiles())
     }
 
     /** Gets the list of cubies on a solved cube */
@@ -215,12 +215,12 @@ object ArrayCubeUtils {
 /* ============================================ CUBIE ACCESS FUNCTIONS ============================================== */
 
     /** Gets all cubies on this cube */
-    fun getCubies(cube: ArrayCube): List<Cubie> {
+    fun getCubies(cube: AnalyzableStandardCube): List<Cubie> {
         return getCorners(cube) + getEdges(cube) + getCenters(cube)
     }
 
     /** Gets all corner cubies on this cube */
-    fun getCorners(cube: ArrayCube): List<CornerCubie> {
+    fun getCorners(cube: AnalyzableStandardCube): List<CornerCubie> {
         val corners = ArrayList<CornerCubie>()
         corners.add(getCubieOnFaces(cube, Face.UP, Face.FRONT, Face.LEFT) as CornerCubie)
         corners.add(getCubieOnFaces(cube, Face.UP, Face.FRONT, Face.RIGHT) as CornerCubie)
@@ -234,7 +234,7 @@ object ArrayCubeUtils {
     }
 
     /** Gets all edge cubies on this cube */
-    fun getEdges(cube: ArrayCube): List<EdgeCubie> {
+    fun getEdges(cube: AnalyzableStandardCube): List<EdgeCubie> {
         val edges = ArrayList<EdgeCubie>()
         edges.add(getCubieOnFaces(cube, Face.UP, Face.FRONT) as EdgeCubie)
         edges.add(getCubieOnFaces(cube, Face.UP, Face.BACK) as EdgeCubie)
@@ -252,7 +252,7 @@ object ArrayCubeUtils {
     }
 
     /** Gets all center cubies on this cube */
-    fun getCenters(cube: ArrayCube): List<CenterCubie> {
+    fun getCenters(cube: AnalyzableStandardCube): List<CenterCubie> {
         val centers = ArrayList<CenterCubie>()
         centers.add(getCubieOnFaces(cube, Face.FRONT) as CenterCubie)
         centers.add(getCubieOnFaces(cube, Face.BACK) as CenterCubie)
@@ -271,7 +271,7 @@ object ArrayCubeUtils {
      * @throws IllegalArgumentException if an invalid set of faces is provided
      */
     @Throws(IllegalArgumentException::class)
-    fun getCubieOnFaces(cube: ArrayCube, vararg faces: Face): Cubie {
+    fun getCubieOnFaces(cube: AnalyzableStandardCube, vararg faces: Face): Cubie {
         if (faces.isEmpty() || faces.size > 3) throw failInvalidNumberOfFaces()
         return getCubieAt(cube, getTilePositionOnFaces(*faces))
     }
@@ -284,7 +284,7 @@ object ArrayCubeUtils {
      * @throws IllegalArgumentException if an invalid tile position is provided
      */
     @Throws(IllegalArgumentException::class)
-    fun getCubieAt(cube: ArrayCube, tile: TilePosition): Cubie {
+    fun getCubieAt(cube: AnalyzableStandardCube, tile: TilePosition): Cubie {
         return when {
             isOnCenterCubie(tile) -> Cubie.makeCubie(Tile(cube, tile))
             isOnEdgeCubie(tile) -> Cubie.makeCubie(Tile(cube, tile), Tile(cube, getOtherTilePositionOnEdgeCubie(tile)))
@@ -302,7 +302,7 @@ object ArrayCubeUtils {
      * @throws IllegalArgumentException if the provided cubie does not exist on the given cube
      */
     @Throws(IllegalArgumentException::class)
-    fun getCubieOnCube(cube: ArrayCube, cubie: Cubie): Cubie {
+    fun getCubieOnCube(cube: AnalyzableStandardCube, cubie: Cubie): Cubie {
         return getCubieWithColors(cube, *getColorsOnCubie(cubie))
     }
 
@@ -314,7 +314,7 @@ object ArrayCubeUtils {
      * @throws IllegalArgumentException if no cubie on this cube has all of the given colors
      */
     @Throws(IllegalArgumentException::class)
-    fun getCubieWithColors(cube: ArrayCube, vararg colors: Int): Cubie {
+    fun getCubieWithColors(cube: AnalyzableStandardCube, vararg colors: Int): Cubie {
         for (cubie in getCubies(cube)) {
             val cubieColors = getColorsOnCubie(cubie)
             if (colors.all { color1 -> cubieColors.any { color2 -> color1 == color2 } } &&

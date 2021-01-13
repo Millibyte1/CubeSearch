@@ -1,7 +1,8 @@
 package com.millibyte1.cubesearch.util
 
+import com.millibyte1.cubesearch.cube.Cube
 import com.millibyte1.cubesearch.cube.StandardCube
-import com.millibyte1.cubesearch.cube.AbstractCubeFactory
+import com.millibyte1.cubesearch.cube.CubeFactory
 import com.millibyte1.cubesearch.cube.Twist
 import kotlin.random.Random
 
@@ -17,9 +18,9 @@ import kotlin.random.Random
  * @property walkLength the number of random twists performed when generating the next random cube. can be changed.
  *
  */
-class CubeGenerator<T : StandardCube<T>> {
+class CubeGenerator<T : Cube> {
 
-    private val factory: AbstractCubeFactory<T>
+    private val factory: CubeFactory
     private var random: Random
     private val seed: Int
 
@@ -33,7 +34,7 @@ class CubeGenerator<T : StandardCube<T>> {
      * @throws IllegalArgumentException if [walkLength] is negative.
      */
     @Throws(IllegalArgumentException::class)
-    constructor(factory: AbstractCubeFactory<T>, seed: Int = Random.nextInt(), walkLength: Int = 100) {
+    constructor(factory: CubeFactory, seed: Int = Random.nextInt(), walkLength: Int = 100) {
         if(walkLength < 0) throw IllegalArgumentException("Error: negative walk length provided")
         this.factory = factory
         this.seed = seed
@@ -67,7 +68,7 @@ class CubeGenerator<T : StandardCube<T>> {
             cube = cube.twist(previousMove)
         }
 
-        return cube
+        return cube as T
     }
 
     /** Resets the internal RNG. Uses the seed this CubeGenerator was created with. */

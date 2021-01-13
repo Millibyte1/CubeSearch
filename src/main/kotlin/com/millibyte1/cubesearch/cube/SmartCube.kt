@@ -40,7 +40,7 @@ class SmartCube internal constructor(
     var cornerPositions: IntArray,
     var edgeOrientations: IntArray,
     var cornerOrientations: IntArray
-) : AnalyzableMutableStandardCube<SmartCube>, Serializable {
+) : AnalyzableStandardCube, Serializable {
 
     /** Constructs the cube, computing initial orientations from the data array */
     internal constructor(data: Array<IntArray>) : this(data, IntArray(12), IntArray(8), IntArray(12), IntArray(8)) {
@@ -112,6 +112,10 @@ class SmartCube internal constructor(
             Twist.DOWN_180 -> { this.data = twistDown180(data); return this }
             Twist.DOWN_270 -> { this.data = twistDown270(data); return this }
         }
+    }
+
+    override fun getTiles(): Array<IntArray> {
+        return data
     }
 
     override fun getEdgePositionPermutation(): IntArray {

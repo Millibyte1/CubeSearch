@@ -1,9 +1,10 @@
 package com.millibyte1.cubesearch.cube
 
 /**
- * Interface wrapping functions for analyzing the configuration of standard Rubik's cubes.
+ * Interface for a standard 3x3 Rubik's cube that implements both mutable and immutable twists and functions for
+ * analyzing its configuration.
  */
-interface Analyzable {
+interface AnalyzableStandardCube : StandardCube {
     /**
      * Gets the permutation of edge positions as an array of integers, sorted by the solved positions of the pieces
      * (i.e. the orientation of the piece that is in the up-front edge position when solved is first).
@@ -55,4 +56,7 @@ interface Analyzable {
      * this without copying may or may not modify the cube.
      */
     fun getCornerOrientationPermutation(): IntArray
+
+    override fun twist(twist: Twist): AnalyzableStandardCube
+    override fun twistNoCopy(twist: Twist): AnalyzableStandardCube
 }

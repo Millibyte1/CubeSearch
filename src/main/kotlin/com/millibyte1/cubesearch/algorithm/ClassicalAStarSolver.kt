@@ -3,6 +3,7 @@ package com.millibyte1.cubesearch.algorithm
 import com.millibyte1.cubesearch.cube.ArrayCube
 import com.millibyte1.cubesearch.cube.Twist
 import com.millibyte1.cubesearch.algorithm.heuristics.CostEvaluator
+import com.millibyte1.cubesearch.cube.AnalyzableStandardCube
 import com.millibyte1.cubesearch.util.*
 
 import com.millibyte1.cubesearch.util.ArrayCubeUtils.isSolved
@@ -10,11 +11,11 @@ import com.millibyte1.cubesearch.util.failNotSolvable
 
 import java.util.concurrent.PriorityBlockingQueue
 
-class ClassicalAStarSolver(costEvaluator: CostEvaluator<ArrayCube>) : AbstractSolver<ArrayCube>(costEvaluator) {
+class ClassicalAStarSolver(costEvaluator: CostEvaluator) : AbstractSolver(costEvaluator) {
 
-    private val visited: MutableMap<ArrayCube, Int> = HashMap()
-    private val candidates: PriorityBlockingQueue<PathWithBack<ArrayCube>> = PriorityBlockingQueue(100, Comparator {
-        path1: PathWithBack<ArrayCube>, path2: PathWithBack<ArrayCube> -> when {
+    private val visited: MutableMap<AnalyzableStandardCube, Int> = HashMap()
+    private val candidates: PriorityBlockingQueue<PathWithBack> = PriorityBlockingQueue(100, Comparator {
+        path1: PathWithBack, path2: PathWithBack -> when {
             path1.size() + getCost(path1.back) < path2.size() + getCost(path2.back) -> -1
             path1.size() + getCost(path1.back) == path2.size() + getCost(path2.back) -> 0
             else -> 1
@@ -23,7 +24,7 @@ class ClassicalAStarSolver(costEvaluator: CostEvaluator<ArrayCube>) : AbstractSo
 
     @Synchronized
     @Throws(IllegalArgumentException::class)
-    override fun getSolution(cube: ArrayCube): Path {
+    override fun getSolution(cube: AnalyzableStandardCube): Path {
         if(!SolvabilityUtils.isSolvable(cube)) throw failNotSolvable()
         reset()
 
@@ -31,9 +32,9 @@ class ClassicalAStarSolver(costEvaluator: CostEvaluator<ArrayCube>) : AbstractSo
         candidates.add(PathWithBack(ArrayList(), cube))
         visited[cube] = 0
 
-        var path: PathWithBack<ArrayCube>
-        var currentCube: ArrayCube
-        var nextCube: ArrayCube
+        var path: PathWithBack
+        var currentCube: AnalyzableStandardCube
+        var nextCube: AnalyzableStandardCube
 
         var face1Previous: Twist.Face?
         var face2Previous: Twist.Face?
