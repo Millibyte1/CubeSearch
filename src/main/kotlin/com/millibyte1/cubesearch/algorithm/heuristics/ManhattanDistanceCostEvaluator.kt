@@ -1,5 +1,6 @@
 package com.millibyte1.cubesearch.algorithm.heuristics
 
+import com.millibyte1.cubesearch.cube.AnalyzableStandardCube
 import com.millibyte1.cubesearch.cube.ArrayCube
 import com.millibyte1.cubesearch.cube.ArrayCubeFactory
 import com.millibyte1.cubesearch.cube.Twist
@@ -7,6 +8,7 @@ import com.millibyte1.cubesearch.util.Cubie
 import com.millibyte1.cubesearch.util.SolvabilityUtils
 import com.millibyte1.cubesearch.util.ArrayCubeUtils
 
+//TODO: fix ArrayCubeUtils to work for any cube type
 /**
  * Wrapper for a "Manhattan Distance" heuristic. This heuristic is less performant than large pattern databases
  * (it's actually equivalent 26 single-cubie pattern databases), but it takes just milliseconds to initialize,
@@ -18,7 +20,7 @@ import com.millibyte1.cubesearch.util.ArrayCubeUtils
  * @constructor Tabulates the Manhattan distances of each possible cubie from the provided goal cube.
  * @param goal the cube we want to search for; usually the solved cube.
  */
-class ManhattanDistanceCostEvaluator(private val goal: ArrayCube = ArrayCubeFactory().getSolvedCube()) : CostEvaluator<ArrayCube> {
+class ManhattanDistanceCostEvaluator(private val goal: ArrayCube = ArrayCubeFactory().getSolvedCube()) : CostEvaluator {
 
     private val cubieManhattanDistances: MutableMap<Cubie, Int> = HashMap()
 
@@ -39,7 +41,8 @@ class ManhattanDistanceCostEvaluator(private val goal: ArrayCube = ArrayCubeFact
      * @throws IllegalArgumentException if this cube is improperly stickered
      */
     @Throws(IllegalArgumentException::class)
-    override fun getCost(cube: ArrayCube): Byte {
+    override fun getCost(cube: AnalyzableStandardCube): Byte {
+        val cube = ArrayCube(cube.getTiles())
         return when {
             SolvabilityUtils.isCorrectlyStickered(cube) ->
                 (Integer.max(

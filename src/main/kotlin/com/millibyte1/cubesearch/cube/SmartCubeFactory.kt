@@ -1,6 +1,6 @@
 package com.millibyte1.cubesearch.cube
 
-class SmartCubeFactory : AbstractCubeFactory<SmartCube>() {
+class SmartCubeFactory : CubeFactory {
     /**
      * Constructs a cube from the contents of [data]
      * @param data the 6xN array representing the faces of the cube
@@ -27,12 +27,21 @@ class SmartCubeFactory : AbstractCubeFactory<SmartCube>() {
     ): SmartCube {
         return SmartCube(data, edgePositions, cornerPositions, edgeOrientations, cornerOrientations)
     }
-    /** Returns a copy of this cube
-     * @param cube the cube to copy
-     * @return the constructed cube
-     */
-    override fun getCube(cube: SmartCube): SmartCube {
-        return SmartCube(cube.data, cube.edgePositions, cube.cornerPositions, cube.edgeOrientations, cube.cornerOrientations)
+
+    override fun getCube(cube: Cube): SmartCube {
+        if(cube is SmartCube) {
+            return SmartCube(
+                cube.data,
+                cube.edgePositions,
+                cube.cornerPositions,
+                cube.edgeOrientations,
+                cube.cornerOrientations
+            )
+        }
+        if(cube is ArrayCube) {
+            return SmartCube(cube.data)
+        }
+        throw failWrongImplementation()
     }
     /** Returns a SmartCube from this ArrayCube
      * @param cube the cube to copy
@@ -58,4 +67,7 @@ class SmartCubeFactory : AbstractCubeFactory<SmartCube>() {
             )
         )
     }
+}
+private fun failWrongImplementation(): IllegalArgumentException {
+    return IllegalArgumentException("Error: factory cannot produce an SmartCube from an instance of the provided cube's type")
 }

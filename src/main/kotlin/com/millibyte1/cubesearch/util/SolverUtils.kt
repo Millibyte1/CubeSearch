@@ -47,10 +47,10 @@ object SolverUtils {
      * @param path the sequence of twists to apply to this cube
      * @return the cube that this path yields (the "back" of the path, if it were cubes instead of twists)
      */
-    fun <T : StandardCube<T>> realizePath(initial: T, path: Path): T {
-        var cube = initial
+    fun <T : Cube> realizePath(initial: T, path: Path): T {
+        var cube: Cube = initial
         for(twist in path) cube = cube.twist(twist)
-        return cube
+        return cube as T
     }
 }
 

@@ -30,6 +30,7 @@ object CornerPatternDatabase : AbstractPatternDatabase() {
     private val tempPositionDatabase = ByteArray(POSITION_CARDINALITY) { -1 }
 
     init {
+        /*
         if(!isPopulated()) {
             for(i in 0 until CARDINALITY) tempDatabase[i] = -1
             for(i in 0 until ORIENTATION_CARDINALITY) tempOrientationDatabase[i] = -1
@@ -47,6 +48,8 @@ object CornerPatternDatabase : AbstractPatternDatabase() {
             for(i in 0 until ORIENTATION_CARDINALITY) jedis.hset(orientationKey, i.toString(), tempOrientationDatabase[i].toString())
              */
         }
+
+         */
     }
 
     override fun getCost(index: Int): Byte {
@@ -62,7 +65,7 @@ object CornerPatternDatabase : AbstractPatternDatabase() {
         return tempDatabase[index]
     }
 
-    override fun getIndex(cube: AnalyzableStandardCube<*>): Int {
+    override fun getIndex(cube: AnalyzableStandardCube): Int {
         //(maxOrientationIndex * positionIndex) + orientationIndex
         return (2187 * getCornerPositionIndex(cube)) + getCornerOrientationIndex(cube)
     }
@@ -192,12 +195,12 @@ object CornerPatternDatabase : AbstractPatternDatabase() {
         for(i in 0 until CARDINALITY) if(closedList[i].toInt() != -1) addCost(i, closedList[i])
     }
     /** Checks whether this configuration is already in the pattern database */
-    private fun databaseContains(cube: AnalyzableStandardCube<*>): Boolean {
+    private fun databaseContains(cube: AnalyzableStandardCube): Boolean {
         if(USE_REDIS) return jedis.hexists(key, getIndex(cube).toString())
         return tempDatabase[getIndex(cube)].toInt() != -1
     }
     /** Adds the cost to the pattern database */
-    private fun addCost(cube: AnalyzableStandardCube<*>, cost: Byte) {
+    private fun addCost(cube: AnalyzableStandardCube, cost: Byte) {
         tempDatabase[getIndex(cube)] = cost
         val orientationVal = tempOrientationDatabase[getCornerOrientationIndex(cube)]
         val positionVal = tempPositionDatabase[getCornerPositionIndex(cube)]
@@ -219,7 +222,7 @@ object CornerPatternDatabase : AbstractPatternDatabase() {
     }
 
     /** Gets the Lehmer code of the corner permutation of this cube and converts it to base 10 */
-    fun getCornerPositionIndex(cube: AnalyzableStandardCube<*>): Int {
+    fun getCornerPositionIndex(cube: AnalyzableStandardCube): Int {
         //val permutation = SolvabilityUtils.getCornerPermutation(cube)
         //val lehmer = PatternDatabaseUtils.getLehmerCode(permutation)
         //val lehmer = PatternDatabaseUtils.getLehmerCode(SolvabilityUtils.getCornerPermutation(cube))
@@ -234,7 +237,7 @@ object CornerPatternDatabase : AbstractPatternDatabase() {
                lehmer[6]
     }
     /** Computes the corner orientation index by converting the orientation string to a base 10 number */
-    fun getCornerOrientationIndex(cube: AnalyzableStandardCube<*>): Int {
+    fun getCornerOrientationIndex(cube: AnalyzableStandardCube): Int {
         //val orientations = getCornerOrientationSequence(cube)
         val orientations = cube.getCornerOrientationPermutation()
         //ignores orientations[7] since there are only 7 degrees of choice

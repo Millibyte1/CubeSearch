@@ -14,5 +14,5 @@ interface CostEvaluator {
      * @throws IllegalArgumentException if the cost cannot be evaluated (e.g. if the cube is incorrectly stickered)
      */
     @Throws(IllegalArgumentException::class)
-    fun getCost(cube: AnalyzableStandardCube<*>): Byte
+    fun getCost(cube: AnalyzableStandardCube): Byte
 }

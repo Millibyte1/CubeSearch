@@ -22,7 +22,7 @@ import java.io.Serializable
  *  . . . 3 D 5 . . . . . .
  *  . . . 6 7 8 . . . . . .
  */
-class ArrayCube internal constructor(var data: Array<IntArray>) : AnalyzableStandardCube<ArrayCube>, Serializable {
+class ArrayCube internal constructor(var data: Array<IntArray>) : AnalyzableStandardCube, Serializable {
 
     override fun twist(twist: Twist): ArrayCube {
         return when(twist) {
@@ -68,6 +68,10 @@ class ArrayCube internal constructor(var data: Array<IntArray>) : AnalyzableStan
             Twist.DOWN_180 -> { this.data = twistDown180(data); return this }
             Twist.DOWN_270 -> { this.data = twistDown270(data); return this }
         }
+    }
+
+    override fun getTiles(): Array<IntArray> {
+        return data
     }
 
     override fun getEdgePositionPermutation(): IntArray {

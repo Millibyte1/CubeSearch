@@ -12,14 +12,14 @@ import com.millibyte1.cubesearch.util.Path
  */
 abstract class AbstractSolver(private val costEvaluator: CostEvaluator) : Solver, CostEvaluator {
     @Throws(IllegalArgumentException::class)
-    override fun getCost(cube: AnalyzableStandardCube<*>): Byte {
+    override fun getCost(cube: AnalyzableStandardCube): Byte {
         return costEvaluator.getCost(cube)
     }
 
     /**
      * Gets the total estimated cost of a path of past moves and a candidate node
      */
-    internal fun totalCost(path: Path, candidate: AnalyzableStandardCube<*>): Int {
+    internal fun totalCost(path: Path, candidate: AnalyzableStandardCube): Int {
         return path.size + costEvaluator.getCost(candidate)
     }
 }

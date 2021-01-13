@@ -75,7 +75,7 @@ abstract class AbstractPatternDatabase: CostEvaluator {
      * @param  cube the cube in question
      * @return a lower bound on the number of moves it might take to solve this cube
      */
-    override fun getCost(cube: AnalyzableStandardCube<*>): Byte {
+    override fun getCost(cube: AnalyzableStandardCube): Byte {
         return getCost(getIndex(cube))
     }
     /**
@@ -92,5 +92,5 @@ abstract class AbstractPatternDatabase: CostEvaluator {
      * @param cube the cube in question
      * @return the index of this cube in the pattern database.
      */
-    abstract fun getIndex(cube: AnalyzableStandardCube<*>): Int
+    abstract fun getIndex(cube: AnalyzableStandardCube): Int
 }

@@ -3,13 +3,14 @@ package com.millibyte1.cubesearch.cube
 /**
  * Factory for ArrayCubes
  */
-class ArrayCubeFactory : AbstractCubeFactory<ArrayCube>() {
+class ArrayCubeFactory : CubeFactory {
 
     override fun getCube(data: Array<IntArray>): ArrayCube {
         return ArrayCube(data.copy())
     }
 
-    override fun getCube(cube: ArrayCube): ArrayCube {
+    override fun getCube(cube: Cube): ArrayCube {
+        if(cube !is ArrayCube) throw failWrongImplementation()
         return ArrayCube(cube.data.copy())
     }
 
@@ -24,4 +25,7 @@ class ArrayCubeFactory : AbstractCubeFactory<ArrayCube>() {
         ))
     }
 
+}
+private fun failWrongImplementation(): IllegalArgumentException {
+    return IllegalArgumentException("Error: factory cannot produce an ArrayCube from an instance of the provided cube's type")
 }

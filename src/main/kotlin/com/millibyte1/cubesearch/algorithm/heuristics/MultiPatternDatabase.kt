@@ -1,5 +1,6 @@
 package com.millibyte1.cubesearch.algorithm.heuristics
 
+import com.millibyte1.cubesearch.cube.AnalyzableStandardCube
 import com.millibyte1.cubesearch.cube.StandardCube
 
 /**
@@ -8,14 +9,14 @@ import com.millibyte1.cubesearch.cube.StandardCube
  * @constructor constructs a MultiPatternDatabase that considers the costs from all of the provided databases
  * @param databases the set of databases to consider when evaluating the cost of a given cube
  */
-class MultiPatternDatabase<T : StandardCube<T>>(private vararg val databases: AbstractPatternDatabase<T>) : CostEvaluator<T> {
+class MultiPatternDatabase(private vararg val databases: AbstractPatternDatabase) : CostEvaluator {
     /**
      * Gets the cost of this cube based off the values in the pattern databases.
      * Gets the maximum of the costs for this cube from each pattern database this MultiPatternDatabase considers.
      * @param cube the cube in question
      * @return a lower bound on the number of moves it might take to solve this cube
      */
-    override fun getCost(cube: T): Byte {
+    override fun getCost(cube: AnalyzableStandardCube): Byte {
         var cost: Byte = 0
         for(database in databases) cost = maxOf(cost, database.getCost(cube))
         return cost

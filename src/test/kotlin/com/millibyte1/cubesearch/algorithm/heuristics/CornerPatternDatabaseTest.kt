@@ -18,20 +18,18 @@ class CornerPatternDatabaseTest {
     }
 
     fun testSolvedCubeCost() {
-        val solvedIndex = CornerPatternDatabase.getIndex(solved())
         assertEquals(CornerPatternDatabase.getCost(solved()), 0)
     }
     @Test
     fun testSingleMoveCubeCosts() {
         for(twist in Twist.values()) {
-            val index = CornerPatternDatabase.getIndex(solved().twist(twist))
             assertEquals(CornerPatternDatabase.getCost(solved().twist(twist)), 1)
         }
     }
     @Test
     fun testRandomCubeCosts() {
         //generates 100 random cubes for each walk length and tests that the cost is possible
-        val generator = CubeGenerator(factory)
+        val generator = CubeGenerator<SmartCube>(factory)
         for(walkLength in 2..20) {
             generator.setWalkLength(walkLength)
             for(i in 0 until 100) {

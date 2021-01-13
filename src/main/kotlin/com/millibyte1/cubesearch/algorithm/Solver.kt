@@ -16,5 +16,5 @@ interface Solver {
      * @throws IllegalArgumentException if this cube is unsolvable
      */
     @Throws(IllegalArgumentException::class)
-    fun getSolution(cube: AnalyzableStandardCube<*>): List<Twist>
+    fun getSolution(cube: AnalyzableStandardCube): List<Twist>
 }
