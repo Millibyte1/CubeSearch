@@ -586,22 +586,10 @@ class SmartCubeTest {
         return orientationSum % 3 == 0
     }
     private fun edgeOrientationsMatchExpected(cube: SmartCube): Boolean {
-        val edges = ArrayCubeUtils.getEdges(cube.toArrayCube())
-        for(i in 0 until 12) {
-            val cubieIndex = cube.edgePositions[i]
-            if(cube.edgeOrientations[i] != SolvabilityUtils.getEdgeOrientation(edges[cubieIndex], cube.toArrayCube())) return false
-        }
         val arrayPermutation = cube.toArrayCube().getEdgeOrientationPermutation()
         return arrayPermutation.contentEquals(cube.getEdgeOrientationPermutation())
     }
     private fun cornerOrientationsMatchExpected(cube: SmartCube): Boolean {
-        val corners = ArrayCubeUtils.getCorners(cube.toArrayCube())
-        val orientations = IntArray(8)
-        for(i in 0 until 8) {
-            val cubieIndex = cube.cornerPositions[i]
-            orientations[i] = SolvabilityUtils.getCornerOrientation(corners[cubieIndex])
-            if(cube.cornerOrientations[i] != SolvabilityUtils.getCornerOrientation(corners[cubieIndex])) return false
-        }
         val arrayPermutation = cube.toArrayCube().getCornerOrientationPermutation()
         return arrayPermutation.contentEquals(cube.getCornerOrientationPermutation())
     }
