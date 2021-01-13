@@ -17,6 +17,7 @@ class CornerPatternDatabaseTest {
         return factory.getSolvedCube()
     }
 
+    @Test
     fun testSolvedCubeCost() {
         assertEquals(CornerPatternDatabase.getCost(solved()), 0)
     }
@@ -27,8 +28,8 @@ class CornerPatternDatabaseTest {
         }
     }
     @Test
-    fun testRandomCubeCosts() {
-        //generates 100 random cubes for each walk length and tests that the cost is possible
+    fun testRandomCubeCostsAreAdmissible() {
+        //generates 100 random cubes for each walk length and tests that the cost is admissible
         val generator = CubeGenerator<SmartCube>(factory)
         for(walkLength in 2..20) {
             generator.setWalkLength(walkLength)
@@ -38,11 +39,11 @@ class CornerPatternDatabaseTest {
             }
         }
     }
-
     @Test
     fun testDatabaseSize() {
         assertEquals(CornerPatternDatabase.getPopulation(), CornerPatternDatabase.CARDINALITY)
     }
+    /*
     @Test
     fun testOrientationDatabaseSize() {
         assertEquals(CornerPatternDatabase.getOrientationPopulation(), CornerPatternDatabase.ORIENTATION_CARDINALITY)
@@ -54,6 +55,7 @@ class CornerPatternDatabaseTest {
 
     @Test
     fun notActuallyATest() {
+        /*
         val orientationCosts = ByteArray(2187)
         val positionCosts = ByteArray(40320)
         var orientationCostSum: Int = 0
@@ -82,5 +84,7 @@ class CornerPatternDatabaseTest {
         println("Min position cost: $positionCostMin")
         println("Max position cost: $positionCostMax")
         println("Average position cost: " + (positionCostSum / 40320.0))
+        */
     }
+    */
 }
