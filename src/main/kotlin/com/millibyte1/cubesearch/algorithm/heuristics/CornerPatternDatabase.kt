@@ -8,6 +8,13 @@ import java.util.ArrayDeque
 
 import redis.clients.jedis.Jedis
 
+import java.io.File
+import java.io.IOException
+import java.io.ByteArrayOutputStream
+import java.io.FileOutputStream
+
+import org.apache.commons.io.FileUtils
+
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 
@@ -30,30 +37,42 @@ object CornerPatternDatabase : AbstractPatternDatabase() {
     private val jedis = Jedis()
     private val key = cornerConfig.getString("redis-key")
 
-    private val tempDatabase = ByteArray(CARDINALITY) { -1 }
+    private val file = File("data/corners-full.db")
+
+    private var tempDatabase = ByteArray(CARDINALITY) { -1 }
 
     init {
         //if the database has already been populated, load it into memory from the persistent store
         if(isPopulated()) {
-            TODO()
+            when(persistenceMode) {
+                "file" -> tempDatabase = FileUtils.readFileToByteArray(file)
+            }
         }
         //otherwise goes through the process of populating it
         else {
-            //initializes the in-memory database
-            for(i in 0 until CARDINALITY) tempDatabase[i] = -1
             //performs the search to populate the database
             when(searchMode) {
                 "bfs" -> populateDatabaseBFS()
                 "dfs" -> populateDatabaseDFS()
-                "iddfs" -> populateDatabaseIDDFS()
+                //"iddfs" -> populateDatabaseIDDFS()
             }
             //saves the contents of the populated database into the appropriate persistent store
             when(persistenceMode) {
                 "redis" -> for(i in 0 until CARDINALITY) jedis.hset(key, i.toString(), tempDatabase[i].toString())
-                "file" -> TODO()
+                "file" -> writeDatabaseToFile()
             }
         }
+    }
 
+    private fun writeDatabaseToFile() {
+        try {
+            val fileStream = FileOutputStream(file)
+            fileStream.write(tempDatabase)
+            fileStream.close()
+        }
+        catch(e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     override fun getCost(index: Int): Byte {
@@ -73,7 +92,12 @@ object CornerPatternDatabase : AbstractPatternDatabase() {
     internal fun getPopulation(): Int {
         return when(persistenceMode) {
             "redis" -> jedis.hlen(key).toInt()
-            "file" -> TODO()
+            "file" -> {
+                return when {
+                    file.exists() -> FileUtils.readFileToByteArray(file).size
+                    else -> 0
+                }
+            }
             else -> tempDatabase.fold(0) { total, item -> if(item.toInt() == -1) total else total + 1 }
         }
     }
@@ -113,9 +137,10 @@ object CornerPatternDatabase : AbstractPatternDatabase() {
      * Not guaranteed to encounter the best paths first like the BFS, however, so there's some slowdown.
      */
     private fun populateDatabaseDFS() {
-        populateDatabaseDFS(PathWithBack(ArrayList(), factory.getSolvedCube()), tempDatabase, 11)
+        populateDatabaseDFS(PathWithBack(ArrayList(), factory.getSolvedCube()), 11)
     }
 
+    /*
     /**
      * Strictly less performant than the DFS both in memory and runtime, but asymptotically the same.
      * Performs a complete depth first traversal from the solved cube to each depth up to 11.
@@ -133,19 +158,20 @@ object CornerPatternDatabase : AbstractPatternDatabase() {
             println("Finished performing DFS at depth $i. Real database size: ${getRealSizeOfTempDatabase()}")
         }
     }
+     */
     /**
      * Performs a recursive DP-optimized DFS up to the given depth limit.
      * This search function is used by both the DFS and IDDFS modes.
      */
-    private fun populateDatabaseDFS(path: PathWithBack, closedList: ByteArray, depthLimit: Int) {
+    private fun populateDatabaseDFS(path: PathWithBack, depthLimit: Int) {
 
         val current = path.back
         val currentDepth = path.size()
         val index = getIndex(current)
         //short circuits if we've already encountered a cube with this corner configuration at this low a depth
-        if(closedList[index].toInt() != -1 && closedList[index].toInt() <= currentDepth) return
+        if(tempDatabase[index].toInt() != -1 && tempDatabase[index].toInt() <= currentDepth) return
         //adds this configuration to the database
-        closedList[index] = currentDepth.toByte()
+        addCost(index, currentDepth.toByte())
 
         //if we're not at the depth limit, try more twists
         if(currentDepth < depthLimit) {
@@ -154,7 +180,7 @@ object CornerPatternDatabase : AbstractPatternDatabase() {
             val face2Previous = if(path.size() >= 2) Twist.getFace(path.path[path.size() - 2]) else null
             //tries to expand off of each potentially viable twist
             for (twist in SolverUtils.getOptions(face1Previous, face2Previous)) {
-                populateDatabaseDFS(path.add(twist), closedList, depthLimit)
+                populateDatabaseDFS(path.add(twist), depthLimit)
             }
         }
     }
@@ -176,13 +202,13 @@ object CornerPatternDatabase : AbstractPatternDatabase() {
     private fun addCost(cube: AnalyzableStandardCube, cost: Byte) {
         tempDatabase[getIndex(cube)] = cost
         generated++
-        //if(generated % 100000 == 0) println(generated)
+        if(generated % 1000000 == 0) println(generated)
     }
     /** Adds the cost to the pattern database */
     private fun addCost(index: Int, cost: Byte) {
         tempDatabase[index] = cost
         generated++
-        //if(generated % 100000 == 0) println(generated)
+        if(generated % 1000000 == 0) println(generated)
     }
 
     /** Gets the Lehmer code of the corner permutation of this cube and converts it to base 10 */

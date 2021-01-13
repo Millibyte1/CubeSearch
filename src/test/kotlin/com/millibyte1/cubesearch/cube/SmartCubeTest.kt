@@ -531,6 +531,28 @@ class SmartCubeTest {
 
     @Test
     @Tag("CubeSimulationTest")
+    fun testPositionValues() {
+        var cube1 = solved()
+        var cube2 = solved()
+        //tests initial values for solved cube
+        for(i in cube1.edgePositions.indices) assertEquals(cube1.edgePositions[i], i)
+        for(i in cube1.cornerPositions.indices) assertEquals(cube1.cornerPositions[i], i)
+        assertTrue(edgePositionsMatchExpected(cube1))
+        assertTrue(cornerPositionsMatchExpected(cube1))
+        //performs parity tests for both mutable and immutable twists
+        for(i in 0 until 100) {
+            for(twist in Twist.values()) {
+                cube1 = cube1.twist(twist)
+                cube2 = cube2.twistNoCopy(twist)
+                //assertTrue(edgePositionsMatchExpected(cube1))
+                assertTrue(cornerPositionsMatchExpected(cube1))
+                //assertTrue(edgePositionsMatchExpected(cube2))
+                assertTrue(cornerPositionsMatchExpected(cube2))
+            }
+        }
+    }
+    @Test
+    @Tag("CubeSimulationTest")
     fun testOrientationValues() {
         var cube1 = solved()
         var cube2 = solved()
@@ -569,7 +591,8 @@ class SmartCubeTest {
             val cubieIndex = cube.edgePositions[i]
             if(cube.edgeOrientations[i] != SolvabilityUtils.getEdgeOrientation(edges[cubieIndex], cube.toArrayCube())) return false
         }
-        return true
+        val arrayPermutation = cube.toArrayCube().getEdgeOrientationPermutation()
+        return arrayPermutation.contentEquals(cube.getEdgeOrientationPermutation())
     }
     private fun cornerOrientationsMatchExpected(cube: SmartCube): Boolean {
         val corners = ArrayCubeUtils.getCorners(cube.toArrayCube())
@@ -577,12 +600,21 @@ class SmartCubeTest {
         for(i in 0 until 8) {
             val cubieIndex = cube.cornerPositions[i]
             orientations[i] = SolvabilityUtils.getCornerOrientation(corners[cubieIndex])
-            if(cube.cornerOrientations[i] != SolvabilityUtils.getCornerOrientation(corners[cubieIndex])) {
-                //return false
-                println()
-            }
+            if(cube.cornerOrientations[i] != SolvabilityUtils.getCornerOrientation(corners[cubieIndex])) return false
         }
-        return true
+        val arrayPermutation = cube.toArrayCube().getCornerOrientationPermutation()
+        return arrayPermutation.contentEquals(cube.getCornerOrientationPermutation())
+    }
+    fun edgePositionsMatchExpected(cube: SmartCube): Boolean {
+        val arrayPermutation = cube.toArrayCube().getEdgePositionPermutation()
+        return arrayPermutation.contentEquals(cube.getEdgePositionPermutation())
+    }
+    fun cornerPositionsMatchExpected(cube: SmartCube): Boolean {
+        val arrayPermutation = cube.toArrayCube().getCornerPositionPermutation()
+        if(!arrayPermutation.contentEquals(cube.getCornerPositionPermutation())) {
+            val foo = 0
+        }
+        return arrayPermutation.contentEquals(cube.getCornerPositionPermutation())
     }
     @Test
     @Tag("CubeSimulationTest")

@@ -1,8 +1,8 @@
 package com.millibyte1.cubesearch.algorithm.heuristics
 
 import com.millibyte1.cubesearch.cube.AnalyzableStandardCube
-import com.millibyte1.cubesearch.cube.ArrayCube
-import com.millibyte1.cubesearch.cube.ArrayCubeFactory
+import com.millibyte1.cubesearch.cube.SmartCube
+import com.millibyte1.cubesearch.cube.SmartCubeFactory
 import com.millibyte1.cubesearch.util.CubeGenerator
 
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -21,7 +21,7 @@ class CostEvaluatorTest {
     @ParameterizedTest
     @MethodSource("evaluators")
     fun testConsistency(evaluator: CostEvaluator) {
-        var cube: ArrayCube
+        var cube: SmartCube
         for(depth in 1..20) {
             generator.reset()
             generator.setWalkLength(depth)
@@ -33,16 +33,19 @@ class CostEvaluatorTest {
 
     companion object {
 
-        private val factory = ArrayCubeFactory()
+        private val factory = SmartCubeFactory()
         private val generator = CubeGenerator<AnalyzableStandardCube>(factory)
 
-        private fun solved(): ArrayCube {
+        private fun solved(): SmartCube {
             return factory.getSolvedCube()
         }
 
         @JvmStatic
         fun evaluators(): List<CostEvaluator> {
-            return listOf(ManhattanDistanceCostEvaluator())
+            return listOf(
+                ManhattanDistanceCostEvaluator(),
+                CornerPatternDatabase
+            )
         }
     }
 }

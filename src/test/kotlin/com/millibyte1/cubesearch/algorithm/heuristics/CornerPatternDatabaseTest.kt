@@ -1,5 +1,6 @@
 package com.millibyte1.cubesearch.algorithm.heuristics
 
+import com.millibyte1.cubesearch.cube.CubeFactoryProducer
 import com.millibyte1.cubesearch.cube.SmartCube
 import com.millibyte1.cubesearch.cube.SmartCubeFactory
 import com.millibyte1.cubesearch.cube.Twist
@@ -52,39 +53,51 @@ class CornerPatternDatabaseTest {
     fun testPositionDatabaseSize() {
         assertEquals(CornerPatternDatabase.getPositionPopulation(), CornerPatternDatabase.POSITION_CARDINALITY)
     }
+    */
 
     @Test
-    fun notActuallyATest() {
-        /*
-        val orientationCosts = ByteArray(2187)
-        val positionCosts = ByteArray(40320)
-        var orientationCostSum: Int = 0
-        var positionCostSum: Int = 0
-        var orientationCostMin: Byte = 100
-        var positionCostMin: Byte = 100
-        var orientationCostMax: Byte = 0
-        var positionCostMax: Byte = 0
-        for(index in 0 until 2187) {
-            val cost = CornerPatternDatabase.getOrientationCost(index)
-            if(cost < orientationCostMin) orientationCostMin = cost
-            if(cost > orientationCostMax) orientationCostMax = cost
-            orientationCosts[index] = cost
-            orientationCostSum += cost
+    fun theoreticalAnalysis() {
+        val costs = ByteArray(CornerPatternDatabase.CARDINALITY)
+        val costCounts = IntArray(12) { 0 }
+        val costProbabilities = DoubleArray(12) { 0.0 }
+        var costSum = 0
+        for(index in 0 until CornerPatternDatabase.CARDINALITY) {
+            val cost = CornerPatternDatabase.getCost(index)
+            costs[index] = cost
+            costCounts[cost.toInt()]++
+            costSum += cost
         }
-        for(index in 0 until 40320) {
-            val cost = CornerPatternDatabase.getPositionCost(index)
-            if(cost < positionCostMin) positionCostMin = cost
-            if(cost > positionCostMax) positionCostMax = cost
-            positionCosts[index] = cost
-            positionCostSum += cost
+        println("Performing theoretical analysis of CornerPatternDatabase off of the cost values for every possible configuration.")
+        for(cost in 0..11) {
+            costProbabilities[cost] = costCounts[cost] / CornerPatternDatabase.CARDINALITY.toDouble()
+            println("# of configurations with cost $cost: " + costCounts[cost])
         }
-        println("Min orientation cost: $orientationCostMin")
-        println("Max orientation cost: $orientationCostMax")
-        println("Average orientation cost: " + (orientationCostSum / 2187.0))
-        println("Min position cost: $positionCostMin")
-        println("Max position cost: $positionCostMax")
-        println("Average position cost: " + (positionCostSum / 40320.0))
-        */
+        var expected = 0.0
+        for(cost in 0..11) expected += (cost * costProbabilities[cost])
+        println("Expected cost: $expected")
     }
-    */
+    @Test
+    fun monteCarloAnalysis() {
+        val generator = CubeGenerator<SmartCube>(CubeFactoryProducer.getFactory("SmartCube"))
+        val costs = ByteArray(1000000)
+        val costCounts = IntArray(12) { 0 }
+        val costProbabilities = DoubleArray(12) { 0.0 }
+        var costSum = 0
+        for(i in 0 until 1000000) {
+            val cube = generator.nextCube()
+            val index = CornerPatternDatabase.getIndex(cube)
+            val cost = CornerPatternDatabase.getCost(index)
+            costs[i] = cost
+            costCounts[cost.toInt()]++
+            costSum += cost
+        }
+        println("Performing analysis of CornerPatternDatabase via a Monte-Carlo simulation of ${costs.size} cubes.")
+        for(cost in 0..11) {
+            costProbabilities[cost] = costCounts[cost] / 1000000.toDouble()
+            println("# of cubes with cost $cost: " + costCounts[cost])
+        }
+        var expected = 0.0
+        for(cost in 0..11) expected += (cost * costProbabilities[cost])
+        println("Expected cost: $expected")
+    }
 }

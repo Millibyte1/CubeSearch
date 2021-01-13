@@ -2,6 +2,8 @@ package com.millibyte1.cubesearch.util
 
 import com.millibyte1.cubesearch.cube.ArrayCube
 import com.millibyte1.cubesearch.cube.ArrayCubeFactory
+import com.millibyte1.cubesearch.cube.SmartCube
+import com.millibyte1.cubesearch.cube.SmartCubeFactory
 
 import org.junit.jupiter.api.Test
 
@@ -21,7 +23,12 @@ class CubeGeneratorTest {
     private fun oneMoveGenerator() : CubeGenerator<ArrayCube> {
         return CubeGenerator<ArrayCube>(factory, 0, 0)
     }
-
+    private fun intensiveGenerator() : CubeGenerator<SmartCube> {
+        return CubeGenerator<SmartCube>(SmartCubeFactory())
+    }
+    private fun intensiveArrayCubeGenerator() : CubeGenerator<ArrayCube> {
+        return CubeGenerator<ArrayCube>(factory)
+    }
     @Test
     fun sameSeed() {
         var generator1 = simpleGenerator()
@@ -53,5 +60,18 @@ class CubeGeneratorTest {
         println("cube1: $cube1")
         println("cube2: $cube2")
     }
-
+    @Test
+    fun stressTest() {
+        var generator = intensiveGenerator()
+        for(i in 0 until 10000) {
+            val cube = generator.nextCube()
+        }
+    }
+    @Test
+    fun stressTestArrayCube() {
+        var generator = intensiveArrayCubeGenerator()
+        for(i in 0 until 10000) {
+            val cube = generator.nextCube()
+        }
+    }
 }

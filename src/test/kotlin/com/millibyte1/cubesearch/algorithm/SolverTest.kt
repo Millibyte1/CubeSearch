@@ -1,5 +1,6 @@
 package com.millibyte1.cubesearch.algorithm
 
+import com.millibyte1.cubesearch.algorithm.heuristics.CornerPatternDatabase
 import com.millibyte1.cubesearch.algorithm.heuristics.CostEvaluator
 import com.millibyte1.cubesearch.algorithm.heuristics.ManhattanDistanceCostEvaluator
 import com.millibyte1.cubesearch.cube.*
@@ -37,13 +38,24 @@ class SolverTest {
                 var cube = generator.nextCube()
                 val solution = solver.getSolution(cube)
                 val visited = HashSet<AnalyzableStandardCube>()
+                var newCube = factory.getCube(cube)
                 //checks that the solution actually works, and that there's no duplicate states
                 for(twist in solution) {
-                    assertFalse(visited.contains(cube))
-                    visited.add(cube)
-                    cube = cube.twist(twist)
+                    assertFalse(visited.contains(newCube))
+                    visited.add(newCube)
+                    newCube = newCube.twist(twist)
                 }
-                assertEquals(cube, solved())
+                if(newCube != solved()) {
+                    var cube3 = cube
+                    for(twist in solution) {
+                        val oldCube3 = factory.getCube(cube3)
+                        cube3 = cube3.twist(twist)
+                        if(cube3.getEdgePositionPermutation() != cube3.toArrayCube().getEdgePositionPermutation()) {
+                            val foo = 0
+                        }
+                    }
+                }
+                assertEquals(newCube, solved())
             }
         }
     }
@@ -89,7 +101,16 @@ class SolverTest {
         }
 
         private fun standardCostFunction(): CostEvaluator {
-            return ManhattanDistanceCostEvaluator()
+            //return ManhattanDistanceCostEvaluator()
+            return CornerPatternDatabase
+        }
+        @JvmStatic
+        /** Returns a list of CostEvaulators to test the solvers with */
+        private fun costEvaluators(): List<CostEvaluator> {
+            return listOf(
+                ManhattanDistanceCostEvaluator(),
+                CornerPatternDatabase
+            )
         }
 
         @JvmStatic
@@ -112,19 +133,19 @@ class SolverTest {
         @JvmStatic
         private fun depthRating(solver: Solver): Int {
             return when(solver) {
-                is ClassicalAStarSolver -> 5
-                is FrontierSearchSolver -> 5
-                is IterativeDeepeningAStarSolver -> 6
-                else -> 6
+                is ClassicalAStarSolver -> 10
+                is FrontierSearchSolver -> 10
+                is IterativeDeepeningAStarSolver -> 10
+                else -> 10
             }
         }
         @JvmStatic
         private fun singleRunDepthRating(solver: Solver): Int {
             return when(solver) {
-                is ClassicalAStarSolver -> 7
-                is FrontierSearchSolver -> 7
-                is IterativeDeepeningAStarSolver -> 7
-                else -> 7
+                is ClassicalAStarSolver -> 10
+                is FrontierSearchSolver -> 10
+                is IterativeDeepeningAStarSolver -> 10
+                else -> 10
             }
         }
     }
