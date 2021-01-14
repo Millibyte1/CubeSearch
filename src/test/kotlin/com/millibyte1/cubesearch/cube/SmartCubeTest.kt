@@ -544,9 +544,9 @@ class SmartCubeTest {
             for(twist in Twist.values()) {
                 cube1 = cube1.twist(twist)
                 cube2 = cube2.twistNoCopy(twist)
-                //assertTrue(edgePositionsMatchExpected(cube1))
+                assertTrue(edgePositionsMatchExpected(cube1))
                 assertTrue(cornerPositionsMatchExpected(cube1))
-                //assertTrue(edgePositionsMatchExpected(cube2))
+                assertTrue(edgePositionsMatchExpected(cube2))
                 assertTrue(cornerPositionsMatchExpected(cube2))
             }
         }
@@ -593,15 +593,12 @@ class SmartCubeTest {
         val arrayPermutation = cube.toArrayCube().getCornerOrientationPermutation()
         return arrayPermutation.contentEquals(cube.getCornerOrientationPermutation())
     }
-    fun edgePositionsMatchExpected(cube: SmartCube): Boolean {
+    private fun edgePositionsMatchExpected(cube: SmartCube): Boolean {
         val arrayPermutation = cube.toArrayCube().getEdgePositionPermutation()
         return arrayPermutation.contentEquals(cube.getEdgePositionPermutation())
     }
-    fun cornerPositionsMatchExpected(cube: SmartCube): Boolean {
+    private fun cornerPositionsMatchExpected(cube: SmartCube): Boolean {
         val arrayPermutation = cube.toArrayCube().getCornerPositionPermutation()
-        if(!arrayPermutation.contentEquals(cube.getCornerPositionPermutation())) {
-            val foo = 0
-        }
         return arrayPermutation.contentEquals(cube.getCornerPositionPermutation())
     }
     @Test

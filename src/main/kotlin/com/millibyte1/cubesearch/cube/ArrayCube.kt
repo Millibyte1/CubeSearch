@@ -75,8 +75,8 @@ class ArrayCube internal constructor(var data: Array<IntArray>) : AnalyzableStan
     }
 
     override fun getEdgePositionPermutation(): IntArray {
-        return SolvabilityUtils.getEdgePermutation(this)
-        /*
+        //return SolvabilityUtils.getEdgePermutation(this)
+
         //inverts the array of cubie numbers sorted by positions grabbed from SolvabilityUtils
         val cubieNumbersInPositions = SolvabilityUtils.getEdgePermutation(this)
         val permutation = IntArray(12)
@@ -85,11 +85,10 @@ class ArrayCube internal constructor(var data: Array<IntArray>) : AnalyzableStan
             permutation[cubieNumber] = position
         }
         return permutation
-        */
     }
     override fun getCornerPositionPermutation(): IntArray {
-        return SolvabilityUtils.getCornerPermutation(this)
-        /*
+        //return SolvabilityUtils.getCornerPermutation(this)
+
         //inverts the array of cubie numbers sorted by positions grabbed from SolvabilityUtils
         val cubieNumbersInPositions = SolvabilityUtils.getCornerPermutation(this)
         val permutation = IntArray(8)
@@ -98,7 +97,6 @@ class ArrayCube internal constructor(var data: Array<IntArray>) : AnalyzableStan
             permutation[cubieNumber] = position
         }
         return permutation
-        */
     }
     override fun getEdgeOrientationPermutation(): IntArray {
         return SolvabilityUtils.getEdgeOrientationSequence(this)

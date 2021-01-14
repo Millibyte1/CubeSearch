@@ -98,6 +98,6 @@ class CornerPatternDatabaseTest {
         }
         var expected = 0.0
         for(cost in 0..11) expected += (cost * costProbabilities[cost])
-        println("Expected cost: $expected")
+        println("Average cost: $expected")
     }
 }
