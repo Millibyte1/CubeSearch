@@ -38,24 +38,13 @@ class SolverTest {
                 var cube = generator.nextCube()
                 val solution = solver.getSolution(cube)
                 val visited = HashSet<AnalyzableStandardCube>()
-                var newCube = factory.getCube(cube)
                 //checks that the solution actually works, and that there's no duplicate states
                 for(twist in solution) {
-                    assertFalse(visited.contains(newCube))
-                    visited.add(newCube)
-                    newCube = newCube.twist(twist)
+                    assertFalse(visited.contains(cube))
+                    visited.add(cube)
+                    cube = cube.twist(twist)
                 }
-                if(newCube != solved()) {
-                    var cube3 = cube
-                    for(twist in solution) {
-                        val oldCube3 = factory.getCube(cube3)
-                        cube3 = cube3.twist(twist)
-                        if(cube3.getEdgePositionPermutation() != cube3.toArrayCube().getEdgePositionPermutation()) {
-                            val foo = 0
-                        }
-                    }
-                }
-                assertEquals(newCube, solved())
+                assertEquals(cube, solved())
             }
         }
     }
@@ -116,10 +105,11 @@ class SolverTest {
         @JvmStatic
         /** Returns a list of solvers using an already tested CostEvaluator */
         private fun solvers(): List<Solver> {
-            //return listOf(IterativeDeepeningAStarSolver(standardCostFunction()))
-            return listOf(ClassicalAStarSolver(standardCostFunction()),
+            return listOf(IterativeDeepeningAStarSolver(standardCostFunction()))
+            /*return listOf(ClassicalAStarSolver(standardCostFunction()),
                           FrontierSearchSolver(standardCostFunction()),
                           IterativeDeepeningAStarSolver(standardCostFunction()))
+             */
         }
 
         @JvmStatic
@@ -133,18 +123,18 @@ class SolverTest {
         @JvmStatic
         private fun depthRating(solver: Solver): Int {
             return when(solver) {
-                is ClassicalAStarSolver -> 10
-                is FrontierSearchSolver -> 10
-                is IterativeDeepeningAStarSolver -> 10
-                else -> 10
+                is ClassicalAStarSolver -> 8
+                is FrontierSearchSolver -> 8
+                is IterativeDeepeningAStarSolver -> 8
+                else -> 8
             }
         }
         @JvmStatic
         private fun singleRunDepthRating(solver: Solver): Int {
             return when(solver) {
-                is ClassicalAStarSolver -> 10
+                is ClassicalAStarSolver -> 8
                 is FrontierSearchSolver -> 10
-                is IterativeDeepeningAStarSolver -> 10
+                is IterativeDeepeningAStarSolver -> 12
                 else -> 10
             }
         }
