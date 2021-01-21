@@ -1,16 +1,18 @@
 package com.millibyte1.cubesearch.algorithm
 
-import com.millibyte1.cubesearch.algorithm.heuristics.CornerPatternDatabase
-import com.millibyte1.cubesearch.algorithm.heuristics.CostEvaluator
-import com.millibyte1.cubesearch.algorithm.heuristics.ManhattanDistanceCostEvaluator
+import com.millibyte1.cubesearch.algorithm.heuristics.*
 import com.millibyte1.cubesearch.cube.*
 import com.millibyte1.cubesearch.util.CubeGenerator
+import com.typesafe.config.Config
+import com.typesafe.config.ConfigFactory
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import redis.clients.jedis.Jedis
+import java.io.File
 
 class SolverTest {
 
@@ -88,17 +90,35 @@ class SolverTest {
         private fun solved(): AnalyzableStandardCube {
             return factory.getSolvedCube()
         }
+        private fun cornerPatternDatabase(): CornerPatternDatabase {
+            val generalConfig: Config = ConfigFactory.load("patterndb.conf").getConfig("patterndb")
+            val cornerConfig = generalConfig.getConfig("corners-full")
+
+            val searchMode = cornerConfig.getString("search-mode")
+            val persistenceMode = generalConfig.getString("persistence-mode")
+
+            val jedis = Jedis()
+            val key = cornerConfig.getString("redis-key")
+
+            val file = File("data/corners-full.db")
+
+            val core = when(persistenceMode) {
+                "file" -> FileCore(file, 88179840)
+                else -> RedisCore(jedis, key, 88179840)
+            }
+            return CornerPatternDatabase(core, searchMode)
+        }
 
         private fun standardCostFunction(): CostEvaluator {
             //return ManhattanDistanceCostEvaluator()
-            return CornerPatternDatabase
+            return cornerPatternDatabase()
         }
         @JvmStatic
         /** Returns a list of CostEvaulators to test the solvers with */
         private fun costEvaluators(): List<CostEvaluator> {
             return listOf(
                 ManhattanDistanceCostEvaluator(),
-                CornerPatternDatabase
+                cornerPatternDatabase()
             )
         }
 

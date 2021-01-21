@@ -5,14 +5,38 @@ import com.millibyte1.cubesearch.cube.SmartCube
 import com.millibyte1.cubesearch.cube.SmartCubeFactory
 import com.millibyte1.cubesearch.cube.Twist
 import com.millibyte1.cubesearch.util.CubeGenerator
+import com.typesafe.config.Config
+import com.typesafe.config.ConfigFactory
 
 import org.junit.jupiter.api.Test
+import redis.clients.jedis.Jedis
+import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class CornerPatternDatabaseTest {
 
     private val factory = SmartCubeFactory()
+    private val database: CornerPatternDatabase
+
+    init {
+        val generalConfig: Config = ConfigFactory.load("patterndb.conf").getConfig("patterndb")
+        val cornerConfig = generalConfig.getConfig("corners-full")
+
+        val searchMode = cornerConfig.getString("search-mode")
+        val persistenceMode = generalConfig.getString("persistence-mode")
+
+        val jedis = Jedis()
+        val key = cornerConfig.getString("redis-key")
+
+        val file = File("data/corners-full.db")
+
+        val core = when(persistenceMode) {
+            "file" -> FileCore(file, 88179840)
+            else -> RedisCore(jedis, key, 88179840)
+        }
+        database = CornerPatternDatabase(core, searchMode)
+    }
 
     private fun solved(): SmartCube {
         return factory.getSolvedCube()
@@ -20,12 +44,12 @@ class CornerPatternDatabaseTest {
 
     @Test
     fun testSolvedCubeCost() {
-        assertEquals(CornerPatternDatabase.getCost(solved()), 0)
+        assertEquals(database.getCost(solved()), 0)
     }
     @Test
     fun testSingleMoveCubeCosts() {
         for(twist in Twist.values()) {
-            assertEquals(CornerPatternDatabase.getCost(solved().twist(twist)), 1)
+            assertEquals(database.getCost(solved().twist(twist)), 1)
         }
     }
     @Test
@@ -36,40 +60,30 @@ class CornerPatternDatabaseTest {
             generator.setWalkLength(walkLength)
             for(i in 0 until 100) {
                 val cube = generator.nextCube()
-                assertTrue(CornerPatternDatabase.getCost(cube) <= walkLength)
+                assertTrue(database.getCost(cube) <= walkLength)
             }
         }
     }
     @Test
     fun testDatabaseSize() {
-        assertEquals(CornerPatternDatabase.getPopulation(), CornerPatternDatabase.CARDINALITY)
+        assertEquals(database.getPopulation(), database.cardinality)
     }
-    /*
-    @Test
-    fun testOrientationDatabaseSize() {
-        assertEquals(CornerPatternDatabase.getOrientationPopulation(), CornerPatternDatabase.ORIENTATION_CARDINALITY)
-    }
-    @Test
-    fun testPositionDatabaseSize() {
-        assertEquals(CornerPatternDatabase.getPositionPopulation(), CornerPatternDatabase.POSITION_CARDINALITY)
-    }
-    */
 
     @Test
     fun theoreticalAnalysis() {
-        val costs = ByteArray(CornerPatternDatabase.CARDINALITY)
+        val costs = ByteArray(database.cardinality)
         val costCounts = IntArray(12) { 0 }
         val costProbabilities = DoubleArray(12) { 0.0 }
         var costSum = 0
-        for(index in 0 until CornerPatternDatabase.CARDINALITY) {
-            val cost = CornerPatternDatabase.getCost(index)
+        for(index in 0 until database.cardinality) {
+            val cost = database.getCost(index)
             costs[index] = cost
             costCounts[cost.toInt()]++
             costSum += cost
         }
         println("Performing theoretical analysis of CornerPatternDatabase off of the cost values for every possible configuration.")
         for(cost in 0..11) {
-            costProbabilities[cost] = costCounts[cost] / CornerPatternDatabase.CARDINALITY.toDouble()
+            costProbabilities[cost] = costCounts[cost] / database.cardinality.toDouble()
             println("# of configurations with cost $cost: " + costCounts[cost])
         }
         var expected = 0.0
@@ -85,8 +99,8 @@ class CornerPatternDatabaseTest {
         var costSum = 0
         for(i in 0 until 1000000) {
             val cube = generator.nextCube()
-            val index = CornerPatternDatabase.getIndex(cube)
-            val cost = CornerPatternDatabase.getCost(index)
+            val index = database.getIndex(cube)
+            val cost = database.getCost(index)
             costs[i] = cost
             costCounts[cost.toInt()]++
             costSum += cost

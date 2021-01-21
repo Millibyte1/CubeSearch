@@ -20,59 +20,31 @@ import com.typesafe.config.ConfigFactory
 
 //TODO: implement full orientation and position databases
 
-object CornerPatternDatabase : AbstractPatternDatabase() {
+class CornerPatternDatabase(
+    private val core: PatternDatabaseCore,
+    private val searchMode: String
+) : AbstractPatternDatabase() {
 
-    internal const val CARDINALITY = 88179840
-
-    private val generalConfig: Config = ConfigFactory.load("patterndb.conf").getConfig("patterndb")
-    private val cornerConfig = generalConfig.getConfig("corners-full")
-
-    private val searchMode = cornerConfig.getString("search-mode")
-    private val persistenceMode = generalConfig.getString("persistence-mode")
+    internal val cardinality = 88179840
 
     private val factory = SmartCubeFactory()
-
     private var generated = 0
-
-    private val jedis = Jedis()
-    private val key = cornerConfig.getString("redis-key")
-
-    private val file = File("data/corners-full.db")
-
-    private var tempDatabase = ByteArray(CARDINALITY) { -1 }
+    private var tempDatabase = ByteArray(cardinality) { -1 }
 
     init {
-        //if the database has already been populated, load it into memory from the persistent store
-        if(isPopulated()) {
-            when(persistenceMode) {
-                "file" -> tempDatabase = FileUtils.readFileToByteArray(file)
-            }
-        }
-        //otherwise goes through the process of populating it
-        else {
+        //if the core is empty, populates the database and stores it in the core
+        if(core.isEmpty()) {
             //performs the search to populate the database
             when(searchMode) {
                 "bfs" -> populateDatabaseBFS()
                 "dfs" -> populateDatabaseDFS()
                 //"iddfs" -> populateDatabaseIDDFS()
             }
-            //saves the contents of the populated database into the appropriate persistent store
-            when(persistenceMode) {
-                "redis" -> for(i in 0 until CARDINALITY) jedis.hset(key, i.toString(), tempDatabase[i].toString())
-                "file" -> writeDatabaseToFile()
-            }
+            //stores the database in the core for persistent storage
+            core.writeDatabase(tempDatabase)
         }
-    }
-
-    private fun writeDatabaseToFile() {
-        try {
-            val fileStream = FileOutputStream(file)
-            fileStream.write(tempDatabase)
-            fileStream.close()
-        }
-        catch(e: Exception) {
-            e.printStackTrace()
-        }
+        //otherwise reads the database from the core
+        else tempDatabase = core.readDatabase()!!
     }
 
     override fun getCost(index: Int): Byte {
@@ -82,24 +54,6 @@ object CornerPatternDatabase : AbstractPatternDatabase() {
     override fun getIndex(cube: AnalyzableStandardCube): Int {
         //(maxOrientationIndex * positionIndex) + orientationIndex
         return (2187 * getCornerPositionIndex(cube)) + getCornerOrientationIndex(cube)
-    }
-
-    /** Checks whether or not the pattern database has been fully generated */
-    internal fun isPopulated(): Boolean {
-        return getPopulation() == CARDINALITY
-    }
-    /** Gets the number of entries in the pattern database */
-    internal fun getPopulation(): Int {
-        return when(persistenceMode) {
-            "redis" -> jedis.hlen(key).toInt()
-            "file" -> {
-                return when {
-                    file.exists() -> FileUtils.readFileToByteArray(file).size
-                    else -> 0
-                }
-            }
-            else -> tempDatabase.fold(0) { total, item -> if(item.toInt() == -1) total else total + 1 }
-        }
     }
 
     /**
@@ -140,29 +94,7 @@ object CornerPatternDatabase : AbstractPatternDatabase() {
         populateDatabaseDFS(PathWithBack(ArrayList(), factory.getSolvedCube()), 11)
     }
 
-    /*
-    /**
-     * Strictly less performant than the DFS both in memory and runtime, but asymptotically the same.
-     * Performs a complete depth first traversal from the solved cube to each depth up to 11.
-     */
-    private fun populateDatabaseIDDFS() {
-        //generates the pattern database via limited depth first traversals to every depth up to 11
-        for(i in 0..11) {
-            println("Now performing DFS at depth $i")
-            // builds a closed list for this search; unlike the BFS we can't just use the patterndb
-            val closedList = ByteArray(CARDINALITY) { -1 }
-            //populates the closed list
-            populateDatabaseDFS(PathWithBack(ArrayList(), factory.getSolvedCube()), closedList, i)
-            //pushes every real element of the closed list to the pattern database
-            pushClosedListToDatabase(closedList)
-            println("Finished performing DFS at depth $i. Real database size: ${getRealSizeOfTempDatabase()}")
-        }
-    }
-     */
-    /**
-     * Performs a recursive DP-optimized DFS up to the given depth limit.
-     * This search function is used by both the DFS and IDDFS modes.
-     */
+    /** Performs a recursive DP-optimized DFS up to the given depth limit. */
     private fun populateDatabaseDFS(path: PathWithBack, depthLimit: Int) {
 
         val current = path.back
@@ -185,15 +117,6 @@ object CornerPatternDatabase : AbstractPatternDatabase() {
         }
     }
 
-    private fun getRealSizeOfTempDatabase(): Int {
-        return tempDatabase
-            .filter { value -> value.toInt() != -1 }
-            .size
-    }
-    /** For every hit (every item that isn't -1) in the closed list, push it into the database */
-    private fun pushClosedListToDatabase(closedList: ByteArray) {
-        for(i in 0 until CARDINALITY) if(closedList[i].toInt() != -1) addCost(i, closedList[i])
-    }
     /** Checks whether this configuration is already in the pattern database */
     private fun databaseContains(cube: AnalyzableStandardCube): Boolean {
         return tempDatabase[getIndex(cube)].toInt() != -1
@@ -209,6 +132,11 @@ object CornerPatternDatabase : AbstractPatternDatabase() {
         tempDatabase[index] = cost
         generated++
         if(generated % 1000000 == 0) println(generated)
+    }
+
+    /** Gets the number of entries in the pattern database */
+    internal fun getPopulation(): Int {
+        return tempDatabase.fold(0) { total, item -> if(item.toInt() == -1) total else total + 1 }
     }
 
     /** Gets the Lehmer code of the corner permutation of this cube and converts it to base 10 */

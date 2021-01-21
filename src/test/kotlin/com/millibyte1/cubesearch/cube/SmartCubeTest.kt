@@ -1,14 +1,20 @@
 package com.millibyte1.cubesearch.cube
 
 import com.millibyte1.cubesearch.algorithm.heuristics.CornerPatternDatabase
+import com.millibyte1.cubesearch.algorithm.heuristics.FileCore
+import com.millibyte1.cubesearch.algorithm.heuristics.RedisCore
 import com.millibyte1.cubesearch.util.ArrayCubeUtils
 import com.millibyte1.cubesearch.util.SolvabilityUtils
+import com.typesafe.config.Config
+import com.typesafe.config.ConfigFactory
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Tag
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertFalse
+import redis.clients.jedis.Jedis
+import java.io.File
 
 /**
  * Unit and stress tests for the SmartCube implementation
@@ -631,7 +637,7 @@ class SmartCubeTest {
         for(i in 0 until 100000) {
             for(twist in Twist.values()) {
                 cube.twistNoCopy(twist)
-                CornerPatternDatabase.getIndex(cube)
+                cornerPatternDatabase().getIndex(cube)
             }
         }
     }
@@ -642,7 +648,7 @@ class SmartCubeTest {
         for(i in 0 until 100000) {
             for(twist in Twist.values()) {
                 cube = cube.twist(twist)
-                CornerPatternDatabase.getIndex(cube)
+                cornerPatternDatabase().getIndex(cube)
             }
         }
     }
@@ -653,7 +659,7 @@ class SmartCubeTest {
         for(i in 0 until 100000) {
             for(twist in Twist.values()) {
                 cube.twistNoCopy(twist)
-                CornerPatternDatabase.getIndex(cube)
+                cornerPatternDatabase().getIndex(cube)
             }
         }
     }
@@ -664,8 +670,29 @@ class SmartCubeTest {
         for(i in 0 until 100000) {
             for(twist in Twist.values()) {
                 cube = cube.twist(twist)
-                CornerPatternDatabase.getIndex(cube)
+                cornerPatternDatabase().getIndex(cube)
             }
+        }
+    }
+
+    companion object {
+        private fun cornerPatternDatabase(): CornerPatternDatabase {
+            val generalConfig: Config = ConfigFactory.load("patterndb.conf").getConfig("patterndb")
+            val cornerConfig = generalConfig.getConfig("corners-full")
+
+            val searchMode = cornerConfig.getString("search-mode")
+            val persistenceMode = generalConfig.getString("persistence-mode")
+
+            val jedis = Jedis()
+            val key = cornerConfig.getString("redis-key")
+
+            val file = File("data/corners-full.db")
+
+            val core = when(persistenceMode) {
+                "file" -> FileCore(file, 88179840)
+                else -> RedisCore(jedis, key, 88179840)
+            }
+            return CornerPatternDatabase(core, searchMode)
         }
     }
 }
