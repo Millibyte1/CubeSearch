@@ -32,8 +32,8 @@ class CornerPatternDatabaseTest {
         val file = File("data/corners-full.db")
 
         val core = when(persistenceMode) {
-            "file" -> FileCore(file, 88179840)
-            else -> RedisCore(jedis, key, 88179840)
+            "file" -> FileCore(file)
+            else -> RedisCore(jedis, key)
         }
         database = CornerPatternDatabase(core, searchMode)
     }

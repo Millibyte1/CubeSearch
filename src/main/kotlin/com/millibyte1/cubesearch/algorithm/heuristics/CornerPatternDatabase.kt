@@ -22,7 +22,7 @@ import com.typesafe.config.ConfigFactory
 
 class CornerPatternDatabase(
     private val core: PatternDatabaseCore,
-    private val searchMode: String
+    private val searchMode: String = "dfs"
 ) : AbstractPatternDatabase() {
 
     internal val cardinality = 88179840
@@ -32,19 +32,19 @@ class CornerPatternDatabase(
     private var tempDatabase = ByteArray(cardinality) { -1 }
 
     init {
+        val bytes = core.readDatabase()
         //if the core is empty, populates the database and stores it in the core
-        if(core.isEmpty()) {
+        if(bytes == null) {
             //performs the search to populate the database
             when(searchMode) {
                 "bfs" -> populateDatabaseBFS()
                 "dfs" -> populateDatabaseDFS()
-                //"iddfs" -> populateDatabaseIDDFS()
             }
             //stores the database in the core for persistent storage
             core.writeDatabase(tempDatabase)
         }
         //otherwise reads the database from the core
-        else tempDatabase = core.readDatabase()!!
+        else tempDatabase = bytes
     }
 
     override fun getCost(index: Int): Byte {
