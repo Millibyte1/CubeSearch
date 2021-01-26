@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
 class CornerPatternDatabaseTest {
 
     private val factory = SmartCubeFactory()
-    private val database: CornerPatternDatabase
+    internal val database: CornerPatternDatabase
 
     init {
         val generalConfig: Config = ConfigFactory.load("patterndb.conf").getConfig("patterndb")
@@ -35,7 +35,7 @@ class CornerPatternDatabaseTest {
             "file" -> FileCore(file)
             else -> RedisCore(jedis, key)
         }
-        database = CornerPatternDatabase(core, searchMode)
+        database = CornerPatternDatabase.create(core, searchMode, mutableListOf(0, 1, 2, 3, 4, 5, 6, 7))
     }
 
     private fun solved(): SmartCube {

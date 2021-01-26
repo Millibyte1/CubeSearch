@@ -1,5 +1,12 @@
 package com.millibyte1.cubesearch.util
 
+import com.millibyte1.cubesearch.algorithm.heuristics.AbstractPatternDatabase
+import com.millibyte1.cubesearch.cube.AnalyzableStandardCube
+import com.millibyte1.cubesearch.cube.SmartCubeFactory
+import com.millibyte1.cubesearch.cube.Twist
+import java.util.*
+import kotlin.collections.ArrayList
+
 //TODO idea: bidirectional search using IDA* w/ pattern database in the towards solved direction and frontier search w/ manhattan distance in the from solved
 /*
  * For a cube with a solvable corner configuration and/or edge configuration, there are:
@@ -23,11 +30,15 @@ package com.millibyte1.cubesearch.util
  * Since we have the cardinality of the sets of all edge configurations and all corner configurations, we know we must
  * explore at minimum all cubes up to depth log_15(CARDINALITY) without heuristic pruning. This amounts to a minimum of:
  * optimisticDepth = log_15(8! * 3^7) = ~6.75 for the corner database,
- * optimisticDepth = log_15(12! * 2^11) = ~10.2 for the full edge database
+ * optimisticDepth = log_15(12! * 2^11) = ~10.2 for the full edge database.
+ *
+ * In reality these depths are much higher. It takes a search up to depth 11 to populate the corner database, and the depth required
+ * to populate the edge database is unknown.
  *
  * This is feasible with a simple breadth-first search for the corner database, but not for the edge database.
  * There may or may not be some algorithm which could exhaustively traverse up to this depth in a realistic time.
- * TODO:
+ *
+ * TODO: Implement queue that spills over to disk so that we can perform BFS instead of DFS for any size database
  * TODO: Explore the idea of using a massively parallel BFS with infrequent pushes to the server and continuous atomic updates on the server
  * TODO: Use Apache Kafka? Hadoop?
  *
@@ -79,5 +90,77 @@ object PatternDatabaseUtils {
         }
         return lehmerSequence
     }
+    /** Computes the lehmer code of the permutation by counting the number of inversions at each index */
+    fun getLehmerCode(permutation: List<Int>): IntArray {
+        val lehmerSequence = IntArray(permutation.size)
+        var inversions: Int
+        for(i in permutation.indices) {
+            inversions = 0
+            //counts the number of inversions at index i
+            for(j in i+1 until permutation.size) if(permutation[i] > permutation[j]) inversions++
+            //sets the value of lehmer[i] to be the number of inversions
+            lehmerSequence[i] = inversions
+        }
+        return lehmerSequence
+    }
 
+    /** Generates the pattern database to completion via a DP-optimized BFS */
+    fun populateDatabaseBFS(table: ByteArray, patternDB: AbstractPatternDatabase, factory: SmartCubeFactory) {
+        //constructs the queue for the BFS and enqueues the solved cube
+        val queue: Queue<PathWithBack> = ArrayDeque()
+        queue.add(PathWithBack(ArrayList(), factory.getSolvedCube()))
+        addCost(factory.getSolvedCube(), 0, table, patternDB)
+        //generates every possible corner configuration via a breadth-first traversal
+        while(queue.isNotEmpty()) {
+            //dequeues the cube
+            val current = queue.remove()
+            //uses a 2-move history to prune some twists resulting in cubes that can be generated in fewer moves
+            val face1Previous = if(current.size() >= 1) Twist.getFace(current.path[current.size() - 1]) else null
+            val face2Previous = if(current.size() >= 2) Twist.getFace(current.path[current.size() - 2]) else null
+            //tries to expand off of each potentially viable twist
+            for(twist in SolverUtils.getOptions(face1Previous, face2Previous)) {
+                val nextCube = current.back.twist(twist)
+                //if we haven't already encountered the cube, add to the database and to the expansion queue
+                if(!databaseContains(nextCube, table, patternDB)) {
+                    queue.add(current.add(twist))
+                    addCost(nextCube, (current.size() + 1).toByte(), table, patternDB)
+                }
+            }
+        }
+    }
+    /** Performs a recursive DP-optimized DFS up to the given depth limit. */
+    fun populateDatabaseDFS(path: PathWithBack, depthLimit: Int, table: ByteArray, patternDB: AbstractPatternDatabase) {
+
+        val current = path.back
+        val currentDepth = path.size()
+        val index = patternDB.getIndex(current)
+        //short circuits if we've already encountered a cube with this corner configuration at this low a depth
+        if(table[index].toInt() != -1 && table[index].toInt() <= currentDepth) return
+        //adds this configuration to the database
+        addCost(index, currentDepth.toByte(), table, patternDB)
+
+        //if we're not at the depth limit, try more twists
+        if(currentDepth < depthLimit) {
+            //uses a 2-move history to prune some twists resulting in cubes that can be generated in fewer moves
+            val face1Previous = if(path.size() >= 1) Twist.getFace(path.path[path.size() - 1]) else null
+            val face2Previous = if(path.size() >= 2) Twist.getFace(path.path[path.size() - 2]) else null
+            //tries to expand off of each potentially viable twist
+            for (twist in SolverUtils.getOptions(face1Previous, face2Previous)) {
+                populateDatabaseDFS(path.add(twist), depthLimit, table, patternDB)
+            }
+        }
+    }
+
+    /** Checks whether this configuration is already in the pattern database */
+    private fun databaseContains(cube: AnalyzableStandardCube, table: ByteArray, patternDB: AbstractPatternDatabase): Boolean {
+        return table[patternDB.getIndex(cube)].toInt() != -1
+    }
+    /** Adds the cost of this cube to the table */
+    private fun addCost(cube: AnalyzableStandardCube, cost: Byte, table: ByteArray, patternDB: AbstractPatternDatabase) {
+        table[patternDB.getIndex(cube)] = cost
+    }
+    /** Adds this cost to the table */
+    private fun addCost(index: Int, cost: Byte, table: ByteArray, patternDB: AbstractPatternDatabase) {
+        table[index] = cost
+    }
 }

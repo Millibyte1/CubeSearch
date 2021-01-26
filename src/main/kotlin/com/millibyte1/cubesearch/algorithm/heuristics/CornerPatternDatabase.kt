@@ -1,35 +1,52 @@
 package com.millibyte1.cubesearch.algorithm.heuristics
 
-import com.millibyte1.cubesearch.cube.*
-import com.millibyte1.cubesearch.util.*
+import com.millibyte1.cubesearch.cube.AnalyzableStandardCube
+import com.millibyte1.cubesearch.cube.SmartCubeFactory
 
-import java.util.Queue
-import java.util.ArrayDeque
+import com.millibyte1.cubesearch.util.PathWithBack
+import com.millibyte1.cubesearch.util.PatternDatabaseUtils
 
-import redis.clients.jedis.Jedis
+import kotlin.collections.ArrayList
 
-import java.io.File
-import java.io.IOException
-import java.io.ByteArrayOutputStream
-import java.io.FileOutputStream
+/*
+ * When we consider a database of n edges and m corners,
+ *
+ * edgeIndex = (2^n * edgePositionIndex) + edgeOrientationIndex
+ * = 2^n * (12!/(12-n)!) unique edge orientations for n edges
+ * edgePositionIndex = <lehmer encoding of position permutation> * <reverse factorial sequence from 12 down to 12-n> (just lehmer code converted to base 10)
+ * = 12!/(12-n)! unique position orientations
+ * edgeOrientationIndex = <edge permutation> * <reverse 2^i sequence from 0 up to n-1>
+ * = 2^n unique orientation permutations
+ *
+ * cornerIndex = (3^7 * cornerPositionIndex) + cornerOrientationIndex
+ * = 3^m * (8!/(8-m)!)
+ * cornerPositionIndex = <lehmer encoding of position permutation> * <reverse factorial sequence from 8 down to 8-m>
+ * = 8!/(8-m)! unique position orientations
+ * cornerOrientationIndex = <corner permutation> * <reverse 3^i sequence from 0 up to m-1>
+ * = 3^m unique orientation permutations
+ *
+ * index = ((3^m * (8!/(8-m)!)) * edgeIndex) + cornerIndex
+ * = (3^m * (8!/(8-m)!)) * (2^n * (12!/(12-n)!)) unique orientations?
+ * No. This hash is collisionless but not perfect --- the edge and corner orientation parities must match for a cube to be solvable so
+ * there are significant gaps in the index hits. We must either resort to a mapping structure or incur significant space costs.
+ *
+ * The memory costs of a flat combined edge and corner database, incurred by the imperfection of the combined hash, likely mean
+ * larger edge-only databases would be more useful within reasonable memory constraints than any combined database.
+ */
 
-import org.apache.commons.io.FileUtils
-
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
-
-//TODO: implement full orientation and position databases
-
-class CornerPatternDatabase(
-    private val core: PatternDatabaseCore,
-    private val searchMode: String = "dfs"
+/**
+ * A pattern database that considers the positions and orientations of some arbitrary subset of cubies on a solvable cube.
+ */
+class CornerPatternDatabase private constructor(
+    val core: PatternDatabaseCore,
+    private val searchMode: String,
+    private val consideredCorners: List<Int>
 ) : AbstractPatternDatabase() {
 
-    internal val cardinality = 88179840
+    internal val cardinality = POWERS_OF_THREE[consideredCorners.size] * (FACTORIALS[8] / FACTORIALS[8 - consideredCorners.size])
 
     private val factory = SmartCubeFactory()
-    private var generated = 0
-    private var tempDatabase = ByteArray(cardinality) { -1 }
+    private var table = ByteArray(cardinality) { -1 }
 
     init {
         val bytes = core.readDatabase()
@@ -37,130 +54,107 @@ class CornerPatternDatabase(
         if(bytes == null) {
             //performs the search to populate the database
             when(searchMode) {
-                "bfs" -> populateDatabaseBFS()
-                "dfs" -> populateDatabaseDFS()
+                //"bfs" -> populateDatabaseBFS()
+                //"dfs" -> populateDatabaseDFS()
+                "bfs" -> PatternDatabaseUtils.populateDatabaseBFS(table, this, factory)
+                "dfs" -> PatternDatabaseUtils.populateDatabaseDFS(PathWithBack(ArrayList(), factory.getSolvedCube()), 11, table, this)
             }
             //stores the database in the core for persistent storage
-            core.writeDatabase(tempDatabase)
+            core.writeDatabase(table)
         }
         //otherwise reads the database from the core
-        else tempDatabase = bytes
+        else table = bytes
     }
 
+    //gets the minimum cost of a cube with this index
     override fun getCost(index: Int): Byte {
-        return tempDatabase[index]
+        return table[index]
     }
-
+    //gets the index of this cube
     override fun getIndex(cube: AnalyzableStandardCube): Int {
         //(maxOrientationIndex * positionIndex) + orientationIndex
-        return (2187 * getCornerPositionIndex(cube)) + getCornerOrientationIndex(cube)
+        return (POWERS_OF_THREE[consideredCorners.size] * getPositionIndex(cube)) + getOrientationIndex(cube)
     }
-
-    /**
-     * Generates the pattern database to completion.
-     * Should only require a partial BFS w/o to depth 11 to generate all possible corner configurations.
-     */
-    private fun populateDatabaseBFS() {
-        //constructs the queue for the BFS and enqueues the solved cube
-        val queue: Queue<PathWithBack> = ArrayDeque()
-        queue.add(PathWithBack(ArrayList(), factory.getSolvedCube()))
-        addCost(factory.getSolvedCube(), 0)
-        //generates every possible corner configuration via a breadth-first traversal
-        while(queue.isNotEmpty()) {
-            //dequeues the cube
-            val current = queue.remove()
-            //uses a 2-move history to prune some twists resulting in cubes that can be generated in fewer moves
-            val face1Previous = if(current.size() >= 1) Twist.getFace(current.path[current.size() - 1]) else null
-            val face2Previous = if(current.size() >= 2) Twist.getFace(current.path[current.size() - 2]) else null
-            //tries to expand off of each potentially viable twist
-            for(twist in SolverUtils.getOptions(face1Previous, face2Previous)) {
-                val nextCube = current.back.twist(twist)
-                //if we haven't already encountered the cube, add to the database and to the expansion queue
-                if(!databaseContains(nextCube)) {
-                    queue.add(current.add(twist))
-                    addCost(nextCube, (current.size() + 1).toByte())
-                }
-            }
-        }
+    /** Computes the position index by converting the lehmer encoding of the position string to a base 10 number */
+    internal fun getPositionIndex(cube: AnalyzableStandardCube): Int {
+        var sum = 0
+        //gets the lehmer encoding of this subset of the corners
+        val lehmer = PatternDatabaseUtils.getLehmerCode(cube.getCornerPositionPermutation()).filterIndexed { index, _ -> index in consideredCorners }
+        //multiplies the value at each index by its factoradic place value
+        for(i in consideredCorners.indices) sum += lehmer[i] * FACTORIALS[7 - i]
+        return sum
     }
-
-    /**
-     * A more memory efficient method of generating the pattern database. Performs a complete depth-first traversal
-     * from the solved cube to depth 11.
-     * Should have a similar runtime to the BFS because a closed list (the database) is still viable to maintain.
-     * Not guaranteed to encounter the best paths first like the BFS, however, so there's some slowdown.
-     */
-    private fun populateDatabaseDFS() {
-        populateDatabaseDFS(PathWithBack(ArrayList(), factory.getSolvedCube()), 11)
-    }
-
-    /** Performs a recursive DP-optimized DFS up to the given depth limit. */
-    private fun populateDatabaseDFS(path: PathWithBack, depthLimit: Int) {
-
-        val current = path.back
-        val currentDepth = path.size()
-        val index = getIndex(current)
-        //short circuits if we've already encountered a cube with this corner configuration at this low a depth
-        if(tempDatabase[index].toInt() != -1 && tempDatabase[index].toInt() <= currentDepth) return
-        //adds this configuration to the database
-        addCost(index, currentDepth.toByte())
-
-        //if we're not at the depth limit, try more twists
-        if(currentDepth < depthLimit) {
-            //uses a 2-move history to prune some twists resulting in cubes that can be generated in fewer moves
-            val face1Previous = if(path.size() >= 1) Twist.getFace(path.path[path.size() - 1]) else null
-            val face2Previous = if(path.size() >= 2) Twist.getFace(path.path[path.size() - 2]) else null
-            //tries to expand off of each potentially viable twist
-            for (twist in SolverUtils.getOptions(face1Previous, face2Previous)) {
-                populateDatabaseDFS(path.add(twist), depthLimit)
-            }
-        }
-    }
-
-    /** Checks whether this configuration is already in the pattern database */
-    private fun databaseContains(cube: AnalyzableStandardCube): Boolean {
-        return tempDatabase[getIndex(cube)].toInt() != -1
-    }
-    /** Adds the cost to the pattern database */
-    private fun addCost(cube: AnalyzableStandardCube, cost: Byte) {
-        tempDatabase[getIndex(cube)] = cost
-        generated++
-        if(generated % 1000000 == 0) println(generated)
-    }
-    /** Adds the cost to the pattern database */
-    private fun addCost(index: Int, cost: Byte) {
-        tempDatabase[index] = cost
-        generated++
-        if(generated % 1000000 == 0) println(generated)
+    /** Computes the orientation index by converting the orientation string to a base 10 number */
+    internal fun getOrientationIndex(cube: AnalyzableStandardCube): Int {
+        var sum = 0
+        val orientations = cube.getCornerOrientationPermutation().filterIndexed { index, _ ->  index in consideredCorners }
+        //multiplies the value at each index by its exponential place value
+        for(i in consideredCorners.indices) sum += orientations[i] * POWERS_OF_THREE[consideredCorners.size - 1 - i]
+        return sum
     }
 
     /** Gets the number of entries in the pattern database */
     internal fun getPopulation(): Int {
-        return tempDatabase.fold(0) { total, item -> if(item.toInt() == -1) total else total + 1 }
+        return table.fold(0) { total, item -> if(item.toInt() == -1) total else total + 1 }
     }
 
-    /** Gets the Lehmer code of the corner permutation of this cube and converts it to base 10 */
-    private fun getCornerPositionIndex(cube: AnalyzableStandardCube): Int {
-        val lehmer = PatternDatabaseUtils.getLehmerCode(cube.getCornerPositionPermutation())
-        //multiplies the value at each index by its factoradic place value. only 7 degrees of choice so ignore lehmer[7]
-        return lehmer[0] * 5040 +
-               lehmer[1] * 720 +
-               lehmer[2] * 120 +
-               lehmer[3] * 24 +
-               lehmer[4] * 6 +
-               lehmer[5] * 2 +
-               lehmer[6]
+    companion object {
+
+        private val POWERS_OF_THREE = arrayOf(1, 3, 9, 27, 81, 243, 729, 2187, 6561)
+        private val FACTORIALS = arrayOf(1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800, 39916800, 479001600)
+
+        /**
+         * Factory function for CornerPatternDatabases.
+         * If this pattern database hasn't already been generated and stored in an identical core, then this function will
+         * block for a long time.
+         * @param core the PatternDatabaseCore to use for database persistence.
+         * @param searchMode the search algorithm to use to generate the database - "dfs" or "bfs"
+         * @param consideredCorners the cubie numbers of the corners to consider in this pattern database
+         * @return a fully constructed CornerPatternDatabase.
+         * @throws IllegalArgumentException if the search mode isn't recognized or if consideredCorners is an illegal configuration.
+         */
+        @Throws(IllegalArgumentException::class)
+        fun create(core: PatternDatabaseCore, searchMode: String = "dfs", consideredCorners: MutableList<Int>): CornerPatternDatabase {
+            consideredCorners.sort()
+            //tests that the arguments are valid and throws if they aren't
+            if(searchMode != "dfs" && searchMode != "bfs") throw failInvalidSearchMode()
+            if(consideredCorners.size > 8 || consideredCorners.any { item -> item !in 0..7 } || containsDuplicates(consideredCorners)) throw failInvalidCorners()
+            //the position and orientation of 7 corners determines the last, so we can remove one redundant cubie from consideration
+            if(consideredCorners.size == 8) consideredCorners.removeAt(7)
+            //constructs and returns the object
+            return CornerPatternDatabase(core, searchMode, consideredCorners)
+        }
+
+        /**
+         * Factory function for CornerPatternDatabases.
+         * If this pattern database hasn't already been generated and stored in an identical core, then this function will
+         * block for a long time.
+         * @param core the PatternDatabaseCore to use for database persistence.
+         * @param searchMode the search algorithm to use to generate the database - "dfs" or "bfs"
+         * @param numConsideredCorners the number of corners to consider in this pattern database
+         * @throws IllegalArgumentException if the search mode isn't recognized or if there's an illegal number of corners
+         */
+        @Throws(IllegalArgumentException::class)
+        fun create(core: PatternDatabaseCore, searchMode: String = "dfs", numConsideredCorners: Int): CornerPatternDatabase {
+            val consideredCorners = ArrayList<Int>(numConsideredCorners)
+            for(i in 0 until numConsideredCorners) consideredCorners[i] = i
+            return create(core, searchMode, consideredCorners)
+        }
     }
-    /** Computes the corner orientation index by converting the orientation string to a base 10 number */
-    private fun getCornerOrientationIndex(cube: AnalyzableStandardCube): Int {
-        val orientations = cube.getCornerOrientationPermutation()
-        //ignores orientations[7] since there are only 7 degrees of choice
-        return orientations[0] * 729 +
-               orientations[1] * 243 +
-               orientations[2] * 81 +
-               orientations[3] * 27 +
-               orientations[4] * 9 +
-               orientations[5] * 3 +
-               orientations[6]
+}
+
+private fun containsDuplicates(list: List<Int>): Boolean {
+    val seen = BooleanArray(8) { false }
+    for(item in list) {
+        if(seen[item]) return true
+        seen[item] = true
     }
+    return false
+}
+
+private fun failInvalidSearchMode(): IllegalArgumentException {
+    return IllegalArgumentException("Invalid search mode provided.")
+}
+private fun failInvalidCorners(): IllegalArgumentException {
+    return IllegalArgumentException("Invalid considered corners list provided")
 }
