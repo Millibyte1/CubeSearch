@@ -93,4 +93,9 @@ abstract class AbstractPatternDatabase: CostEvaluator {
      * @return the index of this cube in the pattern database.
      */
     abstract fun getIndex(cube: AnalyzableStandardCube): Int
+    /**
+     * Gets the number of entries in this pattern database
+     * @return the number of entries in this pattern database
+     */
+    abstract fun getCardinality(): Int
 }

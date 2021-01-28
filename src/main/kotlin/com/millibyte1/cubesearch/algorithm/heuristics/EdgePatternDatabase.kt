@@ -5,11 +5,12 @@ import com.millibyte1.cubesearch.cube.SmartCubeFactory
 
 import com.millibyte1.cubesearch.util.PathWithBack
 import com.millibyte1.cubesearch.util.PatternDatabaseUtils
+import org.jetbrains.annotations.TestOnly
 
 import kotlin.collections.ArrayList
 
 /*
- * When we consider a database of n edges and m corners,
+ * When we consider a database of n edges and m edges,
  *
  * edgeIndex = (2^n * edgePositionIndex) + edgeOrientationIndex
  * = 2^n * (12!/(12-n)!) unique edge orientations for n edges
@@ -18,19 +19,19 @@ import kotlin.collections.ArrayList
  * edgeOrientationIndex = <edge permutation> * <reverse 2^i sequence from 0 up to n-1>
  * = 2^n unique orientation permutations
  *
- * cornerIndex = (3^7 * cornerPositionIndex) + cornerOrientationIndex
+ * edgeIndex = (3^7 * edgePositionIndex) + edgeOrientationIndex
  * = 3^m * (8!/(8-m)!)
- * cornerPositionIndex = <lehmer encoding of position permutation> * <reverse factorial sequence from 8 down to 8-m>
+ * edgePositionIndex = <lehmer encoding of position permutation> * <reverse factorial sequence from 8 down to 8-m>
  * = 8!/(8-m)! unique position orientations
- * cornerOrientationIndex = <corner permutation> * <reverse 3^i sequence from 0 up to m-1>
+ * edgeOrientationIndex = <edge permutation> * <reverse 3^i sequence from 0 up to m-1>
  * = 3^m unique orientation permutations
  *
- * index = ((3^m * (8!/(8-m)!)) * edgeIndex) + cornerIndex
+ * index = ((3^m * (8!/(8-m)!)) * edgeIndex) + edgeIndex
  * = (3^m * (8!/(8-m)!)) * (2^n * (12!/(12-n)!)) unique orientations?
- * No. This hash is collisionless but not perfect --- the edge and corner orientation parities must match for a cube to be solvable so
+ * No. This hash is collisionless but not perfect --- the edge and edge orientation parities must match for a cube to be solvable so
  * there are significant gaps in the index hits. We must either resort to a mapping structure or incur significant space costs.
  *
- * The memory costs of a flat combined edge and corner database, incurred by the imperfection of the combined hash, likely mean
+ * The memory costs of a flat combined edge and edge database, incurred by the imperfection of the combined hash, likely mean
  * larger edge-only databases would be more useful within reasonable memory constraints than any combined database.
  */
 
@@ -57,7 +58,18 @@ class EdgePatternDatabase private constructor(
                 //"bfs" -> populateDatabaseBFS()
                 //"dfs" -> populateDatabaseDFS()
                 "bfs" -> PatternDatabaseUtils.populateDatabaseBFS(table, this, factory)
-                "dfs" -> PatternDatabaseUtils.populateDatabaseDFS(PathWithBack(ArrayList(), factory.getSolvedCube()), 11, table, this)
+                "dfs" -> {
+                    val depthLimit = when(consideredEdges.size) {
+                        /*1 -> 2
+                        2 -> 4
+                        3 -> 6
+                        4 -> 7
+                        5 -> 8
+                        6 -> 10*/
+                        else -> 11
+                    }
+                    PatternDatabaseUtils.populateDatabaseDFS(PathWithBack(ArrayList(), factory.getSolvedCube()), depthLimit, table, this)
+                }
             }
             //stores the database in the core for persistent storage
             core.writeDatabase(table)
@@ -73,16 +85,19 @@ class EdgePatternDatabase private constructor(
     //gets the index of this cube
     override fun getIndex(cube: AnalyzableStandardCube): Int {
         //(maxOrientationIndex * positionIndex) + orientationIndex
-        return (POWERS_OF_TWO[consideredEdges.size] * getPositionIndex(cube)) + getOrientationIndex(cube)
+        val power = POWERS_OF_TWO[consideredEdges.size]
+        val posIndex = getPositionIndex(cube)
+        val orIndex = getOrientationIndex(cube)
+        return (power * posIndex) + orIndex
     }
     /** Computes the position index by converting the lehmer encoding of the position string to a base 10 number */
     internal fun getPositionIndex(cube: AnalyzableStandardCube): Int {
         var sum = 0
-        //gets the lehmer encoding of this subset of the edges
-        val lehmer = PatternDatabaseUtils.getLehmerCode(cube.getEdgePositionPermutation()).filterIndexed { index, _ -> index in consideredEdges }
-        //multiplies the value at each index by its factoradic place value
-        for(i in consideredEdges.indices) sum += lehmer[i] * FACTORIALS[11 - i]
-        return sum
+        val positions = cube.getEdgePositionPermutation().filterIndexed { index, _ -> index in consideredEdges }
+        val lehmer = PatternDatabaseUtils.getLehmerCode(positions, 8)
+        //For a partial permutation of k out of n items, the factoradic base of the lehmer code at index i is:
+        //P( (n-1-i)!, (k-1-i)! ). It's clear that this is equivalent to just (n-1-i)! for a full permutation (k=n).
+        return consideredEdges.foldIndexed(0) { index, sum, _ -> sum + (pick(11 - index, consideredEdges.size - 1 - index) * lehmer[index]) }
     }
     /** Computes the orientation index by converting the orientation string to a base 10 number */
     internal fun getOrientationIndex(cube: AnalyzableStandardCube): Int {
@@ -98,10 +113,29 @@ class EdgePatternDatabase private constructor(
         return table.fold(0) { total, item -> if(item.toInt() == -1) total else total + 1 }
     }
 
+    override fun getCardinality(): Int {
+        return cardinality
+    }
+    /** Gets an array of the edges considered by this pattern database */
+    fun getConsideredEdges(): IntArray {
+        return consideredEdges.toIntArray()
+    }
+
     companion object {
 
+        //pregenerates some mathematical values for efficiency purposes
         private val POWERS_OF_TWO = arrayOf(1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096)
-        private val FACTORIALS = arrayOf(1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800, 39916800, 479001600)
+        private val FACTORIALS = IntArray(1000)
+
+        init {
+            FACTORIALS[0] = 1
+            for(i in 1 until 1000) FACTORIALS[i] = i * FACTORIALS[i - 1]
+        }
+
+        //returns nPk aka P(n, k) aka etc.
+        private fun pick(n: Int, k: Int): Int {
+            return FACTORIALS[n] / FACTORIALS[n - k]
+        }
 
         /**
          * Factory function for EdgePatternDatabases.
@@ -118,9 +152,9 @@ class EdgePatternDatabase private constructor(
             consideredEdges.sort()
             //tests that the arguments are valid and throws if they aren't
             if(searchMode != "dfs" && searchMode != "bfs") throw failInvalidSearchMode()
-            if(consideredEdges.size > 12 || consideredEdges.any { item -> item !in 0..11 } || containsDuplicates(consideredEdges)) throw failInvalidEdges()
+            if(consideredEdges.size > 8 || consideredEdges.any { item -> item !in 0..11 } || containsDuplicates(consideredEdges)) throw failInvalidEdges()
             //the position and orientation of 11 edges determines the last, so we can remove one redundant cubie from consideration
-            if(consideredEdges.size == 12) consideredEdges.removeAt(11)
+            if(consideredEdges.size == 8) consideredEdges.removeAt(11)
             //constructs and returns the object
             return EdgePatternDatabase(core, searchMode, consideredEdges)
         }
@@ -144,7 +178,7 @@ class EdgePatternDatabase private constructor(
 }
 
 private fun containsDuplicates(list: List<Int>): Boolean {
-    val seen = BooleanArray(8) { false }
+    val seen = BooleanArray(12) { false }
     for(item in list) {
         if(seen[item]) return true
         seen[item] = true

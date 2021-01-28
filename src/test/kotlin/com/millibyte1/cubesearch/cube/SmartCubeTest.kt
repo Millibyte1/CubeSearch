@@ -686,7 +686,7 @@ class SmartCubeTest {
             val jedis = Jedis()
             val key = cornerConfig.getString("redis-key")
 
-            val file = File("data/corners-full.db")
+            val file = File("data/corners-full-backup.db")
 
             val core = when(persistenceMode) {
                 "file" -> FileCore(file)

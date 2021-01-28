@@ -5,6 +5,7 @@ import com.millibyte1.cubesearch.cube.SmartCubeFactory
 
 import com.millibyte1.cubesearch.util.PathWithBack
 import com.millibyte1.cubesearch.util.PatternDatabaseUtils
+import org.jetbrains.annotations.TestOnly
 
 import kotlin.collections.ArrayList
 
@@ -57,7 +58,18 @@ class CornerPatternDatabase private constructor(
                 //"bfs" -> populateDatabaseBFS()
                 //"dfs" -> populateDatabaseDFS()
                 "bfs" -> PatternDatabaseUtils.populateDatabaseBFS(table, this, factory)
-                "dfs" -> PatternDatabaseUtils.populateDatabaseDFS(PathWithBack(ArrayList(), factory.getSolvedCube()), 11, table, this)
+                "dfs" -> {
+                    val depthLimit = when(consideredCorners.size) {
+                        1 -> 2
+                        2 -> 4
+                        3 -> 6
+                        4 -> 7
+                        5 -> 8
+                        6 -> 10
+                        else -> 11
+                    }
+                    PatternDatabaseUtils.populateDatabaseDFS(PathWithBack(ArrayList(), factory.getSolvedCube()), depthLimit, table, this)
+                }
             }
             //stores the database in the core for persistent storage
             core.writeDatabase(table)
@@ -73,16 +85,19 @@ class CornerPatternDatabase private constructor(
     //gets the index of this cube
     override fun getIndex(cube: AnalyzableStandardCube): Int {
         //(maxOrientationIndex * positionIndex) + orientationIndex
-        return (POWERS_OF_THREE[consideredCorners.size] * getPositionIndex(cube)) + getOrientationIndex(cube)
+        val power = POWERS_OF_THREE[consideredCorners.size]
+        val posIndex = getPositionIndex(cube)
+        val orIndex = getOrientationIndex(cube)
+        return (power * posIndex) + orIndex
     }
     /** Computes the position index by converting the lehmer encoding of the position string to a base 10 number */
     internal fun getPositionIndex(cube: AnalyzableStandardCube): Int {
         var sum = 0
-        //gets the lehmer encoding of this subset of the corners
-        val lehmer = PatternDatabaseUtils.getLehmerCode(cube.getCornerPositionPermutation()).filterIndexed { index, _ -> index in consideredCorners }
-        //multiplies the value at each index by its factoradic place value
-        for(i in consideredCorners.indices) sum += lehmer[i] * FACTORIALS[7 - i]
-        return sum
+        val positions = cube.getCornerPositionPermutation().filterIndexed { index, _ -> index in consideredCorners }
+        val lehmer = PatternDatabaseUtils.getLehmerCode(positions, 8)
+        //For a partial permutation of k out of n items, the factoradic base of the lehmer code at index i is:
+        //P( (n-1-i)!, (k-1-i)! ). It's clear that this is equivalent to just (n-1-i)! for a full permutation (k=n).
+        return consideredCorners.foldIndexed(0) { index, sum, _ -> sum + (pick(7 - index, consideredCorners.size - 1 - index) * lehmer[index]) }
     }
     /** Computes the orientation index by converting the orientation string to a base 10 number */
     internal fun getOrientationIndex(cube: AnalyzableStandardCube): Int {
@@ -98,10 +113,29 @@ class CornerPatternDatabase private constructor(
         return table.fold(0) { total, item -> if(item.toInt() == -1) total else total + 1 }
     }
 
+    override fun getCardinality(): Int {
+        return cardinality
+    }
+    /** Gets an array of the corners considered by this pattern database */
+    fun getConsideredCorners(): IntArray {
+        return consideredCorners.toIntArray()
+    }
+
     companion object {
 
+        //pregenerates some mathematical values for efficiency purposes
         private val POWERS_OF_THREE = arrayOf(1, 3, 9, 27, 81, 243, 729, 2187, 6561)
-        private val FACTORIALS = arrayOf(1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800, 39916800, 479001600)
+        private val FACTORIALS = IntArray(1000)
+
+        init {
+            FACTORIALS[0] = 1
+            for(i in 1 until 1000) FACTORIALS[i] = i * FACTORIALS[i - 1]
+        }
+
+        //returns nPk aka P(n, k) aka etc.
+        private fun pick(n: Int, k: Int): Int {
+            return FACTORIALS[n] / FACTORIALS[n - k]
+        }
 
         /**
          * Factory function for CornerPatternDatabases.
