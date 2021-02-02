@@ -18,7 +18,6 @@ import kotlin.collections.ArrayList
  * 12! ways to choose the positions of its edges,
  * 2^11 ways to choose the orientations of its edges.
  *
- * There are
  * It would thus require a minimum of:
  * 27 bits to index all solvable corner configurations,
  * 40 bits to index all solvable edge configurations.
@@ -41,10 +40,6 @@ import kotlin.collections.ArrayList
  * This is feasible with a simple breadth-first search for the corner database, but not for the edge database.
  * There may or may not be some algorithm which could exhaustively traverse up to this depth in a realistic time.
  *
- * TODO: Implement queue that spills over to disk so that we can perform BFS instead of DFS for any size database
- * TODO: Explore the idea of using a massively parallel BFS with infrequent pushes to the server and continuous atomic updates on the server
- * TODO: Use Apache Kafka? Hadoop?
- *
  * For now, we must split the edge database into multiple pattern databases each considering k edges.
  * Choosing the positions of k out of 12 edges is equivalent to choosing the order of the k fastest runners in a race of 12 contestants.
  * We then have a full k degrees of choice for choosing the edge orientations.
@@ -57,26 +52,24 @@ import kotlin.collections.ArrayList
  * 510935040 possible configurations of a 7-edge database, which is equivalent to ~5.8 corner databases,
  * 42577920 possible configurations of a 6-edge database, which is equivalent to ~0.5 corner databases.
  *
- * Assuming that each entry in a pattern database takes up 9 bytes (64-bit hash-key, 8-bit value), we get:
- * ~0.739GiB space for the corner database,
- * ~16TiB space for the full 12-edge database,
- * ~8TiB space for an 11-edge database,
- * ~2TiB space for a 10-edge database,
- * ~343GiB space for a 9-edge database,
- * ~42.9GiB space for an 8-edge database,
- * ~4.29GiB space for a 7-edge database,
- * ~0.37GiB space for a 6-edge database.
+ * Assuming that each entry in a pattern database takes up a single byte, we get:
+ * ~88.18 MiB space for the corner database,
+ * ~1.78 TiB space for the full 12-edge database,
+ * ~913.6 GiB space for an 11-edge database,
+ * ~228.4 GiB space for a 10-edge database,
+ * ~38.07 GiB space for a 9-edge database,
+ * ~4.76 GiB space for an 8-edge database,
+ * ~487.3 MiB space for a 7-edge database,
+ * ~40.6 MiB space for a 6-edge database.
  *
  * Assuming each machine in a cluster can dedicate 8GiB of RAM to an in-memory database, we would need:
- * a cluster of ~2048 machines to implement the full 12-edge database,
- * a cluster of ~1024 machines to implement an 11-edge database,
- * a cluster of ~256 machines to implement a 10-edge database,
- * a cluster of ~43 machines to implement a 9-edge database,
- * a cluster of ~6 machines to implement an 8-edge database,
- * and only a single machine for smaller databases.
+ * a cluster of 229 machines to implement the full 12-edge database,
+ * a cluster of 115 machines to implement an 11-edge database,
+ * a cluster of 29 machines to implement a 10-edge database,
+ * a cluster of 5 machines to implement a 9-edge database,
+ * and a single machine for smaller databases.
  *
- * It requires 33 bits to index an 8-edge database. If we implemented a custom 33-bit key, 4-bit value data structure, the 8-edge
- * database would require only 19.6GiB, which is practical on a small cluster or on a single machine with 32 Gigs of RAM.
+ * These numbers and the database sizes could be cut in half by storing entries as nibbles.
  */
 object PatternDatabaseUtils {
     /**
@@ -226,6 +219,7 @@ object PatternDatabaseUtils {
     }
 }
 
+//TODO: implement a custom queue that spills to disk instead of living on disk like BigQueueImpl
 /** Algebraic sum type for queues that might get used for the BFS populator algorithm. */
 private sealed class PopulatorQueue() {
     /** Wrapper for a regular old ArrayDeque */
