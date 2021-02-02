@@ -56,8 +56,8 @@ class EdgePatternDatabase private constructor(
             //performs the search to populate the database
             when(searchMode) {
                 "bfs" -> PatternDatabaseUtils.populateDatabaseBFS(table, this, factory)
-                "iddfs" -> PatternDatabaseUtils.populateDatabaseIDDFS(PathWithBack(ArrayList(), factory.getSolvedCube()), table, this)
-                "dfs" -> {
+                "iddfs" -> PatternDatabaseUtils.populateDatabaseIDDFS(table, this)
+                "dfs", "dfs-recursive" -> {
                     val depthLimit = when(consideredEdges.size) {
                         1 -> 2
                         2 -> 5
@@ -68,7 +68,8 @@ class EdgePatternDatabase private constructor(
                         7 -> 10
                         else -> 13
                     }
-                    PatternDatabaseUtils.populateDatabaseDFS(PathWithBack(ArrayList(), factory.getSolvedCube()), depthLimit, table, this)
+                    if(searchMode == "dfs") PatternDatabaseUtils.populateDatabaseDFS(depthLimit, table, this)
+                    else PatternDatabaseUtils.populateDatabaseDFSRecursive(depthLimit, table, this)
                 }
             }
             //stores the database in the core for persistent storage

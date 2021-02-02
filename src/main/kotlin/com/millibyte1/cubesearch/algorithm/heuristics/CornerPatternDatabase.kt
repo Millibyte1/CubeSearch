@@ -56,8 +56,8 @@ class CornerPatternDatabase private constructor(
             //performs the search to populate the database
             when(searchMode) {
                 "bfs" -> PatternDatabaseUtils.populateDatabaseBFS(table, this, factory)
-                "iddfs" -> PatternDatabaseUtils.populateDatabaseIDDFS(PathWithBack(ArrayList(), factory.getSolvedCube()), table, this)
-                "dfs" -> {
+                "iddfs" -> PatternDatabaseUtils.populateDatabaseIDDFS(table, this)
+                "dfs", "dfs-recursive" -> {
                     val depthLimit = when(consideredCorners.size) {
                         1 -> 2
                         2 -> 4
@@ -66,9 +66,12 @@ class CornerPatternDatabase private constructor(
                         5 -> 8
                         6 -> 10
                         7 -> 10
-                        else -> 11
+                        8 -> 11
+                        //don't know what the depth limit is beyond 8 edges and I have no clue how to analytically derive it.
+                        else -> 14
                     }
-                    PatternDatabaseUtils.populateDatabaseDFS(PathWithBack(ArrayList(), factory.getSolvedCube()), depthLimit, table, this)
+                    if(searchMode == "dfs") PatternDatabaseUtils.populateDatabaseDFS(depthLimit, table, this)
+                    else PatternDatabaseUtils.populateDatabaseDFSRecursive(depthLimit, table, this)
                 }
             }
             //stores the database in the core for persistent storage
@@ -155,7 +158,7 @@ class CornerPatternDatabase private constructor(
         fun create(core: PatternDatabaseCore, searchMode: String = "dfs", consideredCorners: MutableList<Int>): CornerPatternDatabase {
             consideredCorners.sort()
             //tests that the arguments are valid and throws if they aren't
-            if(searchMode != "dfs" && searchMode != "bfs") throw failInvalidSearchMode()
+            if(searchMode != "dfs" && searchMode != "bfs" && searchMode != "iddfs" && searchMode != "dfs-recursive") throw failInvalidSearchMode()
             if(consideredCorners.size > 8 || consideredCorners.any { item -> item !in 0..7 } || containsDuplicates(consideredCorners)) throw failInvalidCorners()
             //the position and orientation of 7 corners determines the last, so we can remove one redundant cubie from consideration
             if(consideredCorners.size == 8) consideredCorners.removeAt(7)

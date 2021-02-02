@@ -27,9 +27,8 @@ data class PatternDBParams(
     val isCorner: Boolean
 )
 
-@TestMethodOrder(
-    MethodOrderer.OrderAnnotation::class)
-class CornerPatternDatabaseTest {
+@TestMethodOrder(MethodOrderer.OrderAnnotation::class)
+class PatternDatabaseTest {
 
     private val factory = SmartCubeFactory()
 
@@ -186,6 +185,7 @@ class CornerPatternDatabaseTest {
             */
             return mutableListOf(
                 PatternDBParams(FileCore("data/corners-01234.db"), "dfs", mutableListOf(0, 1, 2, 3, 4), true),
+                PatternDBParams(FileCore("data/corners-01234-dfs-recursive.db"), "dfs-recursive", mutableListOf(0, 1, 2, 3, 4), true),
                 PatternDBParams(FileCore("data/corners-01234-bfs.db"), "bfs", mutableListOf(0, 1, 2, 3, 4), true)
             )
         }

@@ -3,7 +3,7 @@ package com.millibyte1.cubesearch.cube
 /**
  * Factory for ArrayCubes
  */
-class ArrayCubeFactory : CubeFactory {
+class ArrayCubeFactory : AnalyzableStandardCubeFactory {
 
     override fun getCube(data: Array<IntArray>): ArrayCube {
         return ArrayCube(data.copy())
