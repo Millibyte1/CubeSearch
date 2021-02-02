@@ -35,12 +35,27 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- lightbend configuration library-->
+        <!-- apache commons -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.11</version>
+        </dependency>
+
+        <!-- lightbend configuration library -->
         <dependency>
             <groupId>com.typesafe</groupId>
             <artifactId>config</artifactId>
             <version>1.4.1</version>
         </dependency>
+
+        <!-- fast disk-mapped queue -->
+        <dependency>
+            <groupId>com.baidu</groupId>
+            <artifactId>leansoft-bigqueue</artifactId>
+            <version>0.7.3</version>
+        </dependency>
+
 
         <!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
         <dependency>

@@ -55,9 +55,8 @@ class CornerPatternDatabase private constructor(
         if(bytes == null) {
             //performs the search to populate the database
             when(searchMode) {
-                //"bfs" -> populateDatabaseBFS()
-                //"dfs" -> populateDatabaseDFS()
                 "bfs" -> PatternDatabaseUtils.populateDatabaseBFS(table, this, factory)
+                "iddfs" -> PatternDatabaseUtils.populateDatabaseIDDFS(PathWithBack(ArrayList(), factory.getSolvedCube()), table, this)
                 "dfs" -> {
                     val depthLimit = when(consideredCorners.size) {
                         1 -> 2
@@ -66,6 +65,7 @@ class CornerPatternDatabase private constructor(
                         4 -> 7
                         5 -> 8
                         6 -> 10
+                        7 -> 10
                         else -> 11
                     }
                     PatternDatabaseUtils.populateDatabaseDFS(PathWithBack(ArrayList(), factory.getSolvedCube()), depthLimit, table, this)
@@ -90,9 +90,16 @@ class CornerPatternDatabase private constructor(
         val orIndex = getOrientationIndex(cube)
         return (power * posIndex) + orIndex
     }
-    /** Computes the position index by converting the lehmer encoding of the position string to a base 10 number */
+    /**
+     * Computes the position index by converting the lehmer encoding of the position string to a base 10 number.
+     *
+     * For a partial permutation of k out of n items, the factoradic base of the lehmer code at index i is
+     * P((n-1-i)!, (k-1-i)!). It's clear that this is equivalent to just (n-1-i)! for a full permutation (k=n).
+     *
+     * @param cube the cube we're indexing
+     * @return the position index of the partial configuration of this cube defined by consideredCorners
+     */
     internal fun getPositionIndex(cube: AnalyzableStandardCube): Int {
-        var sum = 0
         val positions = cube.getCornerPositionPermutation().filterIndexed { index, _ -> index in consideredCorners }
         val lehmer = PatternDatabaseUtils.getLehmerCode(positions, 8)
         //For a partial permutation of k out of n items, the factoradic base of the lehmer code at index i is:
@@ -101,15 +108,12 @@ class CornerPatternDatabase private constructor(
     }
     /** Computes the orientation index by converting the orientation string to a base 10 number */
     internal fun getOrientationIndex(cube: AnalyzableStandardCube): Int {
-        var sum = 0
         val orientations = cube.getCornerOrientationPermutation().filterIndexed { index, _ ->  index in consideredCorners }
         //multiplies the value at each index by its exponential place value
-        for(i in consideredCorners.indices) sum += orientations[i] * POWERS_OF_THREE[consideredCorners.size - 1 - i]
-        return sum
+        return consideredCorners.foldIndexed(0) { index, sum, _ -> sum + (orientations[index] * POWERS_OF_THREE[consideredCorners.size - 1 - index]) }
     }
 
-    /** Gets the number of entries in the pattern database */
-    internal fun getPopulation(): Int {
+    internal override fun getPopulation(): Int {
         return table.fold(0) { total, item -> if(item.toInt() == -1) total else total + 1 }
     }
 

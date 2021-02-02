@@ -48,7 +48,6 @@ class SmartCube internal constructor(
         val arrayCube = this.toArrayCube()
         val edges = ArrayCubeUtils.getEdges(arrayCube)
         val corners = ArrayCubeUtils.getCorners(arrayCube)
-        //TODO("position twists do not match up with ")
         //initializes edge positions
         edgePositions = arrayCube.getEdgePositionPermutation()
         //initializes corner positions

@@ -1,9 +1,12 @@
 package com.millibyte1.cubesearch.util
 
+import com.leansoft.bigqueue.BigQueueImpl
 import com.millibyte1.cubesearch.algorithm.heuristics.AbstractPatternDatabase
 import com.millibyte1.cubesearch.cube.AnalyzableStandardCube
+import com.millibyte1.cubesearch.cube.SmartCube
 import com.millibyte1.cubesearch.cube.SmartCubeFactory
 import com.millibyte1.cubesearch.cube.Twist
+import org.apache.commons.lang3.SerializationUtils
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -131,74 +134,53 @@ object PatternDatabaseUtils {
         return lehmerSequence
     }
 
-    /*
-    /** Computes the lehmer code of the permutation by counting the number of inversions at each index */
-    fun getLehmerCode(permutation: IntArray): IntArray {
-        val lehmerSequence = IntArray(permutation.size)
-        var inversions: Int
-        for(i in permutation.indices) {
-            inversions = 0
-            //counts the number of inversions at index i
-            for(j in i+1 until permutation.size) if(permutation[i] > permutation[j]) inversions++
-            //sets the value of lehmer[i] to be the number of inversions
-            lehmerSequence[i] = inversions
-        }
-        return lehmerSequence
-    }
-    /** Computes the lehmer code of the permutation by counting the number of inversions at each index */
-    fun getLehmerCode(permutation: List<Int>): IntArray {
-        val lehmerSequence = IntArray(permutation.size)
-        var inversions: Int
-        for(i in permutation.indices) {
-            inversions = 0
-            //counts the number of inversions at index i
-            for(j in i+1 until permutation.size) if(permutation[i] > permutation[j]) inversions++
-            //sets the value of lehmer[i] to be the number of inversions
-            lehmerSequence[i] = inversions
-        }
-        return lehmerSequence
-    }
-     */
-
     /** Gets the number of entries in the pattern database */
     fun getPopulation(table: ByteArray): Int {
         return table.fold(0) { total, item -> if(item.toInt() == -1) total else total + 1 }
     }
 
-    /** Generates the pattern database to completion via a DP-optimized BFS */
-    fun populateDatabaseBFS(table: ByteArray, patternDB: AbstractPatternDatabase, factory: SmartCubeFactory) {
+    /**
+     * Generates the pattern database via a DP-optimized BFS.
+     * Switches from using an in-memory queue to an on-disk queue after a certain size threshold is reached.
+     */
+    fun populateDatabaseBFS(table: ByteArray, patternDB: AbstractPatternDatabase, factory: SmartCubeFactory, MAX_SIZE: Int = 1000000) {
         //constructs the queue for the BFS and enqueues the solved cube
-        val queue: Queue<PathWithBack> = ArrayDeque()
-        queue.add(PathWithBack(ArrayList(), factory.getSolvedCube()))
+        var queue: PopulatorQueue = PopulatorQueue.MemoryQueue()
+        queue.enqueue(PathWithBack(ArrayList(), factory.getSolvedCube()))
         addCost(factory.getSolvedCube(), 0, table, patternDB)
         //generates every possible corner configuration via a breadth-first traversal
-        while(queue.isNotEmpty()) {
+        while (!queue.isEmpty()) {
+            //if we've gone over the size limit for the in-memory queue, move to an on-disk queue
+            if (queue.effectiveSize() > MAX_SIZE) queue = siphonQueue(queue, PopulatorQueue.DiskQueue("temp", "populate-db-queue"))
             //dequeues the cube
-            val current = queue.remove()
+            val current: PathWithBack = queue.dequeue()
             //uses a 2-move history to prune some twists resulting in cubes that can be generated in fewer moves
-            val face1Previous = if(current.size() >= 1) Twist.getFace(current.path[current.size() - 1]) else null
-            val face2Previous = if(current.size() >= 2) Twist.getFace(current.path[current.size() - 2]) else null
+            val face1Previous = if (current.size() >= 1) Twist.getFace(current.path[current.size() - 1]) else null
+            val face2Previous = if (current.size() >= 2) Twist.getFace(current.path[current.size() - 2]) else null
             //tries to expand off of each potentially viable twist
-            for(twist in SolverUtils.getOptions(face1Previous, face2Previous)) {
+            for (twist in SolverUtils.getOptions(face1Previous, face2Previous)) {
                 val nextCube = current.back.twist(twist)
                 //if we haven't already encountered the cube, add to the database and to the expansion queue
-                if(!databaseContains(nextCube, table, patternDB)) {
-                    queue.add(current.add(twist))
+                if (!databaseContains(nextCube, table, patternDB)) {
+                    queue.enqueue(current.add(twist))
                     addCost(nextCube, (current.size() + 1).toByte(), table, patternDB)
                 }
             }
         }
     }
-
+    /**
+     * Tries to generate the database with depth-first searches to various depths.
+     * Strictly slower than plain DFS if you already know the necessary depth, but faster if it's unknown.
+     */
     fun populateDatabaseIDDFS(path: PathWithBack, table: ByteArray, patternDB: AbstractPatternDatabase) {
-        for(depthLimit in 0 until 11) {
-            val fakeTable = table.copyOf()
-            populateDatabaseDFS(path, depthLimit, fakeTable, patternDB)
-            val population = getPopulation(fakeTable)
-            if(population == patternDB.getCardinality()) {
-                for(i in 0 until population) table[i] = fakeTable[i]
-                break
-            }
+        //tries to generate the database at every depth up to 20, breaking off when it's done
+        for(depthLimit in 0 until 20) {
+            populateDatabaseDFS(path, depthLimit, table, patternDB)
+            val population = getPopulation(table)
+            //if the database is fully generated, we can stop
+            if(population == patternDB.getCardinality()) break
+            //otherwise reset the database and repeat with a deeper search
+            for(i in 0 until population) table[i] = -1
         }
     }
     /** Performs a recursive DP-optimized DFS up to the given depth limit. */
@@ -242,4 +224,54 @@ object PatternDatabaseUtils {
         for(i in 0 until k) if(seen[i]) sum++
         return sum
     }
+}
+
+/** Algebraic sum type for queues that might get used for the BFS populator algorithm. */
+private sealed class PopulatorQueue() {
+    /** Wrapper for a regular old ArrayDeque */
+    class MemoryQueue() : PopulatorQueue() {
+        private val queue: Queue<PathWithBack> = ArrayDeque()
+        override fun enqueue(path: PathWithBack) {
+            queue.add(path)
+        }
+        override fun dequeue(): PathWithBack {
+            return queue.remove()
+        }
+        override fun isEmpty(): Boolean {
+            return queue.isEmpty()
+        }
+        override fun effectiveSize(): Int {
+            return queue.size
+        }
+    }
+    /** Wrapper for a BigQueue that lives on disk. Thanks bulldog2011! (src: https://github.com/bulldog2011/bigqueue) */
+    class DiskQueue(filePath: String, fileName: String) : PopulatorQueue() {
+        private val queue = BigQueueImpl(filePath, fileName)
+        override fun enqueue(path: PathWithBack) {
+            queue.enqueue(SerializationUtils.serialize(path))
+        }
+        override fun dequeue(): PathWithBack {
+            return SerializationUtils.deserialize(queue.dequeue())
+        }
+        override fun isEmpty(): Boolean {
+            return queue.isEmpty
+        }
+        override fun effectiveSize(): Int {
+            return 0
+        }
+    }
+    /** Enqueues an item onto the queue */
+    abstract fun enqueue(path: PathWithBack)
+    /** Dequeues an item from the queue */
+    abstract fun dequeue(): PathWithBack
+    /** Checks whether the queue is empty */
+    abstract fun isEmpty(): Boolean
+    /** Returns the number of elements in the queue if the queue is in memory, else 0 */
+    abstract fun effectiveSize(): Int
+}
+
+/** Siphons all the elements of the old queue into the new queue */
+private fun siphonQueue(oldQueue: PopulatorQueue, newQueue: PopulatorQueue): PopulatorQueue {
+    while (!oldQueue.isEmpty()) newQueue.enqueue(oldQueue.dequeue())
+    return newQueue
 }

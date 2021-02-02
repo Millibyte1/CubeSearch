@@ -55,18 +55,18 @@ class EdgePatternDatabase private constructor(
         if(bytes == null) {
             //performs the search to populate the database
             when(searchMode) {
-                //"bfs" -> populateDatabaseBFS()
-                //"dfs" -> populateDatabaseDFS()
                 "bfs" -> PatternDatabaseUtils.populateDatabaseBFS(table, this, factory)
+                "iddfs" -> PatternDatabaseUtils.populateDatabaseIDDFS(PathWithBack(ArrayList(), factory.getSolvedCube()), table, this)
                 "dfs" -> {
                     val depthLimit = when(consideredEdges.size) {
-                        /*1 -> 2
-                        2 -> 4
-                        3 -> 6
-                        4 -> 7
-                        5 -> 8
-                        6 -> 10*/
-                        else -> 11
+                        1 -> 2
+                        2 -> 5
+                        3 -> 7
+                        4 -> 8
+                        5 -> 9
+                        6 -> 10
+                        7 -> 10
+                        else -> 13
                     }
                     PatternDatabaseUtils.populateDatabaseDFS(PathWithBack(ArrayList(), factory.getSolvedCube()), depthLimit, table, this)
                 }
@@ -90,26 +90,30 @@ class EdgePatternDatabase private constructor(
         val orIndex = getOrientationIndex(cube)
         return (power * posIndex) + orIndex
     }
-    /** Computes the position index by converting the lehmer encoding of the position string to a base 10 number */
+    /**
+     * Computes the position index by converting the lehmer encoding of the position string to a base 10 number.
+     *
+     * For a partial permutation of k out of n items, the factoradic base of the lehmer code at index i is
+     * P((n-1-i)!, (k-1-i)!). It's clear that this is equivalent to just (n-1-i)! for a full permutation (k=n).
+     *
+     * @param cube the cube we're indexing
+     * @return the position index of the partial configuration of this cube defined by consideredEdges
+     */
     internal fun getPositionIndex(cube: AnalyzableStandardCube): Int {
-        var sum = 0
         val positions = cube.getEdgePositionPermutation().filterIndexed { index, _ -> index in consideredEdges }
-        val lehmer = PatternDatabaseUtils.getLehmerCode(positions, 8)
+        val lehmer = PatternDatabaseUtils.getLehmerCode(positions, 12)
         //For a partial permutation of k out of n items, the factoradic base of the lehmer code at index i is:
         //P( (n-1-i)!, (k-1-i)! ). It's clear that this is equivalent to just (n-1-i)! for a full permutation (k=n).
         return consideredEdges.foldIndexed(0) { index, sum, _ -> sum + (pick(11 - index, consideredEdges.size - 1 - index) * lehmer[index]) }
     }
     /** Computes the orientation index by converting the orientation string to a base 10 number */
     internal fun getOrientationIndex(cube: AnalyzableStandardCube): Int {
-        var sum = 0
         val orientations = cube.getEdgeOrientationPermutation().filterIndexed { index, _ ->  index in consideredEdges }
         //multiplies the value at each index by its exponential place value
-        for(i in consideredEdges.indices) sum += orientations[i] * POWERS_OF_TWO[consideredEdges.size - 1 - i]
-        return sum
+        return consideredEdges.foldIndexed(0) { index, sum, _ -> sum + (orientations[index] * POWERS_OF_TWO[consideredEdges.size - 1 - index]) }
     }
 
-    /** Gets the number of entries in the pattern database */
-    internal fun getPopulation(): Int {
+    internal override fun getPopulation(): Int {
         return table.fold(0) { total, item -> if(item.toInt() == -1) total else total + 1 }
     }
 

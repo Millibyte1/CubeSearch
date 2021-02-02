@@ -67,6 +67,7 @@ class SolverTest {
         }
         assertEquals(cube, solved())
     }
+    /*
     @ParameterizedTest
     @MethodSource("solvers")
     fun testConsistencyWithHeuristic(solver: Solver) {
@@ -79,6 +80,7 @@ class SolverTest {
             }
         }
     }
+    */
 
     companion object {
 
@@ -100,7 +102,7 @@ class SolverTest {
             val jedis = Jedis()
             val key = cornerConfig.getString("redis-key")
 
-            val file = File("data/corners-full-backup.db")
+            val file = File("data/corners-full.db")
 
             val core = when(persistenceMode) {
                 "file" -> FileCore(file)
@@ -110,22 +112,30 @@ class SolverTest {
         }
 
         private fun standardCostFunction(): CostEvaluator {
-            //return ManhattanDistanceCostEvaluator()
-            return cornerPatternDatabase()
+            //return cornerPatternDatabase()
+            return MultiPatternDatabase(
+                EdgePatternDatabase.create(FileCore("data/edges-012345.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5)),
+                CornerPatternDatabase.create(FileCore("data/corners-full.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5, 6, 7))
+            )
         }
         @JvmStatic
         /** Returns a list of CostEvaulators to test the solvers with */
         private fun costEvaluators(): List<CostEvaluator> {
             return listOf(
-                ManhattanDistanceCostEvaluator(),
-                cornerPatternDatabase()
+                //ManhattanDistanceCostEvaluator(),
+                cornerPatternDatabase(),
+                MultiPatternDatabase(
+                    EdgePatternDatabase.create(FileCore("data/edges-012345.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5)),
+                    CornerPatternDatabase.create(FileCore("data/corners-full.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5, 6, 7))
+                )
             )
         }
 
         @JvmStatic
         /** Returns a list of solvers using an already tested CostEvaluator */
         private fun solvers(): List<Solver> {
-            return listOf(IterativeDeepeningAStarSolver(standardCostFunction()))
+            return listOf(IterativeDeepeningAStarSolver(standardCostFunction())
+            )
             /*return listOf(ClassicalAStarSolver(standardCostFunction()),
                           FrontierSearchSolver(standardCostFunction()),
                           IterativeDeepeningAStarSolver(standardCostFunction()))
@@ -154,7 +164,7 @@ class SolverTest {
             return when(solver) {
                 is ClassicalAStarSolver -> 8
                 is FrontierSearchSolver -> 10
-                is IterativeDeepeningAStarSolver -> 12
+                is IterativeDeepeningAStarSolver -> 14
                 else -> 10
             }
         }

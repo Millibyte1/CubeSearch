@@ -77,7 +77,7 @@ class ManhattanDistanceCostEvaluator(private val goal: ArrayCube = ArrayCubeFact
     }
 }
 
-private fun Boolean.toInt() = if(this) 1 else 0
+fun Boolean.toInt() = if(this) 1 else 0
 
 private fun failInvalidCubies(): IllegalArgumentException {
     return IllegalArgumentException("Error: cube contains invalid cubies")

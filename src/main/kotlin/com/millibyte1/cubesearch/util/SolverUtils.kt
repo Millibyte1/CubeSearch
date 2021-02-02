@@ -1,11 +1,13 @@
 package com.millibyte1.cubesearch.util
 
+import java.io.Serializable
+
 import com.millibyte1.cubesearch.algorithm.heuristics.CostEvaluator
 import com.millibyte1.cubesearch.cube.*
 
 typealias Path = MutableList<Twist>
 
-data class PathWithBack(val path: Path, val back: AnalyzableStandardCube) {
+data class PathWithBack(val path: Path, val back: AnalyzableStandardCube) : Serializable {
     fun size(): Int {
         return path.size
     }
