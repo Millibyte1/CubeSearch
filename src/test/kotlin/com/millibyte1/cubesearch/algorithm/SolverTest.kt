@@ -3,35 +3,58 @@ package com.millibyte1.cubesearch.algorithm
 import com.millibyte1.cubesearch.algorithm.heuristics.*
 import com.millibyte1.cubesearch.cube.*
 import com.millibyte1.cubesearch.util.CubeGenerator
+
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.MethodOrderer
+import org.junit.jupiter.api.Order
+import org.junit.jupiter.api.TestMethodOrder
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import redis.clients.jedis.Jedis
 import java.io.File
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class SolverTest {
 
     /* =============================================== UNIT TESTS =================================================== */
 
     @ParameterizedTest
     @MethodSource("solvers")
+    @Order(1)
     fun testLengthZeroSolutions(solver: Solver) {
         assertEquals(solver.getSolution(solved()).size, 0)
     }
     @ParameterizedTest
     @MethodSource("solvers")
+    @Order(2)
     fun testLengthOneSolutions(solver: Solver) {
         for(solution in lengthOneSolutions()) {
             assertEquals(solver.getSolution(solution.first)[0], Twist.getReverse(solution.second))
         }
     }
+    /*
     @ParameterizedTest
     @MethodSource("solvers")
+    @Order(3)
+    fun testConsistencyWithHeuristic(solver: Solver) {
+        for(depth in 1..depthRating(solver)) {
+            generator.reset()
+            generator.setWalkLength(depth)
+            for(i in 0 until 100) {
+                val cube = generator.nextCube()
+                assertTrue(solver.getSolution(cube).size >= standardCostFunction().getCost(cube))
+            }
+        }
+    }
+    */
+    @ParameterizedTest
+    @MethodSource("solvers")
+    @Order(4)
     fun testRandomSolutions(solver: Solver) {
         for(depth in 1..depthRating(solver)) {
             generator.reset()
@@ -53,6 +76,7 @@ class SolverTest {
 
     @ParameterizedTest
     @MethodSource("solvers")
+    @Order(5)
     fun testSingleDeepSolution(solver: Solver) {
         generator.reset()
         generator.setWalkLength(singleRunDepthRating(solver))
@@ -67,20 +91,6 @@ class SolverTest {
         }
         assertEquals(cube, solved())
     }
-    /*
-    @ParameterizedTest
-    @MethodSource("solvers")
-    fun testConsistencyWithHeuristic(solver: Solver) {
-        for(depth in 1..depthRating(solver)) {
-            generator.reset()
-            generator.setWalkLength(depth)
-            for(i in 0 until 100) {
-                val cube = generator.nextCube()
-                assertTrue(solver.getSolution(cube).size >= standardCostFunction().getCost(cube))
-            }
-        }
-    }
-    */
 
     companion object {
 

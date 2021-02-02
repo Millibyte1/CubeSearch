@@ -3,17 +3,17 @@ package com.millibyte1.cubesearch.cube
 import com.millibyte1.cubesearch.algorithm.heuristics.CornerPatternDatabase
 import com.millibyte1.cubesearch.algorithm.heuristics.FileCore
 import com.millibyte1.cubesearch.algorithm.heuristics.RedisCore
-import com.millibyte1.cubesearch.util.ArrayCubeUtils
-import com.millibyte1.cubesearch.util.SolvabilityUtils
+
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
-import org.junit.jupiter.api.*
 
+import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+
 import redis.clients.jedis.Jedis
 import java.io.File
 
