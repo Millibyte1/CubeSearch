@@ -1,3 +1,6 @@
+# Large data files
+*.db
+
 # Compiled class file
 *.class
 
