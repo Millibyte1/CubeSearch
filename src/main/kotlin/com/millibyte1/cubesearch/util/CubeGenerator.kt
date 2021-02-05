@@ -65,7 +65,7 @@ class CubeGenerator<T : Cube> {
             face2Previous = face1Previous
             previousMove = options[random.nextInt(options.size)]
             face1Previous = Twist.getFace(previousMove)
-            cube = cube.twist(previousMove)
+            cube.twistNoCopy(previousMove)
         }
 
         return cube as T

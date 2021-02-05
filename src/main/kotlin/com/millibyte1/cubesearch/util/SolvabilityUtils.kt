@@ -272,9 +272,9 @@ object SolvabilityUtils {
     /** Gets an array of the orientations of cubies ordered by cubie number */
     internal fun getEdgeOrientationSequence(cube: AnalyzableStandardCube): IntArray {
         val solvedEdges = getSolvedEdges()
-        val orientations = IntArray(8)
+        val orientations = IntArray(12)
         var edge: EdgeCubie
-        for(i in 0 until 8) {
+        for(i in 0 until 12) {
             edge = getCubieOnCube(cube, solvedEdges[i]) as EdgeCubie
             orientations[i] = getEdgeOrientation(edge, cube)
         }

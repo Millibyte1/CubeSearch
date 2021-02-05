@@ -9,8 +9,6 @@ package com.millibyte1.cubesearch.cube
  * twistNoCopy, which takes a twist and applies it to the cube, modifying it but also returning it;
  *
  * and getTiles, which returns a 2D array representation of the tiles on the cube
- *
- * @param T the implementation class
  */
 interface Cube {
     /**

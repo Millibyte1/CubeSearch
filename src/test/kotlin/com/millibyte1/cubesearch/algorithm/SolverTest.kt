@@ -1,34 +1,59 @@
 package com.millibyte1.cubesearch.algorithm
 
-import com.millibyte1.cubesearch.algorithm.heuristics.CostEvaluator
-import com.millibyte1.cubesearch.algorithm.heuristics.ManhattanDistanceCostEvaluator
+import com.millibyte1.cubesearch.algorithm.heuristics.*
 import com.millibyte1.cubesearch.cube.*
 import com.millibyte1.cubesearch.util.CubeGenerator
 
+import com.typesafe.config.Config
+import com.typesafe.config.ConfigFactory
+
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.MethodOrderer
+import org.junit.jupiter.api.Order
+import org.junit.jupiter.api.TestMethodOrder
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import redis.clients.jedis.Jedis
+import java.io.File
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class SolverTest {
 
     /* =============================================== UNIT TESTS =================================================== */
 
     @ParameterizedTest
     @MethodSource("solvers")
+    @Order(1)
     fun testLengthZeroSolutions(solver: Solver) {
         assertEquals(solver.getSolution(solved()).size, 0)
     }
     @ParameterizedTest
     @MethodSource("solvers")
+    @Order(2)
     fun testLengthOneSolutions(solver: Solver) {
         for(solution in lengthOneSolutions()) {
             assertEquals(solver.getSolution(solution.first)[0], Twist.getReverse(solution.second))
         }
     }
+    /*
     @ParameterizedTest
     @MethodSource("solvers")
+    @Order(3)
+    fun testConsistencyWithHeuristic(solver: Solver) {
+        for(depth in 1..depthRating(solver)) {
+            generator.reset()
+            generator.setWalkLength(depth)
+            for(i in 0 until 100) {
+                val cube = generator.nextCube()
+                assertTrue(solver.getSolution(cube).size >= standardCostFunction().getCost(cube))
+            }
+        }
+    }
+    */
+    @ParameterizedTest
+    @MethodSource("solvers")
+    @Order(4)
     fun testRandomSolutions(solver: Solver) {
         for(depth in 1..depthRating(solver)) {
             generator.reset()
@@ -50,6 +75,7 @@ class SolverTest {
 
     @ParameterizedTest
     @MethodSource("solvers")
+    @Order(5)
     fun testSingleDeepSolution(solver: Solver) {
         generator.reset()
         generator.setWalkLength(singleRunDepthRating(solver))
@@ -64,18 +90,6 @@ class SolverTest {
         }
         assertEquals(cube, solved())
     }
-    @ParameterizedTest
-    @MethodSource("solvers")
-    fun testConsistencyWithHeuristic(solver: Solver) {
-        for(depth in 1..depthRating(solver)) {
-            generator.reset()
-            generator.setWalkLength(depth)
-            for(i in 0 until 100) {
-                val cube = generator.nextCube()
-                assertTrue(solver.getSolution(cube).size >= standardCostFunction().getCost(cube))
-            }
-        }
-    }
 
     companion object {
 
@@ -87,18 +101,67 @@ class SolverTest {
         private fun solved(): AnalyzableStandardCube {
             return factory.getSolvedCube()
         }
+        private fun cornerPatternDatabase(): CornerPatternDatabase {
+            val generalConfig: Config = ConfigFactory.load("patterndb.conf").getConfig("patterndb")
+            val cornerConfig = generalConfig.getConfig("corners-full")
+
+            val searchMode = cornerConfig.getString("search-mode")
+            val persistenceMode = generalConfig.getString("persistence-mode")
+
+            val jedis = Jedis()
+            val key = cornerConfig.getString("redis-key")
+
+            val file = File("data/corners-full.db")
+
+            val core = when(persistenceMode) {
+                "file" -> FileCore(file)
+                else -> RedisCore(jedis, key)
+            }
+            return CornerPatternDatabase.create(core, searchMode, mutableListOf(0, 1, 2, 3, 4, 5, 6, 7))
+        }
 
         private fun standardCostFunction(): CostEvaluator {
-            return ManhattanDistanceCostEvaluator()
+            //return cornerPatternDatabase()
+            /*
+            return MultiPatternDatabase(
+                EdgePatternDatabase.create(FileCore("data/edges-012345.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5)),
+                CornerPatternDatabase.create(FileCore("data/corners-full.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5, 6, 7))
+            )
+
+             */
+            return MultiHeuristic(
+                EdgePatternDatabase.create(FileCore("data/edges-0123456.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5, 6)),
+                EdgePatternDatabase.create(FileCore("data/edges-56789AB.db"), "dfs", mutableListOf(5, 6, 7, 8, 9, 10, 11)),
+                CornerPatternDatabase.create(FileCore("data/corners-full.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5, 6, 7))
+            )
+        }
+        @JvmStatic
+        /** Returns a list of CostEvaulators to test the solvers with */
+        private fun costEvaluators(): List<CostEvaluator> {
+            return listOf(
+                //ManhattanDistanceCostEvaluator(),
+                cornerPatternDatabase(),
+                MultiHeuristic(
+                    EdgePatternDatabase.create(FileCore("data/edges-012345.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5)),
+                    CornerPatternDatabase.create(FileCore("data/corners-full.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5, 6, 7))
+                ),
+                MultiHeuristic(
+                    EdgePatternDatabase.create(FileCore("data/edges-0123456.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5, 6)),
+                    EdgePatternDatabase.create(FileCore("data/edges-56789AB.db"), "dfs", mutableListOf(5, 6, 7, 8, 9, 10, 11)),
+                    CornerPatternDatabase.create(FileCore("data/corners-full.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5, 6, 7))
+                )
+            )
         }
 
         @JvmStatic
         /** Returns a list of solvers using an already tested CostEvaluator */
         private fun solvers(): List<Solver> {
-            //return listOf(IterativeDeepeningAStarSolver(standardCostFunction()))
-            return listOf(ClassicalAStarSolver(standardCostFunction()),
+            return listOf(IterativeDeepeningAStarSolver(standardCostFunction())
+            )
+            /*return listOf(ClassicalAStarSolver(standardCostFunction()),
                           FrontierSearchSolver(standardCostFunction()),
                           IterativeDeepeningAStarSolver(standardCostFunction()))
+             */
         }
 
         @JvmStatic
@@ -112,19 +175,19 @@ class SolverTest {
         @JvmStatic
         private fun depthRating(solver: Solver): Int {
             return when(solver) {
-                is ClassicalAStarSolver -> 5
-                is FrontierSearchSolver -> 5
-                is IterativeDeepeningAStarSolver -> 6
-                else -> 6
+                is ClassicalAStarSolver -> 8
+                is FrontierSearchSolver -> 8
+                is IterativeDeepeningAStarSolver -> 8
+                else -> 8
             }
         }
         @JvmStatic
         private fun singleRunDepthRating(solver: Solver): Int {
             return when(solver) {
-                is ClassicalAStarSolver -> 7
-                is FrontierSearchSolver -> 7
-                is IterativeDeepeningAStarSolver -> 7
-                else -> 7
+                is ClassicalAStarSolver -> 8
+                is FrontierSearchSolver -> 10
+                is IterativeDeepeningAStarSolver -> 14
+                else -> 10
             }
         }
     }

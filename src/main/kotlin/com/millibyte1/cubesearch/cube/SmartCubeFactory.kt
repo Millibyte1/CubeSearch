@@ -1,6 +1,6 @@
 package com.millibyte1.cubesearch.cube
 
-class SmartCubeFactory : CubeFactory {
+class SmartCubeFactory : AnalyzableStandardCubeFactory {
     /**
      * Constructs a cube from the contents of [data]
      * @param data the 6xN array representing the faces of the cube
@@ -64,7 +64,11 @@ class SmartCubeFactory : CubeFactory {
                 IntArray(9) { 3 }, //right face
                 IntArray(9) { 4 }, //up face
                 IntArray(9) { 5 }  //down face
-            )
+            ),
+            intArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
+            intArrayOf(0, 1, 2, 3, 4, 5, 6, 7),
+            IntArray(12) { 0 },
+            IntArray(8) { 0 }
         )
     }
 }

@@ -30,26 +30,19 @@ class FrontierSearchSolver(costEvaluator: CostEvaluator) : AbstractSolver(costEv
         //puts the initial cube into the candidates queue
         candidates.add(PathWithBack(ArrayList(), cube))
 
-        var path: PathWithBack
-        var currentCube: AnalyzableStandardCube
-        var nextCube: AnalyzableStandardCube
-
-        var face1Previous: Twist.Face?
-        var face2Previous: Twist.Face?
-
         while(candidates.isNotEmpty()) {
             //updates local variables
-            path = candidates.remove()
-            currentCube = path.back
-            face1Previous = if(path.size() >= 1) Twist.getFace(path.path[path.size() - 1]) else null
-            face2Previous = if(path.size() >= 2) Twist.getFace(path.path[path.size() - 2]) else null
+            val path = candidates.remove()
+            val currentCube = path.back
+            val face1Previous = if(path.size() >= 1) Twist.getFace(path.path[path.size() - 1]) else null
+            val face2Previous = if(path.size() >= 2) Twist.getFace(path.path[path.size() - 2]) else null
 
             //if the current cube is solved, returns the path that led to it
             if(isSolved(currentCube)) return path.path
 
             //otherwise, go through all the potential successors and enqueue the good ones
             for(twist in SolverUtils.getOptions(face1Previous, face2Previous)) {
-                nextCube = currentCube.twist(twist)
+                val nextCube = currentCube.twist(twist)
 
                 //if it's impossible for this move to produce an optimal solution, skip it
                 if(path.size() + getCost(nextCube) > MAX_DEPTH) continue
