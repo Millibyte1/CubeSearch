@@ -57,7 +57,7 @@ class EdgePatternDatabase private constructor(
             when(searchMode) {
                 "bfs" -> PatternDatabaseUtils.populateDatabaseBFS(table, this, factory)
                 "iddfs" -> PatternDatabaseUtils.populateDatabaseIDDFS(table, this)
-                "dfs", "dfs-recursive" -> {
+                "dfs" -> {
                     val depthLimit = when(consideredEdges.size) {
                         1 -> 2
                         2 -> 5
@@ -66,10 +66,10 @@ class EdgePatternDatabase private constructor(
                         5 -> 9
                         6 -> 10
                         7 -> 10
+                        //don't know what the depth limit is beyond 7 edges and I have no clue how to analytically derive it.
                         else -> 13
                     }
-                    if(searchMode == "dfs") PatternDatabaseUtils.populateDatabaseDFS(depthLimit, table, this)
-                    else PatternDatabaseUtils.populateDatabaseDFSRecursive(depthLimit, table, this)
+                    PatternDatabaseUtils.populateDatabaseDFS(depthLimit, table, this)
                 }
             }
             //stores the database in the core for persistent storage
@@ -115,7 +115,7 @@ class EdgePatternDatabase private constructor(
     }
 
     internal override fun getPopulation(): Int {
-        return table.fold(0) { total, item -> if(item.toInt() == -1) total else total + 1 }
+        return table.fold(0) { total, item -> if(item == (-1).toByte()) total else total + 1 }
     }
 
     override fun getCardinality(): Int {
@@ -124,6 +124,10 @@ class EdgePatternDatabase private constructor(
     /** Gets an array of the edges considered by this pattern database */
     fun getConsideredEdges(): IntArray {
         return consideredEdges.toIntArray()
+    }
+
+    override fun toString(): String {
+        return core.toString()
     }
 
     companion object {
@@ -156,7 +160,7 @@ class EdgePatternDatabase private constructor(
         fun create(core: PatternDatabaseCore, searchMode: String = "dfs", consideredEdges: MutableList<Int>): EdgePatternDatabase {
             consideredEdges.sort()
             //tests that the arguments are valid and throws if they aren't
-            if(searchMode != "dfs" && searchMode != "bfs") throw failInvalidSearchMode()
+            if(searchMode != "dfs" && searchMode != "bfs" && searchMode != "iddfs") throw failInvalidSearchMode()
             if(consideredEdges.size > 8 || consideredEdges.any { item -> item !in 0..11 } || containsDuplicates(consideredEdges)) throw failInvalidEdges()
             //the position and orientation of 11 edges determines the last, so we can remove one redundant cubie from consideration
             if(consideredEdges.size == 8) consideredEdges.removeAt(11)

@@ -32,7 +32,7 @@ import kotlin.collections.ArrayList
  * there are significant gaps in the index hits. We must either resort to a mapping structure or incur significant space costs.
  *
  * The memory costs of a flat combined edge and corner database, incurred by the imperfection of the combined hash, likely mean
- * larger edge-only databases would be more useful within reasonable memory constraints than any combined database.
+ * larger edge-only databases would be more useful within reasonable memory constraints than any combinegetPopulationd database.
  */
 
 /**
@@ -53,25 +53,21 @@ class CornerPatternDatabase private constructor(
         val bytes = core.readDatabase()
         //if the core is empty, populates the database and stores it in the core
         if(bytes == null) {
+            val maxCost = when(consideredCorners.size) {
+                1 -> 2
+                2 -> 4
+                3 -> 6
+                4 -> 7
+                5 -> 8
+                6 -> 10
+                else -> 11
+            }
             //performs the search to populate the database
             when(searchMode) {
-                "bfs" -> PatternDatabaseUtils.populateDatabaseBFS(table, this, factory)
+                "bfs" -> PatternDatabaseUtils.populateDatabaseBFS(table, this, factory, maxCost)
                 "iddfs" -> PatternDatabaseUtils.populateDatabaseIDDFS(table, this)
-                "dfs", "dfs-recursive" -> {
-                    val depthLimit = when(consideredCorners.size) {
-                        1 -> 2
-                        2 -> 4
-                        3 -> 6
-                        4 -> 7
-                        5 -> 8
-                        6 -> 10
-                        7 -> 10
-                        8 -> 11
-                        //don't know what the depth limit is beyond 8 edges and I have no clue how to analytically derive it.
-                        else -> 14
-                    }
-                    if(searchMode == "dfs") PatternDatabaseUtils.populateDatabaseDFS(depthLimit, table, this)
-                    else PatternDatabaseUtils.populateDatabaseDFSRecursive(depthLimit, table, this)
+                "dfs" -> {
+                    PatternDatabaseUtils.populateDatabaseDFS(maxCost, table, this)
                 }
             }
             //stores the database in the core for persistent storage
@@ -117,7 +113,7 @@ class CornerPatternDatabase private constructor(
     }
 
     internal override fun getPopulation(): Int {
-        return table.fold(0) { total, item -> if(item.toInt() == -1) total else total + 1 }
+        return table.fold(0) { total, item -> if(item == (-1).toByte()) total else total + 1 }
     }
 
     override fun getCardinality(): Int {
@@ -126,6 +122,10 @@ class CornerPatternDatabase private constructor(
     /** Gets an array of the corners considered by this pattern database */
     fun getConsideredCorners(): IntArray {
         return consideredCorners.toIntArray()
+    }
+
+    override fun toString(): String {
+        return core.toString()
     }
 
     companion object {
@@ -158,7 +158,7 @@ class CornerPatternDatabase private constructor(
         fun create(core: PatternDatabaseCore, searchMode: String = "dfs", consideredCorners: MutableList<Int>): CornerPatternDatabase {
             consideredCorners.sort()
             //tests that the arguments are valid and throws if they aren't
-            if(searchMode != "dfs" && searchMode != "bfs" && searchMode != "iddfs" && searchMode != "dfs-recursive") throw failInvalidSearchMode()
+            if(searchMode != "dfs" && searchMode != "bfs" && searchMode != "iddfs") throw failInvalidSearchMode()
             if(consideredCorners.size > 8 || consideredCorners.any { item -> item !in 0..7 } || containsDuplicates(consideredCorners)) throw failInvalidCorners()
             //the position and orientation of 7 corners determines the last, so we can remove one redundant cubie from consideration
             if(consideredCorners.size == 8) consideredCorners.removeAt(7)

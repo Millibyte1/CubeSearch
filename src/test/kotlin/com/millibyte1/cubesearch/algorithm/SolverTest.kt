@@ -8,7 +8,6 @@ import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
@@ -123,8 +122,16 @@ class SolverTest {
 
         private fun standardCostFunction(): CostEvaluator {
             //return cornerPatternDatabase()
+            /*
             return MultiPatternDatabase(
                 EdgePatternDatabase.create(FileCore("data/edges-012345.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5)),
+                CornerPatternDatabase.create(FileCore("data/corners-full.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5, 6, 7))
+            )
+
+             */
+            return MultiHeuristic(
+                EdgePatternDatabase.create(FileCore("data/edges-0123456.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5, 6)),
+                EdgePatternDatabase.create(FileCore("data/edges-56789AB.db"), "dfs", mutableListOf(5, 6, 7, 8, 9, 10, 11)),
                 CornerPatternDatabase.create(FileCore("data/corners-full.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5, 6, 7))
             )
         }
@@ -134,8 +141,13 @@ class SolverTest {
             return listOf(
                 //ManhattanDistanceCostEvaluator(),
                 cornerPatternDatabase(),
-                MultiPatternDatabase(
+                MultiHeuristic(
                     EdgePatternDatabase.create(FileCore("data/edges-012345.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5)),
+                    CornerPatternDatabase.create(FileCore("data/corners-full.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5, 6, 7))
+                ),
+                MultiHeuristic(
+                    EdgePatternDatabase.create(FileCore("data/edges-0123456.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5, 6)),
+                    EdgePatternDatabase.create(FileCore("data/edges-56789AB.db"), "dfs", mutableListOf(5, 6, 7, 8, 9, 10, 11)),
                     CornerPatternDatabase.create(FileCore("data/corners-full.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5, 6, 7))
                 )
             )

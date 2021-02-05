@@ -129,15 +129,26 @@ object PatternDatabaseUtils {
 
     /** Gets the number of entries in the pattern database */
     fun getPopulation(table: ByteArray): Int {
-        return table.fold(0) { total, item -> if(item.toInt() == -1) total else total + 1 }
+        return table.fold(0) { total, item -> if(item == (-1).toByte()) total else total + 1 }
     }
 
     /**
-     * Generates the pattern database via a DP-optimized BFS.
-     * Switches from using an in-memory queue to an on-disk queue after a certain size threshold is reached.
+     * Generates the pattern database via a DP-optimized BFS. Whether this can actually finish is limited by available disk space.
+     * @param table a reference to the target table of costs
+     * @param patternDB the pattern database to use for indexing
+     * @param factory the cube factory to use
+     * @param maxCost the maximum length of the shortest path from the solved cube to any configuration. Enables significant optimizations. Optional.
+     * @param MAX_SIZE the size threshold at which to switch from an in-memory to an on-disk queue. Optional.
      */
     //TODO: find max physical size of a naturally occurring PathWithBack via random sample and use that + config values to inform MAX_SIZE
-    fun populateDatabaseBFS(table: ByteArray, patternDB: AbstractPatternDatabase, factory: SmartCubeFactory, MAX_SIZE: Int = 1000000) {
+    fun populateDatabaseBFS(
+        table: ByteArray,
+        patternDB: AbstractPatternDatabase,
+        factory: SmartCubeFactory,
+        maxCost: Int = 20,
+        MAX_SIZE: Int = 1000000
+    ) {
+        val depthLimit = maxCost - 1
         //constructs the queue for the BFS and enqueues the solved cube
         var queue: PopulatorQueue = PopulatorQueue.MemoryQueue()
         queue.enqueue(PathWithBack(ArrayList(), factory.getSolvedCube()))
@@ -148,76 +159,78 @@ object PatternDatabaseUtils {
             if (queue.effectiveSize() > MAX_SIZE) queue = siphonQueue(queue, PopulatorQueue.DiskQueue("temp", "populate-db-queue"))
             //dequeues the cube
             val current: PathWithBack = queue.dequeue()
-            //uses a 2-move history to prune some twists resulting in cubes that can be generated in fewer moves
-            val face1Previous = if (current.size() >= 1) Twist.getFace(current.path[current.size() - 1]) else null
-            val face2Previous = if (current.size() >= 2) Twist.getFace(current.path[current.size() - 2]) else null
-            //tries to expand off of each potentially viable twist
-            for (twist in SolverUtils.getOptions(face1Previous, face2Previous)) {
-                val nextCube = current.back.twist(twist)
-                //if we haven't already encountered the cube, add to the database and to the expansion queue
-                if (!databaseContains(nextCube, table, patternDB)) {
-                    queue.enqueue(current.add(twist))
-                    addCost(nextCube, (current.size() + 1).toByte(), table, patternDB)
+
+            //if we haven't reached the depth limit, expand the nodes out
+            if(current.size() < depthLimit) {
+                //uses a 2-move history to prune some twists resulting in cubes that can be generated in fewer moves
+                val face1Previous = if (current.size() >= 1) Twist.getFace(current.path[current.size() - 1]) else null
+                val face2Previous = if (current.size() >= 2) Twist.getFace(current.path[current.size() - 2]) else null
+                //tries to expand off of each potentially viable twist
+                for (twist in SolverUtils.getOptions(face1Previous, face2Previous)) {
+                    val nextCube = current.back.twist(twist)
+                    //if we haven't already encountered the cube, add to the database and to the expansion queue
+                    if (!databaseContains(nextCube, table, patternDB)) {
+                        queue.enqueue(current.add(twist))
+                        addCost(nextCube, (current.size() + 1).toByte(), table, patternDB)
+                    }
                 }
             }
         }
+        //sets any remaining uninitialized costs to the max cost
+        for(i in table.indices) if(table[i] == (-1).toByte()) table[i] = maxCost.toByte()
     }
+
     /**
      * Tries to generate the database with depth-first searches to various depths.
      * Strictly slower than plain DFS if you already know the necessary depth, but faster if it's unknown.
+     * @param table a reference to the target table of costs
+     * @param patternDB the pattern database to use for indexing
+     * @param factory the cube factory to use
      */
-    fun populateDatabaseIDDFS(table: ByteArray, patternDB: AbstractPatternDatabase) {
+    fun populateDatabaseIDDFS(table: ByteArray, patternDB: AbstractPatternDatabase, factory: SmartCubeFactory = SmartCubeFactory()) {
         //tries to generate the database at every depth up to 20, breaking off when it's done
         for(depthLimit in 0 until 20) {
             //populateDatabaseDFS(path, depthLimit, table, patternDB)
-            populateDatabaseDFS(depthLimit, table, patternDB)
+            populateDatabaseDFS(table, patternDB, depthLimit)
             val population = getPopulation(table)
             //if the database is fully generated, we can stop
             if(population == patternDB.getCardinality()) break
             //otherwise reset the database and repeat with a deeper search
-            for(i in 0 until population) table[i] = -1
+            for(i in table.indices) table[i] = -1
         }
     }
-    /** Performs a recursive DP-optimized DFS up to the given depth limit. */
-    @Deprecated("This generation method is strictly less efficient than the iterative DFS. Use populateDatabaseDFS instead.")
-    fun populateDatabaseDFSRecursive(
-        depthLimit: Int,
-        table: ByteArray,
-        patternDB: AbstractPatternDatabase,
-        path: PathWithBack = PathWithBack(ArrayList(), SmartCubeFactory().getSolvedCube())
-    ) {
 
-        val current = path.back
-        val currentDepth = path.size()
-        val index = patternDB.getIndex(current)
-        //short circuits if we've already encountered a cube with this corner configuration at this low a depth
-        if(table[index].toInt() != -1 && table[index].toInt() <= currentDepth) return
-        //adds this configuration to the database
-        addCost(index, currentDepth.toByte(), table)
-
-        //if we're not at the depth limit, try more twists
-        if(currentDepth < depthLimit) {
-            //uses a 2-move history to prune some twists resulting in cubes that can be generated in fewer moves
-            val face1Previous = if(path.size() >= 1) Twist.getFace(path.path[path.size() - 1]) else null
-            val face2Previous = if(path.size() >= 2) Twist.getFace(path.path[path.size() - 2]) else null
-            //tries to expand off of each potentially viable twist
-            for(twist in SolverUtils.getOptions(face1Previous, face2Previous)) {
-                populateDatabaseDFSRecursive(depthLimit, table, patternDB, path.add(twist))
-            }
-        }
-    }
-    /** Performs an iterative DP-optimized DFS up to the given depth limit. */
+    /**
+     * Performs a depth-limited, DP-optimized DFS to generate the pattern database.
+     * Takes advantage of the max cost being known by cutting off at the depth level before it and setting all
+     * remaining uninitialized entries in the database to the max cost.
+     * @param maxCost the maximum length of the shortest path from the solved cube to any configuration.
+     * @param table a reference to the target table of costs
+     * @param patternDB the pattern database to use for indexing
+     * @param factory the cube factory to use
+     */
     fun populateDatabaseDFS(
-        depthLimit: Int,
+        maxCost: Int,
         table: ByteArray,
         patternDB: AbstractPatternDatabase,
         factory: SmartCubeFactory = SmartCubeFactory()
     ) {
+        populateDatabaseDFS(table, patternDB, maxCost - 1, factory)
+        for(i in table.indices) if(table[i] == (-1).toByte()) table[i] = maxCost.toByte()
+    }
 
+    /** Performs a depth-limited, DP-optimized DFS up to the given depth limit */
+    private fun populateDatabaseDFS(
+        table: ByteArray,
+        patternDB: AbstractPatternDatabase,
+        depthLimit: Int,
+        factory: SmartCubeFactory = SmartCubeFactory()
+    ) {
+        //initializes the search queue and enqueues the solved cube
         val pathQueue: Deque<PathWithBack> = ArrayDeque()
         pathQueue.addFirst(PathWithBack(ArrayList(), factory.getSolvedCube()))
 
-        //performs a DFS using an explicit queue
+        //performs an iterative DFS using an explicit queue
         while(pathQueue.isNotEmpty()) {
 
             val path = pathQueue.removeFirst()
@@ -226,7 +239,7 @@ object PatternDatabaseUtils {
             val index = patternDB.getIndex(current)
 
             //short circuits if we've already encountered a cube with this corner configuration at this low a depth
-            if(table[index].toInt() != -1 && table[index].toInt() <= currentDepth) continue
+            if(table[index] != (-1).toByte() && table[index] <= currentDepth.toByte()) continue
             //adds this configuration to the database
             addCost(index, currentDepth.toByte(), table)
 
@@ -243,7 +256,7 @@ object PatternDatabaseUtils {
 
     /** Checks whether this configuration is already in the pattern database */
     private fun databaseContains(cube: AnalyzableStandardCube, table: ByteArray, patternDB: AbstractPatternDatabase): Boolean {
-        return table[patternDB.getIndex(cube)].toInt() != -1
+        return table[patternDB.getIndex(cube)] != (-1).toByte()
     }
     /** Adds the cost of this cube to the table */
     private fun addCost(cube: AnalyzableStandardCube, cost: Byte, table: ByteArray, patternDB: AbstractPatternDatabase) {

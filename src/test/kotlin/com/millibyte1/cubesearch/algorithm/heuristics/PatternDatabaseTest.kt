@@ -91,8 +91,8 @@ class PatternDatabaseTest {
     fun theoreticalAnalysis(params: PatternDBParams) {
         val database = makeDatabase(params)
         val costs = ByteArray(database.getCardinality())
-        val costCounts = IntArray(12) { 0 }
-        val costProbabilities = DoubleArray(12) { 0.0 }
+        val costCounts = IntArray(15) { 0 }
+        val costProbabilities = DoubleArray(15) { 0.0 }
         var costSum = 0
         for(index in 0 until database.getCardinality()) {
             val cost = database.getCost(index)
@@ -106,12 +106,12 @@ class PatternDatabaseTest {
             true -> println("Considered corners: ${(database as CornerPatternDatabase).getConsideredCorners().contentToString()}")
             false -> println("Considered edges: ${(database as EdgePatternDatabase).getConsideredEdges().contentToString()}")
         }
-        for(cost in 0..11) {
+        for(cost in costProbabilities.indices) {
             costProbabilities[cost] = costCounts[cost] / database.getCardinality().toDouble()
             println("# of configurations with cost $cost: " + costCounts[cost])
         }
         var expected = 0.0
-        for(cost in 0..11) expected += (cost * costProbabilities[cost])
+        for(cost in costProbabilities.indices) expected += (cost * costProbabilities[cost])
         println("Expected cost: $expected")
     }
     /*
@@ -120,12 +120,13 @@ class PatternDatabaseTest {
     @Order(7)
     fun monteCarloAnalysis(params: PatternDBParams) {
     val database = makeDatabase(params)
+        val NUM_TRIALS = 1000000
         val generator = CubeGenerator<SmartCube>(CubeFactoryProducer.getFactory("SmartCube"))
-        val costs = ByteArray(1000000)
-        val costCounts = IntArray(12) { 0 }
-        val costProbabilities = DoubleArray(12) { 0.0 }
+        val costs = ByteArray(NUM_TRIALS)
+        val costCounts = IntArray(15) { 0 }
+        val costProbabilities = DoubleArray(15) { 0.0 }
         var costSum = 0
-        for(i in 0 until 1000000) {
+        for(i in 0 until NUM_TRIALS) {
             val cube = generator.nextCube()
             val index = database.getIndex(cube)
             val cost = database.getCost(index)
@@ -135,60 +136,35 @@ class PatternDatabaseTest {
         }
         println("Performing analysis of CornerPatternDatabase via a Monte-Carlo simulation of ${costs.size} cubes.")
         println("Considered corners: ${database.getConsideredCorners().contentToString()}")
-        for(cost in 0..11) {
+        for(costProbabilities.indices) {
             costProbabilities[cost] = costCounts[cost] / 1000000.toDouble()
             println("# of cubes with cost $cost: " + costCounts[cost])
         }
         var expected = 0.0
-        for(cost in 0..11) expected += (cost * costProbabilities[cost])
+        for(cost in costProbabilities.indices) expected += (cost * costProbabilities[cost])
         println("Average cost: $expected")
     }*/
 
     companion object {
+
+
+        private val cornersFull = PatternDBParams(FileCore("data/corners-full.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5, 6, 7), true)
+        private val sevenEdgesStartZero = PatternDBParams(FileCore("data/edges-0123456.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5, 6), false)
+        private val sevenEdgesStartTwo = PatternDBParams(FileCore("data/edges-2345678.db"), "dfs", mutableListOf(2, 3, 4, 5, 6, 7, 8), false)
+        private val sevenEdgesStartFour = PatternDBParams(FileCore("data/edges-456789A.db"), "dfs", mutableListOf(4, 5, 6, 7, 8, 9, 10), false)
+        private val sevenEdgesStartSix = PatternDBParams(FileCore("data/edges-6789AB0.db"), "dfs", mutableListOf(6, 7, 8, 9, 10, 11, 0), false)
+        private val sevenEdgesStartEight = PatternDBParams(FileCore("data/edges-89AB012.db"), "dfs", mutableListOf(8, 9, 10, 11, 0, 1, 2), false)
+        private val sevenEdgesStartTen = PatternDBParams(FileCore("data/edges-AB01234.db"), "dfs", mutableListOf(10, 11, 0, 1, 2, 3, 4), false)
+
         @JvmStatic
         fun params(): MutableList<PatternDBParams> {
-            /*
             return mutableListOf(
-                //different sized corner databases generated via DFS
-                PatternDBParams(FileCore("data/corners-0.db"), "dfs", mutableListOf(0), true),
-                PatternDBParams(FileCore("data/corners-01.db"), "dfs", mutableListOf(0, 1), true),
-                PatternDBParams(FileCore("data/corners-012.db"), "dfs", mutableListOf(0, 1, 2), true),
-                PatternDBParams(FileCore("data/corners-0123.db"), "dfs", mutableListOf(0, 1, 2, 3), true),
-                PatternDBParams(FileCore("data/corners-01234.db"), "dfs", mutableListOf(0, 1, 2, 3, 4), true),
-                PatternDBParams(FileCore("data/corners-012345.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5), true),
-                PatternDBParams(FileCore("data/corners-full.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5, 6, 7), true),
-                //different sized edge databases generated via DFS
-                PatternDBParams(FileCore("data/edges-0.db"), "dfs", mutableListOf(0), false),
-                PatternDBParams(FileCore("data/edges-01.db"), "dfs", mutableListOf(0, 1), false),
-                PatternDBParams(FileCore("data/edges-012.db"), "dfs", mutableListOf(0, 1, 2), false),
-                PatternDBParams(FileCore("data/edges-0123.db"), "dfs", mutableListOf(0, 1, 2, 3), false),
-                PatternDBParams(FileCore("data/edges-01234.db"), "dfs", mutableListOf(0, 1, 2, 3, 4), false),
-                PatternDBParams(FileCore("data/edges-012345.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5), false),
-                PatternDBParams(FileCore("data/edges-full.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5, 6), false)
-                //different sized corner databases generated via BFS
-                PatternDBParams(FileCore("data/corners-0-bfs.db"), "bfs", mutableListOf(0), true),
-                PatternDBParams(FileCore("data/corners-01-bfs.db"), "bfs", mutableListOf(0, 1), true),
-                PatternDBParams(FileCore("data/corners-012-bfs.db"), "bfs", mutableListOf(0, 1, 2), true),
-                PatternDBParams(FileCore("data/corners-0123-bfs.db"), "bfs", mutableListOf(0, 1, 2, 3), true),
-                PatternDBParams(FileCore("data/corners-01234-bfs.db"), "bfs", mutableListOf(0, 1, 2, 3, 4), true),
-                PatternDBParams(FileCore("data/corners-012345-bfs.db"), "bfs", mutableListOf(0, 1, 2, 3, 4, 5), true),
-                PatternDBParams(FileCore("data/corners-full-bfs.db"), "bfs", mutableListOf(0, 1, 2, 3, 4, 5, 6, 7), true),
-                //different sized edge databases generated via BFS
-                PatternDBParams(FileCore("data/edges-0-bfs.db"), "bfs", mutableListOf(0), false),
-                PatternDBParams(FileCore("data/edges-01-bfs.db"), "bfs", mutableListOf(0, 1), false),
-                PatternDBParams(FileCore("data/edges-012-bfs.db"), "bfs", mutableListOf(0, 1, 2), false),
-                PatternDBParams(FileCore("data/edges-0123-bfs.db"), "bfs", mutableListOf(0, 1, 2, 3), false),
-                PatternDBParams(FileCore("data/edges-01234-bfs.db"), "bfs", mutableListOf(0, 1, 2, 3, 4), false),
-                PatternDBParams(FileCore("data/edges-012345-bfs.db"), "bfs", mutableListOf(0, 1, 2, 3, 4, 5), false),
-                PatternDBParams(FileCore("data/edges-full-bfs.db"), "bfs", mutableListOf(0, 1, 2, 3, 4, 5, 6), false)
-            )
-            */
-            return mutableListOf(
-                PatternDBParams(FileCore("data/corners-01234.db"), "dfs", mutableListOf(0, 1, 2, 3, 4), true),
-                PatternDBParams(FileCore("data/corners-01234-dfs-recursive.db"), "dfs-recursive", mutableListOf(0, 1, 2, 3, 4), true),
-                PatternDBParams(FileCore("data/corners-01234-bfs.db"), "bfs", mutableListOf(0, 1, 2, 3, 4), true)
+                cornersFull,
+                sevenEdgesStartZero, sevenEdgesStartTwo, sevenEdgesStartFour,
+                sevenEdgesStartSix, sevenEdgesStartEight, sevenEdgesStartTen
             )
         }
+
         @JvmStatic
         fun makeDatabase(params: PatternDBParams): AbstractPatternDatabase {
             return when(params.isCorner) {

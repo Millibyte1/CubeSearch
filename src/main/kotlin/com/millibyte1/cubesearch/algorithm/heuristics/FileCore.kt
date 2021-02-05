@@ -39,4 +39,8 @@ class FileCore(private val file: File) : PatternDatabaseCore {
         if (file.exists()) return FileUtils.readFileToByteArray(file)
         return null
     }
+
+    override fun toString(): String {
+        return file.name
+    }
 }
