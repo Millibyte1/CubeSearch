@@ -107,7 +107,7 @@ object PatternDatabaseUtils {
      * with persons 1-9, which place did persons 1-4 finish in?)
      *
      * @param permutation the full or partial permutation.
-     * @param n the size of the full permutation if $permutation$ is only a partial ranking.
+     * @param n the size of the full permutation if [permutation] is only a partial ranking.
      *
      * @return The lehmer encoding of [permutation].
      *
@@ -191,7 +191,7 @@ object PatternDatabaseUtils {
         //tries to generate the database at every depth up to 20, breaking off when it's done
         for(depthLimit in 0 until 20) {
             //populateDatabaseDFS(path, depthLimit, table, patternDB)
-            populateDatabaseDFS(table, patternDB, depthLimit)
+            populateDatabaseDFS(table, patternDB, depthLimit, factory)
             val population = getPopulation(table)
             //if the database is fully generated, we can stop
             if(population == patternDB.getCardinality()) break
