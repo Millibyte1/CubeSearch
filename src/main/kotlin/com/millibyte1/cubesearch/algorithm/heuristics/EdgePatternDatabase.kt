@@ -66,6 +66,7 @@ class EdgePatternDatabase private constructor(
                         5 -> 9
                         6 -> 10
                         7 -> 10
+                        8 -> 11
                         //don't know what the depth limit is beyond 7 edges and I have no clue how to analytically derive it.
                         else -> 13
                     }
@@ -161,9 +162,9 @@ class EdgePatternDatabase private constructor(
             consideredEdges.sort()
             //tests that the arguments are valid and throws if they aren't
             if(searchMode != "dfs" && searchMode != "bfs" && searchMode != "iddfs") throw failInvalidSearchMode()
-            if(consideredEdges.size > 8 || consideredEdges.any { item -> item !in 0..11 } || containsDuplicates(consideredEdges)) throw failInvalidEdges()
+            if(consideredEdges.size > 12 || consideredEdges.any { item -> item !in 0..11 } || containsDuplicates(consideredEdges)) throw failInvalidEdges()
             //the position and orientation of 11 edges determines the last, so we can remove one redundant cubie from consideration
-            if(consideredEdges.size == 8) consideredEdges.removeAt(11)
+            if(consideredEdges.size == 12) consideredEdges.removeAt(11)
             //constructs and returns the object
             return EdgePatternDatabase(core, searchMode, consideredEdges)
         }

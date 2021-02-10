@@ -156,9 +156,12 @@ class PatternDatabaseTest {
         private val sevenEdgesStartEight = PatternDBParams(FileCore("data/edges-89AB012.db"), "dfs", mutableListOf(8, 9, 10, 11, 0, 1, 2), false)
         private val sevenEdgesStartTen = PatternDBParams(FileCore("data/edges-AB01234.db"), "dfs", mutableListOf(10, 11, 0, 1, 2, 3, 4), false)
 
+        private val eightEdgesStartZero = PatternDBParams(FileCore("data/edges-01234567.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5, 6, 7), false)
+
         @JvmStatic
         fun params(): MutableList<PatternDBParams> {
             return mutableListOf(
+                eightEdgesStartZero,
                 cornersFull,
                 sevenEdgesStartZero, sevenEdgesStartTwo, sevenEdgesStartFour,
                 sevenEdgesStartSix, sevenEdgesStartEight, sevenEdgesStartTen
