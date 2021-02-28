@@ -3,7 +3,6 @@ package com.millibyte1.cubesearch.util
 import com.leansoft.bigqueue.BigQueueImpl
 import com.millibyte1.cubesearch.algorithm.heuristics.AbstractPatternDatabase
 import com.millibyte1.cubesearch.cube.AnalyzableStandardCube
-import com.millibyte1.cubesearch.cube.SmartCube
 import com.millibyte1.cubesearch.cube.SmartCubeFactory
 import com.millibyte1.cubesearch.cube.Twist
 import org.apache.commons.lang3.SerializationUtils
@@ -154,7 +153,7 @@ object PatternDatabaseUtils {
         queue.enqueue(PathWithBack(ArrayList(), factory.getSolvedCube()))
         addCost(factory.getSolvedCube(), 0, table, patternDB)
         //generates every possible corner configuration via a breadth-first traversal
-        while (!queue.isEmpty()) {
+        while(!queue.isEmpty()) {
             //if we've gone over the size limit for the in-memory queue, move to an on-disk queue
             if (queue.effectiveSize() > MAX_SIZE) queue = siphonQueue(queue, PopulatorQueue.DiskQueue("temp", "populate-db-queue"))
             //dequeues the cube
@@ -166,10 +165,10 @@ object PatternDatabaseUtils {
                 val face1Previous = if (current.size() >= 1) Twist.getFace(current.path[current.size() - 1]) else null
                 val face2Previous = if (current.size() >= 2) Twist.getFace(current.path[current.size() - 2]) else null
                 //tries to expand off of each potentially viable twist
-                for (twist in SolverUtils.getOptions(face1Previous, face2Previous)) {
+                for(twist in SolverUtils.getOptions(face1Previous, face2Previous)) {
                     val nextCube = current.back.twist(twist)
                     //if we haven't already encountered the cube, add to the database and to the expansion queue
-                    if (!databaseContains(nextCube, table, patternDB)) {
+                    if(!databaseContains(nextCube, table, patternDB)) {
                         queue.enqueue(current.add(twist))
                         addCost(nextCube, (current.size() + 1).toByte(), table, patternDB)
                     }

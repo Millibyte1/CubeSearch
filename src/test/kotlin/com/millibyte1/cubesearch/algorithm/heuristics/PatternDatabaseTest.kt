@@ -1,22 +1,16 @@
 package com.millibyte1.cubesearch.algorithm.heuristics
 
-import com.millibyte1.cubesearch.cube.CubeFactoryProducer
 import com.millibyte1.cubesearch.cube.SmartCube
 import com.millibyte1.cubesearch.cube.SmartCubeFactory
 import com.millibyte1.cubesearch.cube.Twist
 import com.millibyte1.cubesearch.util.CubeGenerator
-import com.millibyte1.cubesearch.util.PatternDatabaseUtils
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
+
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
-
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import redis.clients.jedis.Jedis
-import java.io.File
+
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -161,7 +155,6 @@ class PatternDatabaseTest {
         @JvmStatic
         fun params(): MutableList<PatternDBParams> {
             return mutableListOf(
-                eightEdgesStartZero,
                 cornersFull,
                 sevenEdgesStartZero, sevenEdgesStartTwo, sevenEdgesStartFour,
                 sevenEdgesStartSix, sevenEdgesStartEight, sevenEdgesStartTen
