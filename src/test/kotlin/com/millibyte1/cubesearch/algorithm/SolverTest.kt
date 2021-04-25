@@ -20,6 +20,7 @@ import java.io.File
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class SolverTest {
 
+    init { }
     /* =============================================== UNIT TESTS =================================================== */
 
     @ParameterizedTest
@@ -97,16 +98,16 @@ class SolverTest {
         private val generator = CubeGenerator<SmartCube>(factory, -483132)
 
         private val sevenEdgesStartZero = EdgePatternDatabase.create(FileCore("data/edges-0123456.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5, 6))
-        private val sevenEdgesStartTwo = EdgePatternDatabase.create(FileCore("data/edges-2345678.db"), "dfs", mutableListOf(2, 3, 4, 5, 6, 7, 8))
-        private val sevenEdgesStartFour = EdgePatternDatabase.create(FileCore("data/edges-456789A.db"), "dfs", mutableListOf(4, 5, 6, 7, 8, 9, 10))
+        //private val sevenEdgesStartTwo = EdgePatternDatabase.create(FileCore("data/edges-2345678.db"), "dfs", mutableListOf(2, 3, 4, 5, 6, 7, 8))
+        //private val sevenEdgesStartFour = EdgePatternDatabase.create(FileCore("data/edges-456789A.db"), "dfs", mutableListOf(4, 5, 6, 7, 8, 9, 10))
         private val sevenEdgesStartSix = EdgePatternDatabase.create(FileCore("data/edges-6789AB0.db"), "dfs", mutableListOf(6, 7, 8, 9, 10, 11, 0))
-        private val sevenEdgesStartEight = EdgePatternDatabase.create(FileCore("data/edges-89AB012.db"), "dfs", mutableListOf(8, 9, 10, 11, 0, 1, 2))
-        private val sevenEdgesStartTen = EdgePatternDatabase.create(FileCore("data/edges-AB01234.db"), "dfs", mutableListOf(10, 11, 0, 1, 2, 3, 4))
+        //private val sevenEdgesStartEight = EdgePatternDatabase.create(FileCore("data/edges-89AB012.db"), "dfs", mutableListOf(8, 9, 10, 11, 0, 1, 2))
+        //private val sevenEdgesStartTen = EdgePatternDatabase.create(FileCore("data/edges-AB01234.db"), "dfs", mutableListOf(10, 11, 0, 1, 2, 3, 4))
         private val cornerPatternDatabase = CornerPatternDatabase.create(FileCore("data/corners-full.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5, 6, 7))
 
-        private val twinSevenEdgePatternDatabase = MultiHeuristic(sevenEdgesStartZero, sevenEdgesStartSix)
+        //private val twinSevenEdgePatternDatabase = MultiHeuristic(sevenEdgesStartZero, sevenEdgesStartSix)
         private val twinSevenEdgeAndCornerPatternDatabase = MultiHeuristic(sevenEdgesStartZero, sevenEdgesStartSix, cornerPatternDatabase)
-        private val manyEdgeDatabase = MultiHeuristic(
+        /*private val manyEdgeDatabase = MultiHeuristic(
                 sevenEdgesStartZero, sevenEdgesStartTwo, sevenEdgesStartFour,
                 sevenEdgesStartSix, sevenEdgesStartEight, sevenEdgesStartTen
         )
@@ -114,7 +115,7 @@ class SolverTest {
                 sevenEdgesStartZero, sevenEdgesStartTwo, sevenEdgesStartFour,
                 sevenEdgesStartSix, sevenEdgesStartEight, sevenEdgesStartTen,
                 cornerPatternDatabase
-        )
+        )*/
         
         /* ====================================== TEST FIXTURES ===================================================== */
 
@@ -131,14 +132,15 @@ class SolverTest {
             )
 
              */
-            return manyEdgeDatabaseWithCorners
+            //return manyEdgeDatabaseWithCorners
+            return twinSevenEdgeAndCornerPatternDatabase
         }
         @JvmStatic
         /** Returns a list of CostEvaulators to test the solvers with */
         private fun costEvaluators(): List<CostEvaluator> {
             return listOf(
                 //cornerPatternDatabase,
-                manyEdgeDatabaseWithCorners,
+                //manyEdgeDatabaseWithCorners,
                 twinSevenEdgeAndCornerPatternDatabase
             )
         }
@@ -169,7 +171,7 @@ class SolverTest {
             return when(solver) {
                 is ClassicalAStarSolver -> 8
                 is FrontierSearchSolver -> 8
-                is IterativeDeepeningAStarSolver -> 8
+                is IterativeDeepeningAStarSolver -> 15
                 else -> 8
             }
         }
