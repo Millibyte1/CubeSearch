@@ -1,5 +1,7 @@
 package com.millibyte1.cubesearch.algorithm.heuristics
 
+import com.millibyte1.array64.ByteArray64
+import com.millibyte1.array64.FastByteArray64
 import org.apache.commons.io.FileUtils
 import java.io.File
 import java.io.FileOutputStream
@@ -36,7 +38,15 @@ class FileCore(private val file: File) : PatternDatabaseCore {
      */
     @Throws(IOException::class)
     override fun readDatabase(): ByteArray? {
-        if (file.exists()) return FileUtils.readFileToByteArray(file)
+        if(file.exists()) return FileUtils.readFileToByteArray(file)
+        return null
+    }
+
+    override fun writeDatabase64(bytes: ByteArray64) = writeDatabase(ByteArray(bytes.size.toInt()) { i -> bytes[i.toLong()] })
+
+    override fun readDatabase64(): ByteArray64? {
+        val bytes = readDatabase()
+        if(bytes != null) return FastByteArray64(bytes.size.toLong()) { i -> bytes[i.toInt()] }
         return null
     }
 

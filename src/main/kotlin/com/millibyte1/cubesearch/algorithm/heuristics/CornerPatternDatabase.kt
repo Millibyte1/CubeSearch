@@ -44,7 +44,7 @@ class CornerPatternDatabase private constructor(
     private val consideredCorners: List<Int>
 ) : AbstractPatternDatabase() {
 
-    internal val cardinality = POWERS_OF_THREE[consideredCorners.size] * (FACTORIALS[8] / FACTORIALS[8 - consideredCorners.size])
+    private val cardinality = POWERS_OF_THREE[consideredCorners.size] * (FACTORIALS[8] / FACTORIALS[8 - consideredCorners.size])
 
     private val factory = SmartCubeFactory()
     private var table = ByteArray(cardinality) { -1 }

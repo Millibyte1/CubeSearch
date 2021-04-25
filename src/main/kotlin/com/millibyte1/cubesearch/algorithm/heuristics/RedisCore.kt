@@ -1,5 +1,6 @@
 package com.millibyte1.cubesearch.algorithm.heuristics
 
+import com.millibyte1.array64.ByteArray64
 import redis.clients.jedis.Jedis
 
 /**
@@ -41,5 +42,13 @@ class RedisCore(
         val map = jedis.hgetAll(key)
         for(pair in map) bytes[pair.key.toInt()] = pair.value.toByte()
         return bytes
+    }
+
+    override fun writeDatabase64(bytes: ByteArray64) {
+        TODO("Not yet implemented")
+    }
+
+    override fun readDatabase64(): ByteArray64? {
+        TODO("Not yet implemented")
     }
 }

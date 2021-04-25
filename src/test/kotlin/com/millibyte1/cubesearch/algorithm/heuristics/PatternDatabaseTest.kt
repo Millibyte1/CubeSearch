@@ -1,22 +1,16 @@
 package com.millibyte1.cubesearch.algorithm.heuristics
 
-import com.millibyte1.cubesearch.cube.CubeFactoryProducer
 import com.millibyte1.cubesearch.cube.SmartCube
 import com.millibyte1.cubesearch.cube.SmartCubeFactory
 import com.millibyte1.cubesearch.cube.Twist
 import com.millibyte1.cubesearch.util.CubeGenerator
-import com.millibyte1.cubesearch.util.PatternDatabaseUtils
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
+
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
-
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import redis.clients.jedis.Jedis
-import java.io.File
+
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -155,6 +149,8 @@ class PatternDatabaseTest {
         private val sevenEdgesStartSix = PatternDBParams(FileCore("data/edges-6789AB0.db"), "dfs", mutableListOf(6, 7, 8, 9, 10, 11, 0), false)
         private val sevenEdgesStartEight = PatternDBParams(FileCore("data/edges-89AB012.db"), "dfs", mutableListOf(8, 9, 10, 11, 0, 1, 2), false)
         private val sevenEdgesStartTen = PatternDBParams(FileCore("data/edges-AB01234.db"), "dfs", mutableListOf(10, 11, 0, 1, 2, 3, 4), false)
+
+        private val eightEdgesStartZero = PatternDBParams(FileCore("data/edges-01234567.db"), "dfs", mutableListOf(0, 1, 2, 3, 4, 5, 6, 7), false)
 
         @JvmStatic
         fun params(): MutableList<PatternDBParams> {

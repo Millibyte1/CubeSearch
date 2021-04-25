@@ -4,6 +4,8 @@ import com.millibyte1.cubesearch.util.ArrayCubeUtils
 import com.millibyte1.cubesearch.util.SolvabilityUtils
 import java.io.Serializable
 
+// TODO: eliminate data matrix, eliminate indexOf() performance bottleneck
+
 /**
  * Class representing the configuration of a 3x3 Rubik's cube.
  * Uses an internal array, but keeps track of the orientation values of individual cubies to enable rapid analysis of

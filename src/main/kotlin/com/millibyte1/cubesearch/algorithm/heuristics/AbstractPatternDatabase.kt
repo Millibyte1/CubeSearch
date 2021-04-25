@@ -41,7 +41,8 @@ import com.millibyte1.cubesearch.cube.AnalyzableStandardCube
  * 510935040 possible configurations of a 7-edge database, which is equivalent to ~5.8 corner databases,
  * 42577920 possible configurations of a 6-edge database, which is equivalent to ~0.5 corner databases.
  *
- * Assuming that each entry in a pattern database takes up 9 bytes (64-bit hash-key, 8-bit value), we get:
+ * TODO: recalculate this stuff
+ * Assuming that each entry in a pattern database takes up 1 byte, we get:
  * ~0.739GiB space for the corner database,
  * ~16TiB space for the full 12-edge database,
  * ~8TiB space for an 11-edge database,
