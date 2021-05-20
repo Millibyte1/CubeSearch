@@ -5,15 +5,20 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.millibyte1</groupId>
+    <groupId>io.github.millibyte1</groupId>
     <artifactId>cubesearch</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>cubesearch</name>
 
     <properties>
-        <java.version>1.14</java.version>
-        <kotlin.version>1.4.10</kotlin.version>
+        <version.java>1.14</version.java>
+        <version.kotlin>1.4.10</version.kotlin>
+        <version.maven-install-plugin>3.0.0-M1</version.maven-install-plugin>
+        <version.array64>1.0-SNAPSHOT</version.array64>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <kotlin.compiler.jvmTarget>1.8</kotlin.compiler.jvmTarget>
     </properties>
 
     <dependencies>
@@ -21,12 +26,12 @@
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib-jdk8</artifactId>
-            <version>${kotlin.version}</version>
+            <version>${version.kotlin}</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-test</artifactId>
-            <version>${kotlin.version}</version>
+            <version>${version.kotlin}</version>
         </dependency>
 
         <dependency>
@@ -61,8 +66,13 @@
         <dependency>
             <groupId>it.unimi.dsi</groupId>
             <artifactId>fastutil</artifactId>
-            <version>8.2.2</version>
+            <version>8.5.2</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.github.millibyte1</groupId>
+            <artifactId>array64</artifactId>
+            <version>${version.array64}</version>
         </dependency>
 
 
@@ -76,20 +86,57 @@
         <dependency>
             <groupId>redis.clients</groupId>
             <artifactId>jedis</artifactId>
-            <version>3.4.0</version>
+            <version>3.6.0</version>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>-Xmx8192m -XX:MaxPermSize=256m</argLine>
+                    <skipTests>true</skipTests>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <compilerVersion>1.8</compilerVersion>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
 
+            <!-- handles non-maven jars -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-install-plugin</artifactId>
+                <version>${version.maven-install-plugin}</version>
+                <executions>
+                    <execution>
+                        <id>install-array64-jar</id>
+                        <phase>clean</phase>
+                        <configuration>
+                            <version>${version.array64}</version>
+                            <file>${project.basedir}/libs/array64.jar</file>
+                            <packaging>jar</packaging>
+                            <generatePom>true</generatePom>
+                        </configuration>
+                        <goals>
+                            <goal>install-file</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.1</version>
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <source>${version.java}</source>
+                    <target>${version.java}</target>
                 </configuration>
                 <executions>
                     <execution>
@@ -119,7 +166,7 @@
             <plugin>
                 <artifactId>kotlin-maven-plugin</artifactId>
                 <groupId>org.jetbrains.kotlin</groupId>
-                <version>${kotlin.version}</version>
+                <version>${version.kotlin}</version>
                 <executions>
                     <execution>
                         <id>compile</id>
